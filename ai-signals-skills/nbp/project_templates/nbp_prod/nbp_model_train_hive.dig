@@ -1,0 +1,80 @@
+_export:
+  !include : config/params.yml
+  td:
+    database: ${sink_database}
+
++computation:
+  _parallel: true
+  +similarity:
+    +item_similarity:
+      td>: queries/item_similarity.sql
+      create_table: ${prefix}item_similarity
+      engine: hive
+
+    +topk_similar_items:
+      td>: queries/topk_similar_items.sql
+      create_table: ${prefix}topk_similar_items
+      engine: hive
+
++recommendation:
+  ## Find items that user recently purchased/accessed
+  +recent_item_contacts:
+    td>: queries/recent_item_contacts.sql
+    create_table: ${prefix}recent_item_contacts
+    engine: hive
+
++check_if_exclusion_filters_apply:
+  if>: ${exclude_product_recs == 'no'}
+  _do:
+    +topk_recommended_items:
+      td>: queries/topk_recommended_items.sql
+      create_table: ${prefix}topk_recommended_items
+      engine: hive
+
+  _else_do:
+    +topk_recommended_items_temp:
+      td>: queries/topk_recommended_items.sql
+      create_table: ${prefix}topk_recommended_items_temp
+      engine: hive
+
+    +filter_products_from_recommendation_list:
+      if>: ${recs_exclusion_values !== 'query'}
+      _do:
+        td>: queries/filter_products_recs.sql
+        create_table: ${prefix}topk_recommended_items
+      _else_do:
+        td>: queries/filter_products_recs_query.sql
+        create_table: ${prefix}topk_recommended_items
+
++final_table:
+  +create_empty_schema:
+    td_ddl>:
+    empty_tables: ["${prefix}schema"]
+
+  +loop_through_index_of_max_recommended_items:
+    _parallel: true
+    loop>: ${max_recommended_items}
+    _do:
+      +generate_query_syntax_per_index:
+        +generate_list_index:
+          td>:
+          query: "SELECT ${i} + 1 AS idx"
+          store_last_results: true
+        +insert_syntax_into_schema:
+          td>: queries/nbp_parsing_syntax.sql
+          insert_into: ${prefix}schema
+          engine: presto
+
++generate_final_query_syntax:
+  td>:
+  query: "SELECT ARRAY_JOIN(array_sort(ARRAY_AGG(query_syntax)), CONCAT(', ',chr(10))) as query_syntax FROM ${prefix}schema"
+  engine: presto
+  store_last_results: true
+
++enrich_user_master_with_recommendations_attribute:
+  td>: queries/add_recs_to_user_master_attribute.sql
+  create_table: ${user_master_attr_table}
+  engine: presto
+
+
+

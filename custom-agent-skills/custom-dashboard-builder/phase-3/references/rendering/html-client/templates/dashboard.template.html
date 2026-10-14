@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #f5f5f5;
+      color: #333;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-bottom: 1px solid #e0e0e0;
+      padding-bottom: 15px;
+    }
+
+    .header h1 {
+      font-size: 28px;
+      font-weight: 600;
+    }
+
+    .data-info {
+      font-size: 12px;
+      color: #999;
+      text-align: right;
+    }
+
+    .data-info-label {
+      display: block;
+      margin-bottom: 3px;
+      font-weight: 500;
+    }
+
+    #data-timestamp {
+      font-weight: 600;
+      color: #666;
+    }
+
+    .loading {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 400px;
+      font-size: 16px;
+      color: #999;
+    }
+
+    .error {
+      background: #ffebee;
+      border: 1px solid #ef5350;
+      border-radius: 4px;
+      padding: 15px;
+      margin: 20px 0;
+      color: #c62828;
+    }
+
+    .error strong {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    /* KPI Cards */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 15px;
+      margin-bottom: 30px;
+    }
+
+    .kpi-card {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      transition: box-shadow 0.2s ease;
+    }
+
+    .kpi-card:hover {
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .kpi-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: #1976d2;
+      word-break: break-word;
+    }
+
+    /* Charts */
+    .chart-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      margin-bottom: 20px;
+    }
+
+    .chart-title {
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #333;
+    }
+
+    .chart-canvas-wrapper {
+      position: relative;
+      height: 300px;
+      margin-bottom: 15px;
+    }
+
+    /* Tables */
+    .table-container {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+
+    .table-title {
+      font-size: 14px;
+      font-weight: 600;
+      padding: 15px 20px;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead {
+      background: #f5f5f5;
+    }
+
+    th {
+      padding: 12px 15px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 600;
+      color: #666;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    td {
+      padding: 12px 15px;
+      border-top: 1px solid #f0f0f0;
+      font-size: 13px;
+    }
+
+    tbody tr:hover {
+      background: #fafafa;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .header {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .data-info {
+        text-align: left;
+        margin-top: 10px;
+      }
+
+      .kpi-row {
+        grid-template-columns: 1fr;
+      }
+
+      .header h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Header -->
+  <div class="header">
+    <h1>Dashboard</h1>
+    <div class="data-info">
+      <div class="data-info-label">Data as of:</div>
+      <div id="data-timestamp">Loading...</div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loading" class="loading" style="display: none;">
+    ⏳ Loading data...
+  </div>
+
+  <!-- Error State -->
+  <div id="error-container"></div>
+
+  <!-- Content (shown after data loads) -->
+  <div id="content" style="display: none;">
+
+    <!-- KPI Cards -->
+    <div class="kpi-row" id="kpi-container">
+      <!-- Generated from RAW.kpis -->
+    </div>
+
+    <!-- Trend Chart -->
+    <div class="chart-container" id="trend-section" style="display: none;">
+      <div class="chart-title">Trend</div>
+      <div class="chart-canvas-wrapper">
+        <canvas id="trend-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Distribution Chart -->
+    <div class="chart-container" id="distribution-section" style="display: none;">
+      <div class="chart-title">Distribution</div>
+      <div class="chart-canvas-wrapper">
+        <canvas id="distribution-chart"></canvas>
+      </div>
+    </div>
+
+    <!-- Data Table -->
+    <div class="table-container" id="table-section" style="display: none;">
+      <div class="table-title">Data</div>
+      <table>
+        <thead>
+          <tr id="table-header"></tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+
+  </div>
+</div>
+
+<!-- CRITICAL: Load data.json at startup (before dashboard init) -->
+<script>
+(function() {
+  var chartInstances = {};
+
+  // Show loading state
+  document.getElementById('loading').style.display = 'flex';
+
+  // Load data.json at runtime
+  fetch('data.json')
+    .then(response => {
+      if (!response.ok) {
+        throw new Error('HTTP ' + response.status + ': Failed to load data.json');
+      }
+      return response.json();
+    })
+    .then(data => {
+      window.RAW = data;
+      console.log('✅ Data loaded:', window.RAW);
+
+      // Update data freshness display
+      if (window.RAW && window.RAW._meta) {
+        var dt = new Date(window.RAW._meta.generated_at);
+        var ageMs = Date.now() - dt;
+        var ageMin = Math.floor(ageMs / (1000 * 60));
+        var ageHr = Math.floor(ageMs / (1000 * 60 * 60));
+
+        var ageStr;
+        if (ageMin < 1) {
+          ageStr = 'just now';
+        } else if (ageMin < 60) {
+          ageStr = ageMin + 'm ago';
+        } else if (ageHr < 24) {
+          ageStr = ageHr + 'h ago';
+        } else {
+          ageStr = Math.floor(ageMs / (1000 * 60 * 60 * 24)) + 'd ago';
+        }
+
+        document.getElementById('data-timestamp').textContent =
+          dt.toLocaleString() + ' (' + ageStr + ')';
+      }
+
+      // Initialize dashboard
+      initDashboard();
+    })
+    .catch(err => {
+      console.error('❌ Error loading data:', err);
+
+      document.getElementById('loading').style.display = 'none';
+
+      var errorHtml =
+        '<div class="error">' +
+        '<strong>Error loading dashboard data</strong>' +
+        '<p>' + err.message + '</p>' +
+        '<p style="margin-top: 10px; font-size: 12px;">' +
+        'Make sure <code>generate-data.js</code> was run first to create <code>data.json</code>' +
+        '</p>' +
+        '</div>';
+
+      document.getElementById('error-container').innerHTML = errorHtml;
+    });
+
+  // Initialize dashboard with RAW data
+  function initDashboard() {
+    if (!window.RAW) {
+      console.error('RAW data not available');
+      return;
+    }
+
+    // Hide loading, show content
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('content').style.display = 'block';
+
+    // Render KPI cards
+    renderKPIs();
+
+    // Render charts (if data exists)
+    if (window.RAW.trend) renderTrendChart();
+    if (window.RAW.distribution) renderDistributionChart();
+
+    // Render table (if data exists)
+    if (window.RAW.rows) renderTable();
+  }
+
+  function renderKPIs() {
+    var container = document.getElementById('kpi-container');
+    container.innerHTML = '';
+
+    if (!window.RAW.kpis || window.RAW.kpis.length === 0) {
+      container.innerHTML = '<p style="color: #999;">No KPI data available</p>';
+      return;
+    }
+
+    window.RAW.kpis.forEach(kpi => {
+      var card = document.createElement('div');
+      card.className = 'kpi-card';
+
+      var value = typeof kpi.value === 'number'
+        ? kpi.value.toLocaleString(undefined, { maximumFractionDigits: 2 })
+        : (kpi.value || '—');
+
+      card.innerHTML =
+        '<div class="kpi-label">' + (kpi.label || 'Metric') + '</div>' +
+        '<div class="kpi-value">' + value + '</div>';
+
+      container.appendChild(card);
+    });
+  }
+
+  function renderTrendChart() {
+    var section = document.getElementById('trend-section');
+    if (!window.RAW.trend || window.RAW.trend.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+
+    var labels = window.RAW.trend.map(r => r.month || r.date || r.label || '');
+    var data = window.RAW.trend.map(r => parseFloat(r.revenue || r.value || 0));
+
+    var ctx = document.getElementById('trend-chart').getContext('2d');
+
+    if (chartInstances.trend) {
+      chartInstances.trend.destroy();
+    }
+
+    chartInstances.trend = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [{
+          label: 'Revenue',
+          data: data,
+          borderColor: '#1976d2',
+          backgroundColor: 'rgba(25, 118, 210, 0.1)',
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true,
+          pointRadius: 4,
+          pointBackgroundColor: '#1976d2',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            position: 'top'
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '$' + value.toLocaleString();
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function renderDistributionChart() {
+    var section = document.getElementById('distribution-section');
+    if (!window.RAW.distribution || window.RAW.distribution.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+
+    var labels = window.RAW.distribution.map(r => r.label || '');
+    var data = window.RAW.distribution.map(r => parseFloat(r.value || 0));
+
+    var colors = [
+      '#1976d2', '#388e3c', '#d32f2f', '#f57c00', '#7b1fa2',
+      '#0097a7', '#c2185b', '#455a64', '#e64a19', '#5e35b1'
+    ];
+
+    var ctx = document.getElementById('distribution-chart').getContext('2d');
+
+    if (chartInstances.distribution) {
+      chartInstances.distribution.destroy();
+    }
+
+    chartInstances.distribution = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{
+          data: data,
+          backgroundColor: colors.slice(0, data.length)
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom'
+          }
+        }
+      }
+    });
+  }
+
+  function renderTable() {
+    var section = document.getElementById('table-section');
+    var tbody = document.getElementById('table-body');
+    var thead = document.getElementById('table-header');
+
+    if (!window.RAW.rows || window.RAW.rows.length === 0) {
+      section.style.display = 'none';
+      return;
+    }
+
+    section.style.display = 'block';
+
+    // Build header from first row keys
+    var firstRow = window.RAW.rows[0];
+    var columns = Object.keys(firstRow);
+
+    thead.innerHTML = '';
+    columns.forEach(col => {
+      var th = document.createElement('th');
+      th.textContent = col.replace(/_/g, ' ').toUpperCase();
+      thead.appendChild(th);
+    });
+
+    // Build rows
+    tbody.innerHTML = '';
+    window.RAW.rows.forEach(row => {
+      var tr = document.createElement('tr');
+      columns.forEach(col => {
+        var td = document.createElement('td');
+        var val = row[col];
+        if (typeof val === 'number') {
+          td.textContent = val.toLocaleString(undefined, { maximumFractionDigits: 2 });
+        } else {
+          td.textContent = val || '—';
+        }
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+  }
+})();
+</script>
+
+</body>
+</html>

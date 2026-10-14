@@ -1,0 +1,12 @@
+_export:
+  !include : 'input_params.yaml'
+
++cleanup_temp_tables:
+  loop>: ${temporary_tables}
+  _do:
+    +drop_table_${item}:
+      td>:
+        data: |
+          DROP TABLE IF EXISTS ${sink_database}.${item}
+      engine: presto
+      database: ${sink_database}

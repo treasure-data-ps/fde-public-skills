@@ -1,0 +1,39 @@
+sink_database: lead_scoring
+td_endpoint: 'https://api.treasuredata.com'
+
+user_id_col: 'ucp_id'
+description: 'desc of changes to track performance'
+
+
+look_back_months_training: 27
+train_end_months_from_now: 2
+look_back_months_prediction: 12
+
+
+
+
+
+# ---output table prefix------
+# If set (e.g. 'lead_scoring_'), all output tables use this prefix.
+# If empty, generic names are used (e.g. run_log, feature_importance).
+# Must end with '_' if non-empty.
+table_prefix: ''
+
+# ---model params------
+model_store_table: 'ml_model_store'
+model_type:  'xgboost'   #'catboost'
+model_name: 'scorer_xgb'
+
+fbeta_beta:        '0.7'     # 0.5=precision-biased
+n_trials:          '30'      # XGBoost tunes ~9 hyperparams → more trials
+corr_threshold:    '0.90'    # less aggressive than LR; trees handle corr natively
+min_metric_floor:  '0.35'    # safety floor: recall floor when beta<1 (precision-biased), precision floor when beta>1 (recall-biased)
+
+# ---tuning strategy------
+optuna_metric:          'fbeta'              # fbeta | auc_roc | auc_pr | precision | recall | log_loss
+threshold_strategy:     'precision_optimal'  # precision_optimal | f1_optimal | recall_optimal | youden_j | fixed
+fixed_threshold:        '0.5'               # used only when threshold_strategy='fixed'
+cv_folds:               '3'                 # stratified CV folds for Optuna (2-10)
+early_stopping_rounds:  '0'                 # 0=disabled; >0 stops XGB/CatBoost early during Optuna CV
+class_balance_strategy: 'balanced'          # balanced | none
+xgb_eval_metric:        'aucpr'             # aucpr | auc | logloss | error (auto-mapped for CatBoost)

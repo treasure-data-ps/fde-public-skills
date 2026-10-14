@@ -1,0 +1,58 @@
+##########################################################################
+# Dashboard Workflow — Input Parameters
+# Single source of truth for all workflow configuration.
+# All .dig files load this via:  _export: !include : 'input_params.yaml'
+#
+# ⚠️  CRITICAL: ALL variables MUST be at TOP LEVEL — never nested.
+# Digdag resolves only top-level keys. Variables under globals: or any
+# nested object are NOT resolved and cause runtime errors like:
+#   "Failed to evaluate variable ${sink_database}"
+##########################################################################
+
+##########################################################################
+# GLOBAL PARAMETERS — all at top level (required for digdag resolution)
+##########################################################################
+project_prefix: dashboard            # prefix added to all output table names
+sink_database: dashboard_db          # database where all output tables are written
+
+# Source data — set to your confirmed source database + table
+source_database: source_db           # e.g., acme_prod, sales_db
+source_table: events                 # e.g., orders, sessions, events
+
+main_id_key: td_canonical_id         # canonical user identifier column — only relevant if
+                                      # you add a dimension-table JOIN (see comment in
+                                      # sql/10_create_aggregates_full.sql); not read by any
+                                      # template SQL as shipped
+api_endpoint: 'https://api.treasuredata.com'  # US: api.treasuredata.com | EU: api.eu01.treasuredata.com
+
+# Execution flags — control which sub-workflows run
+cleanup_temp_tables: 'no'           # 'yes' ONLY if temp tables are actually created by your SQL
+
+# Refresh mode — controls whether SQL loads the full historical window or appends incrementally
+# 'full'        → uses start_date → end_date; run this on first deploy and after schema changes.
+#                 Every SINK aggregate table task uses create_table: (atomic full replace).
+# 'incremental' → appends the last incremental_look_back_days only; use for daily scheduled runs.
+#                 Every SINK aggregate table task DELETEs the affected date range, then
+#                 insert_into:s the fresh window — see SLUG_data_prep.dig Section 2.
+#                 NEVER use create_table: for the incremental branch of a SINK table — it
+#                 replaces the whole table and silently deletes all history outside the
+#                 lookback window (see phase-2/references/incremental_update_patterns.md).
+#
+# ⚠️ Before switching a LIVE project from 'full' to 'incremental', run the Pre-Incremental
+# Safety Gate in phase-2/references/workflow-deployment-validate.md Step 2h — record row
+# counts + date ranges for every SINK table, run the incremental workflow once, and diff
+# the results before trusting it on a schedule.
+refresh_mode: 'full'
+incremental_look_back_days: 2       # days to look back on incremental runs (covers late-arriving data)
+table_filter: ""                    # WHERE clause for exclusion rules, e.g. "status != 'cancelled'" — used by sql/01_data_prep.sql
+
+# Time window — used by td_time_range() in 01_data_prep.sql on 'full' runs
+start_date: '2024-01-01'            # historical start; first run loads this full window
+end_date: '2024-12-31'              # rolling end — update to current date or leave for workflow to resolve
+
+td:
+  database: dashboard_db            # must match sink_database above
+
+# Temporary tables cleaned up by SLUG_cleaner.dig
+# Leave empty if your SQL does not create temp tables
+temporary_tables: []

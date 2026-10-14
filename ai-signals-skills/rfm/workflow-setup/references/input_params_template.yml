@@ -1,0 +1,71 @@
+#####################################################################
+########################## GLOBAL PARAMS ############################
+#####################################################################
+globals:
+  #Define input/output database names in TD
+  canonical_id: canonical_id
+  sink_database: <sink_database>
+  model_type: 'custom' #Use 'custom' to run custom PS code, use `automl` to run PrecisionML notebook
+  built_union_activity: yes
+  archive_results: yes
+  store_historic_scores: no
+  time_zone: 'UTC'
+  api_endpoint: 'api.treasuredata.com'
+  num_bins: 10
+
+### Output Table Params
+union_activity_table: rfm_combined_user_events
+input_table: rfm_input_table
+output_table: rfm_output_table
+stats_table: rfm_stats
+
+############## TIME FILTER PARAMS ##########################
+##Below params will ONLY be applied if above param `apply_time_filter = 'yes', otherwise entire interaction history will be included
+apply_time_filter: 'no'
+time_filter_type: interval #Use 'range' to specify fixed start/end dates OR 'interval' to lookback days/weeks/months from time_range_end_date
+time_range_start_date: 2022-01-01 #Defines start date for`TD_TIME_RANGE` use format YYYY-MM-DD
+time_range_end_date: 2222-22-22 #To always end TIME_RANGE at the latest available date, leave default as '2222-22-22'. To end on a custom date use format YYYY-MM-DD
+lookback_period: '-180d' #-1M looksback a month, -30d looks back 30 days, - 2w looksback 2 weeks etc. Used only with TD_INTERVAL
+
+############## UNION BEHAVIOR TABLES PARAMS ##########################
+################ INPUT TABLE PARAMS ###################################
+aggregate_metrics_tables:
+  - src_table: <source_database>.enriched_pageviews
+    name: 'pageviews'
+    unixtime_col: time
+    join_key: canonical_id
+    order_amount: 0.0
+    context_col: td_title        #Column used for event histogram (e.g. page title, event type, category). Must exist in src_table.
+    custom_filter:
+    apply_time_filter: 'no'
+    query_type: #Leave blank if you want to read from YML params, use 'custom' to write custom SQL for src_table creation using the 'sql/union_src_tables/name.sql' files
+
+  - src_table: <source_database>.enriched_orders
+    name: 'order_events'
+    unixtime_col: time
+    join_key: canonical_id
+    order_amount: unit_price
+    context_col: order_status    #Column used for event histogram
+    custom_filter: "NOT REGEXP_LIKE(lower(order_status), ''cancel|return'')"
+    apply_time_filter: 'no'
+    query_type:
+
+  - src_table: <source_database>.enriched_email_events
+    name: 'email_activity'
+    unixtime_col: time
+    join_key: canonical_id
+    order_amount: 0.0
+    context_col: event_type      #Column used for event histogram
+    custom_filter: "event_type IN (''friendforward'', ''webform'', ''open'', ''click'', ''conversion'', ''unsubscribe'', ''reply'')"
+    apply_time_filter: 'no'
+    query_type:
+
+  - src_table: <source_database>.sales_rep_interactions
+    name: 'sales_rep_interactions'
+    unixtime_col: time
+    join_key: canonical_id
+    order_amount: 0.0
+    context_col: interaction_type  #Column used for event histogram
+    custom_filter:
+    apply_time_filter: 'no'
+    query_type:

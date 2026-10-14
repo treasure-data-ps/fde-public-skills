@@ -1,0 +1,111 @@
+#####################################################################
+########################## GLOBAL PARAMS ############################
+#####################################################################
+sink_database: <sink_database>                  #database where all model output tables will be saved
+unique_user_id: canonical_id                #the main join key that will be used to join behaviors tables to customers table, unless a foreign join key is required - this can be defined in next
+api_endpoint: 'api.treasuredata.com'                          #determines how deeply into nested folders in Audience Studio the code will scan to find the Segments you want to analyze
+cleanup_temp_tables: 'no'                   #'yes' - will DELETE all temp_tables not used by final dashboard
+include_non_converted_channels: yes
+
+######################## CUSTOMER ANALYSIS ENRICHMENT ################################################################
+add_customer_analysis: 'no'                                             #'yes' - will join customer table to journey table and add customer labels
+customers_table: <source_database>.rfm_output_table                        #full table name (database.table) for customer table to join to journey table
+attributes_list: 'recency, frequency, monetary_value, rfm_segment'      #column name from customer table to add to journey table
+
+#####################################################################
+######################## FILTER PARAMS ############################## <--- NOTE** It is VERY important to apply these correctly when running this for customers with lots of Parent Segments / Audiences
+#####################################################################
+time_filter_type: range                    #Use 'range' to specify fixed start/end dates OR 'interval' to lookback days/weeks/months from time_range_end_date
+time_range_start_date: 2022-01-01             #Defines start date for`TD_TIME_RANGE` use format YYYY-MM-DD
+time_range_end_date: 2222-22-22               #To always end TIME_RANGE at the latest available date, leave default as '222-02-02'. To end on a custom date use format YYYY-MM-DD
+lookback_period: -180d                         #-1M looksback a month, -30d looks back 30 days, - 2w looksback 2 weeks etc. Used only with TD_INTERVAL
+session_length: 3600                          #in seconds (3600s = 60 mins) - how long a customer has to be inactive from previous touchpoint to count next touchpoint as a new session  
+backfill_partition_col: ${unique_user_id}     #use '${unique_user_id}' to backfill NULL touchpoints across entire customer journey, OR use 'session_id' if you only want to backfill within a session
+top_k_channel_perc: 0.01                      #in case your data contains a lot of different channels, this will only use the top_k DISTINCT values by COUNT() and change all others to 'others'
+top_k_conv_perc: 0.01                         #in case your data contains a lot of different channels, this will only use the top_k DISTINCT values by SUM(total_conv) and change all others to 'others'
+top_k_journeys: 50                            #when creating 'mta_top_conversion_journeys' table it will bring top_k distinct touchpoint patterns for converted and non-converted journeys
+sample_tpoint_limit: 25                       #controls journey length of the samples tables we're extracting from src_union and all the journey tables for easy review and analysis
+journey_steps_lookback: 20                    #takes the first and last-n touchpoints from each journey (ex. if set to 10 and a journey has 15 touchpoints it will take step 1 and steps 6-15)
+max_journey_days: 180                         #Lookback days from conversion event tstamp. Determines what touchpoints should be included in each converted journey based on tstamp.
+agg_analysis_cols: ["event_context", "channel"]
+summary_table_top_k: 20                       #top-k of distinct values to include in src_table_summary JSONs of stats
+
+#####################################################################
+# ############# TABLE INPUT PARAMS FOR UNION TABLE #############
+# #####################################################################
+
+aggregate_metrics_tables:
+  - src_table: <source_database>.enriched_pageviews
+    table_description: 'Web Activity data streamed from JS SDK on the website'
+    name: pageviews
+    unixtime_col: time
+    url_col: td_url
+    referral_col: td_referrer
+    medium_col: "COALESCE(url_extract_parameter(LOWER(td_url),''utm_medium''), url_extract_parameter(LOWER(td_url),''medium''))"
+    source_col: "COALESCE(url_extract_parameter(LOWER(td_url),''utm_source''), url_extract_parameter(LOWER(td_url),''source''))"
+    campaign_col: "COALESCE(url_extract_parameter(LOWER(td_url),''utm_campaign''), url_extract_parameter(LOWER(td_url),''campaign''))"
+    utm_mailing_col: "COALESCE(url_extract_parameter(LOWER(td_url),''utm_mailing''), url_extract_parameter(LOWER(td_url),''mailing''))"
+    context_col: td_title
+    event_type: "''web activity''"
+    custom_filter: "${unique_user_id} IS NOT NULL AND REGEXP_LIKE(lower(td_language), ''en'')"
+    # conversion_flag: 0.0
+    conversion_flag: "IF(REGEXP_LIKE(lower(td_path), ''thank_you''), 1.0, 0.0)"
+    item_price: 1.0
+    apply_time_filter: false
+    query_type:                  #Leave blank if you want to read from YML params, use 'custom' to write custom SQL for src_table creation using the 'sql/union_src_tables/name.sql' files
+
+  - src_table: <source_database>.enriched_email_events
+    table_description: 'Email activity data coming from SFMC tracking email sends, opens, clicks, unsubscribe events etc'
+    name: 'email_events'
+    unixtime_col: time
+    url_col: CAST(NULL AS VARCHAR)
+    referral_col: "''email''"
+    medium_col: "''email''"
+    source_col: "''sfmc''"
+    campaign_col: "REGEXP_REPLACE(lower(campaign_name), ''[- ]'', ''_'')"
+    utm_mailing_col: "REGEXP_REPLACE(lower(campaign_name), ''[- ]'', ''_'')"
+    context_col: "REGEXP_REPLACE(lower(email_name), ''[- ]'', ''_'')"
+    event_type: "CONCAT(''email_'', event_type)"
+    custom_filter: "${unique_user_id} IS NOT NULL AND NOT REGEXP_LIKE(lower(event_type), ''send'')"
+    conversion_flag: 0.0
+    item_price: 0.0
+    apply_time_filter: false
+    query_type:  
+
+  - src_table: <source_database>.enriched_sales_rep_interactions
+    table_description: 'Sales rep notes coming from SFDC containing information on the context and sentiment of the interaction with the customer'
+    name: 'sales_rep_interactions'
+    unixtime_col: time
+    url_col: CAST(NULL AS VARCHAR)
+    referral_col: CAST(NULL AS VARCHAR)
+    medium_col: "''sales_rep_interactions''"
+    source_col: source
+    campaign_col: topic
+    utm_mailing_col: topic
+    context_col: topic
+    event_type: "CONCAT(''sales_rep_interactions_'', source)"
+    custom_filter: ${unique_user_id} IS NOT NULL
+    conversion_flag: 0.0
+    item_price: 0.0
+    apply_time_filter: false
+    query_type:
+
+
+###################### CUSTOM QUERY SOURCES - DO NOT UNCOMMENT, THEY ARE ALL SET ###############################
+  - src_table: <source_database>.enriched_orders
+    table_description: 'Order history activity with information on items purchased, item price, order status, etc '
+    name: 'order_events'
+    unixtime_col: time
+    url_col: CAST(NULL AS VARCHAR)
+    referral_col: CAST(NULL AS VARCHAR)
+    medium_col: CAST(NULL AS VARCHAR)
+    source_col: CAST(NULL AS VARCHAR)
+    campaign_col: CAST(NULL AS VARCHAR)
+    utm_mailing_col: CAST(NULL AS VARCHAR) 
+    context_col: order_type
+    event_type: "CONCAT(lower(order_type), ''_order'')"
+    custom_filter: "${unique_user_id} IS NOT NULL AND order_status IN (''COMPLETE'', ''PROCESSING'')"
+    conversion_flag: 1.0
+    item_price: unit_price
+    apply_time_filter: false
+    query_type: 'custom'

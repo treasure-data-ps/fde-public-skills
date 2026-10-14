@@ -1,0 +1,33 @@
+timezone: UTC
+
+# Schedule — update to your confirmed refresh time before go-live
+schedule:
+  daily>: "02:00:00"
+
+_export:
+  !include : 'input_params.yaml'
+
+# ── Dashboard Workflow — Launch Orchestrator ─────────────────────────
+#
+# Step 1: Data prep + output table creation (always runs)
+#   SLUG_data_prep.dig handles both:
+#   - Source data prep (01_data_prep.sql → staging table, always create_table:)
+#   - SINK table creation (10_/11_/12_ SQL → create_table: on 'full', DELETE+insert_into: on 'incremental')
+#   Set refresh_mode: 'full' in input_params.yaml for first run (loads full
+#   historical window). Switch to 'incremental' for daily scheduled runs — but only
+#   AFTER validating the incremental run against a safety-net baseline (see
+#   phase-2/references/workflow-deployment-validate.md Step 2h "Pre-Incremental Safety Gate").
+#
+# Step 2: Cleanup temp tables (only if your SQL creates temp tables)
+# ─────────────────────────────────────────────────────────────────────
+
+# Step 1: Always run data prep + output table creation
++run_data_prep_and_sink:
+  call>: SLUG_data_prep.dig
+
+# Step 2: Cleanup temp tables (set cleanup_temp_tables: 'yes' only if temp tables used)
++check_if_cleanup_needed:
+  if>: ${cleanup_temp_tables == 'yes'}
+  _do:
+    +run_cleanup_wf:
+      call>: SLUG_cleaner.dig

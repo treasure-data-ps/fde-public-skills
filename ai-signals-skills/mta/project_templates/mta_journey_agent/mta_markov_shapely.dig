@@ -1,0 +1,79 @@
+_export: 
+  !include : 'config/input_params.yml'
+  td:
+    database: ${sink_database}
+
+
++create_empty_tables_for_markov_and_shapley_models:
+  td_ddl>:
+  empty_tables: ["mta_markov_attribution", "mta_markov_transition", "mta_shapley_attribution"]
+
++run_markov_and_shapley_models_parallel:
+  _parallel: true
+
+  +execute_markov_model:
+    +agg_journey_for_markov_chains:
+      td>: sql/ml_models/mta_journey_agg.sql
+      create_table: ${output_tables.agg_journey_markov_table}
+
+    +run_markov_model:
+      py>: python.mta_lib.run_markov_model
+      _env:
+        TD_API_KEY: '${secret:secret_key}'
+        TD_API_SERVER: '${api_endpoint}'
+        SINK_DB: '${sink_database}'
+        Markov_table: 'mta_journey_agg_markov'
+        user_id_col: 'conversion_journey_id'
+        time_col: 'date_time'
+        channel_colname: 'journey'
+        conversion_col_name: 'conversion'
+        save_tables_in_td: 'yes'
+      docker:
+        image: "digdag/digdag-python:3.9"
+
+
+    +create_transition_matrix_channels:
+      _parallel: true
+
+      td_for_each>: sql/ml_models/get_markov_channels_with_removal_effect.sql
+      _do:  
+        +create_markov_transition_final:
+          td>: sql/ml_models/markov_transition_matrix.sql
+          insert_into: mta_markov_transition_final
+
+    +insert_into_markov_attribution_final:
+      td>: sql/ml_models/markov_insert_final.sql
+      insert_into: mta_markov_attribution_final
+
+
+  +execute_shapley_model:
+    +create_input_table_for_shapely:
+      td>: sql/ml_models/mta_shapely_input_table.sql
+      create_table: ${output_tables.shapely_input_table}
+
+    +run_shapley_model:
+      py>: python.mta_lib.run_shapley_model
+      _env:
+        TD_API_KEY: '${secret:secret_key}'
+        TD_API_SERVER: '${api_endpoint}'
+        SINK_DB: '${sink_database}'
+        shapley_table: 'mta_shapely_input_table'
+        user_id_col: '${unique_user_id}'
+        time_col: 'date_time'
+        channel_colname: 'channel'
+        conversion_col_name: 'conversion_flag'
+        save_tables_in_td: 'yes'
+      docker:
+        image: "digdag/digdag-python:3.9"
+
+    +create_shapely_attribution_percentage:
+      td>: sql/ml_models/shapley_attr_percentage.sql
+      insert_into: mta_shapley_attribution_final
+
+
+
+
+
+
+
+

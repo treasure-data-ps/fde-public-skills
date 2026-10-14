@@ -1,0 +1,8 @@
+_export:
+  !include : 'config/input_params.yml'
+  td:
+    database: ${globals.sink_database}
+
++create_final_rfm_table:
+  td>: queries/rfm_custom.sql
+  create_table: ${output_table}

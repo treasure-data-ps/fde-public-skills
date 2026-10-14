@@ -1,0 +1,49 @@
+#####################################################################
+########################## CORE SETTINGS ###########################
+#####################################################################
+sink_database: lead_scoring               # TD database where all output tables will be saved
+td_endpoint: 'https://api.treasuredata.com'  # TD API endpoint ('https://api.treasuredata.co.jp' for JP region)
+
+user_id_col: 'ucp_id'                    # Column that uniquely identifies each record/customer
+description: 'initial model run'          # Brief description logged with each run for audit trail
+
+#####################################################################
+##################### TRAINING TIME WINDOW #########################
+#####################################################################
+look_back_months_training: 27             # How many months of history to include for training features
+train_end_months_from_now: 2              # Stop training data N months before now (gap avoids label leakage)
+look_back_months_prediction: 12           # History window for prediction features
+
+#####################################################################
+##################### OUTPUT TABLE PREFIX ##########################
+#####################################################################
+# If set (e.g. 'lead_scoring_'), all output tables use this prefix.
+# If empty, generic names are used (e.g. run_log, feature_importance).
+# Must end with '_' if non-empty.
+table_prefix: ''
+
+#####################################################################
+##################### MODEL SELECTION ##############################
+#####################################################################
+model_type: 'xgboost'                    # Options: logistic | xgboost | catboost
+model_store_table: 'ml_model_store'       # TD table for storing model binary (tree models only)
+model_name: 'scorer_xgb'                  # Name tag used to look up the model in model store
+
+#####################################################################
+##################### TUNING PARAMETERS ############################
+#####################################################################
+fbeta_beta:        '0.7'                  # F-beta weight: <1 = precision-biased, >1 = recall-biased
+n_trials:          '30'                   # Number of Optuna hyperparameter search trials
+corr_threshold:    '0.90'                 # Drop features with pairwise correlation above this
+min_metric_floor:  '0.35'                 # Safety floor — auto-selects recall or precision based on fbeta_beta
+
+#####################################################################
+##################### TUNING STRATEGY ##############################
+#####################################################################
+optuna_metric:          'fbeta'           # fbeta | auc_roc | auc_pr | precision | recall | log_loss
+threshold_strategy:     'precision_optimal'  # precision_optimal | f1_optimal | recall_optimal | youden_j | fixed
+fixed_threshold:        '0.5'            # Used only when threshold_strategy = 'fixed'
+cv_folds:               '3'              # Stratified CV folds for Optuna (2-10)
+early_stopping_rounds:  '0'              # 0 = disabled; >0 stops tree models early if no improvement
+class_balance_strategy: 'balanced'        # balanced | none — how class imbalance is handled
+xgb_eval_metric:        'aucpr'           # aucpr | auc | logloss | error (auto-mapped for CatBoost)

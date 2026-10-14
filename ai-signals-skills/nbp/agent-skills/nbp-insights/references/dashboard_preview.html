@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NBP Next Best Product Summary — Acme Corp [PREVIEW]</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+  :root {
+    --td-1: #B4E3E3; --td-2: #ABB3DB; --td-3: #D9BFDF; --td-4: #F8E1B0;
+    --td-5: #8FD6D4; --td-6: #828DCA; --td-7: #C69ED0; --td-8: #F5D389;
+    --td-9: #6AC8C6; --td-10: #5867B8; --td-11: #B37EC0; --td-12: #F1C461;
+    --td-13: #44BAB8; --td-14: #2E41A6; --td-15: #8CC97E; --td-16: #A05EB0;
+    --bg: #F7F8FB; --card: #FFFFFF; --ink: #1F2147; --muted: #6A6F8A; --line: #E6E8F2;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+         background: var(--bg); color: var(--ink); line-height: 1.4; }
+  header { background: linear-gradient(135deg, var(--td-14) 0%, var(--td-10) 100%); color: white;
+           padding: 32px 48px 0; }
+  header h1 { margin: 0 0 8px; font-size: 28px; font-weight: 600; }
+  header p { margin: 0; opacity: 0.85; font-size: 14px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 16px; font-size: 13px; padding-bottom: 24px; }
+  .meta-row span strong { font-weight: 600; }
+  .tab-nav { background: linear-gradient(135deg, var(--td-14) 0%, var(--td-10) 100%); padding: 0 48px; }
+  .tab-nav-inner { display: flex; gap: 4px; max-width: 1400px; margin: 0 auto; }
+  .tab-button {
+    background: rgba(255,255,255,0.12); color: white; border: none; padding: 14px 24px;
+    cursor: pointer; font-size: 14px; font-weight: 500; border-radius: 8px 8px 0 0;
+    transition: background 0.15s ease; font-family: inherit;
+  }
+  .tab-button:hover { background: rgba(255,255,255,0.22); }
+  .tab-button.active { background: var(--bg); color: var(--td-14); font-weight: 600; }
+  main { padding: 32px 48px; max-width: 1400px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+  section { margin-bottom: 40px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px; padding-bottom: 8px;
+       border-bottom: 2px solid var(--td-1); color: var(--td-14); }
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px;
+         box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .kpi .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi .value { font-size: 32px; font-weight: 700; margin-top: 6px; color: var(--td-14); }
+  .kpi .sub { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  .chart { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 16px 8px;
+           box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .chart-row.three { grid-template-columns: 1fr 1fr 1fr; }
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid var(--line); }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); font-size: 13px; }
+  th { background: var(--td-1); color: var(--td-14); font-weight: 600; font-size: 12px;
+       text-transform: uppercase; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;
+          background: var(--td-1); color: var(--td-14); }
+  .pill.warn { background: var(--td-4); color: #8a6d1c; }
+  .pill.ok { background: var(--td-15); color: #2c5e1f; }
+  .insights ul { margin: 0; padding-left: 20px; }
+  .insights li { margin-bottom: 8px; font-size: 14px; }
+  .insights li strong { color: var(--td-14); }
+  .callout { background: var(--td-4); border: 1px solid #e6c87e; color: #8a6d1c;
+             padding: 14px 18px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
+  .callout strong { color: #6a5316; }
+  .preview-banner { background: #fff3cd; border: 1px solid #ffc107; color: #856404;
+                    padding: 10px 48px; font-size: 13px; font-weight: 500; text-align: center; }
+  footer { text-align: center; padding: 24px; color: var(--muted); font-size: 12px; }
+  @media (max-width: 900px) { .chart-row, .chart-row.three { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<div class="preview-banner">
+  PREVIEW — Sample data only. Substitute all <code>{{TOKEN}}</code> values with real query results before sharing with a customer.
+</div>
+
+<header>
+  <h1>Next Best Product Model Summary</h1>
+  <p>Acme Corp · acme_ml_output · Prefix: nbp_ · Session 1748563200</p>
+  <div class="meta-row">
+    <span><strong>Run time:</strong> 2026-05-30 06:00 UTC</span>
+    <span><strong>Engine:</strong> hive / dimsum</span>
+    <span><strong>Users with recs:</strong> 43,820</span>
+    <span><strong>Coverage:</strong> 87.3%</span>
+    <span><strong>Items excluded by filters:</strong> 12</span>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-button active" data-tab="tab-overview">Run Overview</button>
+    <button class="tab-button" data-tab="tab-recommendations">Recommendations</button>
+    <button class="tab-button" data-tab="tab-catalog">Catalog &amp; Popularity</button>
+    <button class="tab-button" data-tab="tab-historic">Historic Tracker</button>
+    <button class="tab-button" data-tab="tab-testset">Test Set</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1 — RUN OVERVIEW                                         -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div id="tab-overview" class="tab-panel active">
+
+    <section>
+      <h2>Coverage KPIs</h2>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="label">Users with Recommendations</div>
+          <div class="value">43,820</div>
+          <div class="sub">of 50,194 source users</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Coverage Rate</div>
+          <div class="value">87.3%</div>
+          <div class="sub">of source users received ≥1 rec</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Items Recommended</div>
+          <div class="value">284</div>
+          <div class="sub">of 340 items in catalog</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Training Window</div>
+          <div class="value">180d</div>
+          <div class="sub">2025-11-30 → 2026-05-29</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Recommendation Coverage</h2>
+      <div class="chart-row">
+        <div class="chart"><div id="chart-coverage-pie" style="height:360px"></div></div>
+        <div class="chart">
+          <table style="margin-top:8px">
+            <thead><tr><th>Configuration</th><th>Value</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Session ID</strong></td><td>1748563200</td></tr>
+              <tr><td><strong>Run time</strong></td><td>2026-05-30 06:00 UTC</td></tr>
+              <tr><td><strong>Engine</strong></td><td>hive</td></tr>
+              <tr><td><strong>Algorithm</strong></td><td>dimsum</td></tr>
+              <tr><td><strong>Training window</strong></td><td>180 days</td></tr>
+              <tr><td><strong>Items excluded by filters</strong></td><td>12</td></tr>
+              <tr><td><strong>Exclusion filters</strong></td><td>out_of_stock, discontinued</td></tr>
+              <tr><td><strong>Model params</strong></td><td><code style="font-size:11px">{"model_type":"hive","topk_similar_items":3,"recent_items":5,"max_recommended_items":5,"min_cooccurence_filter":3,"dimsum_similarity_threshold":0.1}</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Insights &amp; Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          <li><strong>87.3% coverage</strong> (43,820 of 50,194 users) is above the healthy ≥80% threshold — cold-start gap of <strong>6,374 users</strong> with no purchase history received no recommendations under the hive engine.</li>
+          <li><strong>83.5% of catalog items</strong> (284 of 340) appear in the recommendation output — good breadth; 56 items were never recommended, likely due to sparse co-occurrence in training data.</li>
+          <li><strong>12 items excluded</strong> by <code>out_of_stock</code> and <code>discontinued</code> filters — verify these exclusions are still current; stale exclusion lists reduce catalog diversity unnecessarily.</li>
+          <li><strong>180-day training window</strong> provides a stable signal; if seasonal campaigns shift purchase behavior, consider reducing the window to 90 days to capture more recent intent.</li>
+          <li>Cold-start gap of <strong>6,374 users</strong> could be addressed by enabling <code>automl</code> with <code>popular</code> as a fallback, which would lift coverage to 100%.</li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2 — RECOMMENDATIONS                                      -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div id="tab-recommendations" class="tab-panel">
+
+    <section>
+      <h2>Top Recommended Items — Rank 1</h2>
+      <div class="chart"><div id="chart-top-items" style="height:420px"></div></div>
+    </section>
+
+    <section>
+      <h2>Top 3 Recommendations — Side by Side</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Rank 1 Item</th><th class="num">Users</th>
+            <th>Rank 2 Item</th><th class="num">Users</th>
+            <th>Rank 3 Item</th><th class="num">Users</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Wireless Noise-Cancelling Headphones</td><td class="num">5,214</td><td>Bluetooth Speaker Pro</td><td class="num">4,890</td><td>Smart Watch Series 4</td><td class="num">4,102</td></tr>
+          <tr><td>2</td><td>USB-C Laptop Charger 65W</td><td class="num">4,381</td><td>Mechanical Keyboard TKL</td><td class="num">3,765</td><td>Laptop Stand Adjustable</td><td class="num">3,850</td></tr>
+          <tr><td>3</td><td>Smart Watch Series 4</td><td class="num">3,902</td><td>Fitness Tracker Band</td><td class="num">3,401</td><td>Wireless Earbuds Pro</td><td class="num">3,210</td></tr>
+          <tr><td>4</td><td>Portable SSD 1TB</td><td class="num">3,418</td><td>USB Hub 7-Port</td><td class="num">3,122</td><td>Mechanical Keyboard TKL</td><td class="num">2,980</td></tr>
+          <tr><td>5</td><td>Mechanical Keyboard TKL</td><td class="num">3,102</td><td>Portable SSD 1TB</td><td class="num">2,890</td><td>Portable SSD 1TB</td><td class="num">2,740</td></tr>
+          <tr><td>6</td><td>Bluetooth Speaker Pro</td><td class="num">2,780</td><td>Laptop Stand Adjustable</td><td class="num">2,614</td><td>USB Hub 7-Port</td><td class="num">2,390</td></tr>
+          <tr><td>7</td><td>Webcam 4K HD</td><td class="num">2,340</td><td>Wireless Earbuds Pro</td><td class="num">2,280</td><td>Webcam 4K HD</td><td class="num">2,210</td></tr>
+          <tr><td>8</td><td>Laptop Stand Adjustable</td><td class="num">2,105</td><td>Webcam 4K HD</td><td class="num">2,015</td><td>USB-C Laptop Charger 65W</td><td class="num">1,980</td></tr>
+          <tr><td>9</td><td>Monitor 27" 4K IPS</td><td class="num">1,890</td><td>Monitor 27" 4K IPS</td><td class="num">1,760</td><td>Fitness Tracker Band</td><td class="num">1,820</td></tr>
+          <tr><td>10</td><td>Wireless Earbuds Pro</td><td class="num">1,680</td><td>Smart Watch Series 4</td><td class="num">1,540</td><td>Monitor 27" 4K IPS</td><td class="num">1,650</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Category Distribution &amp; Rank Spread</h2>
+      <div class="chart-row">
+        <div class="chart"><div id="chart-cat-rank1-pie" style="height:360px"></div></div>
+        <div class="chart"><div id="chart-cat-ranks-stacked" style="height:360px"></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Insights &amp; Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          <li><strong>Wireless Noise-Cancelling Headphones</strong> is the top-1 recommendation for <strong>5,214 users (11.9%)</strong> — below the 30% concentration risk threshold, indicating good personalization diversity.</li>
+          <li><strong>Audio &amp; Wearables</strong> dominates rank-1 recommendations at <strong>38.2%</strong> of users; <strong>Computing Accessories</strong> and <strong>Peripherals</strong> each account for ~28–30%, showing balanced category representation.</li>
+          <li>Rank-2 and rank-3 category distributions are similar to rank-1 — the model is not diversifying categories across ranks. Consider tuning <code>topk_similar_items</code> or reducing <code>dimsum_similarity_threshold</code> to introduce more variety at ranks 2–5.</li>
+          <li><strong>10 items</strong> each received rank-1 recommendations from ≥1,680 users — good long-tail coverage; no single item dominates at risk levels.</li>
+          <li>Cross-rank diversity: <strong>Laptop Stand Adjustable</strong> and <strong>Portable SSD 1TB</strong> appear at all three ranks for different user cohorts — these are high-affinity items worth featuring in merchandising campaigns.</li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- TAB 3 — CATALOG & POPULARITY                                 -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div id="tab-catalog" class="tab-panel">
+
+    <section>
+      <h2>Product Catalog — Category Breakdown</h2>
+      <div class="chart"><div id="chart-catalog-pie" style="height:360px"></div></div>
+    </section>
+
+    <section>
+      <h2>Most Ordered vs. Most Recommended</h2>
+      <div class="chart-row">
+        <div class="chart">
+          <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px">Most Ordered in Source Data</div>
+          <div id="chart-most-ordered" style="height:380px"></div>
+        </div>
+        <div class="chart">
+          <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px">Most Recommended (Rank 1)</div>
+          <div id="chart-most-recommended" style="height:380px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Insights &amp; Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          <li><strong>Computing Accessories</strong> is the largest catalog category with <strong>112 items (32.9%)</strong>, but contributes only ~29% of rank-1 recommendations — slightly underrepresented relative to catalog size.</li>
+          <li><strong>USB-C Laptop Charger 65W</strong> is the most-ordered item in source data (<strong>8,920 orders</strong>) but ranks only 2nd in recommendations — the model is surfacing Wireless Headphones above it, indicating genuine personalization beyond pure popularity.</li>
+          <li><strong>3 items</strong> (Wireless Headphones, Smart Watch Series 4, Bluetooth Speaker Pro) appear in both most-ordered and most-recommended lists — these are safe anchors for any "top picks" campaign.</li>
+          <li><strong>Monitor 27" 4K IPS</strong> and <strong>Webcam 4K HD</strong> are recommended more than their order frequency would suggest — the model has identified latent demand for these items, likely through co-purchase signals with keyboards and peripherals.</li>
+          <li>Catalog breadth: <strong>56 items (16.5%)</strong> never appeared in recommendations. Check whether these are low-cooccurrence items blocked by <code>min_cooccurence_filter: 3</code> — lowering this threshold may increase long-tail coverage.</li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- TAB 4 — HISTORIC TRACKER                                     -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div id="tab-historic" class="tab-panel">
+
+    <section>
+      <h2>Coverage Rate Over Time</h2>
+      <div class="chart"><div id="chart-historic-coverage" style="height:320px"></div></div>
+    </section>
+
+    <section>
+      <h2>Users with Recommendations Over Time</h2>
+      <div class="chart"><div id="chart-historic-users" style="height:300px"></div></div>
+    </section>
+
+    <section>
+      <h2>Catalog Breadth — Items Recommended Over Time</h2>
+      <div class="chart"><div id="chart-historic-items" style="height:300px"></div></div>
+    </section>
+
+    <section>
+      <h2>Insights &amp; Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          <li>Coverage improved from <strong>81.2% → 87.3%</strong> over 4 runs — driven by the expansion of the training window from 90 to 180 days in Run 3 (2026-03-12), which brought more users above the minimum interaction threshold.</li>
+          <li>Items recommended grew from <strong>218 → 284</strong> over the same period — the larger training window also increased co-occurrence density, enabling more catalog items to pass <code>min_cooccurence_filter</code>.</li>
+          <li>User base grew from <strong>42,100 → 50,194</strong> source users across runs — coverage improvement is genuine even after accounting for audience growth.</li>
+          <li>Run 2 (2026-01-15) showed a dip in coverage to <strong>79.8%</strong> — this coincides with a stricter <code>dimsum_similarity_threshold: 0.15</code> that was reverted in Run 3. The current <code>0.10</code> threshold is the stable setting.</li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <!-- TAB 5 — TEST SET (conditional)                               -->
+  <!-- ════════════════════════════════════════════════════════════ -->
+  <div id="tab-testset" class="tab-panel">
+
+    <section>
+      <h2>Model Evaluation — Test Set Results</h2>
+      <div class="kpi-grid">
+        <div class="kpi">
+          <div class="label">Product Match Rate</div>
+          <div class="value">30.9%</div>
+          <div class="sub">vs. 7.2% random baseline — <strong>4.3× lift</strong></div>
+        </div>
+        <div class="kpi">
+          <div class="label">Category Match Rate</div>
+          <div class="value">51.3%</div>
+          <div class="sub">vs. 17.1% random baseline — <strong>3.0× lift</strong></div>
+        </div>
+        <div class="kpi">
+          <div class="label">Test Set Customers</div>
+          <div class="value">8,420</div>
+          <div class="sub">Held out from training for evaluation</div>
+        </div>
+        <div class="kpi">
+          <div class="label">Items Bought (holdout)</div>
+          <div class="value">19,840</div>
+          <div class="sub">Total purchases in holdout period</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Model vs. Random Baseline</h2>
+      <div class="chart"><div id="chart-testset-baseline" style="height:340px"></div></div>
+    </section>
+
+    <section>
+      <h2>Precision Distribution</h2>
+      <div class="chart"><div id="chart-testset-prec" style="height:300px"></div></div>
+    </section>
+
+    <section>
+      <h2>Recall Distribution</h2>
+      <div class="chart"><div id="chart-testset-rec" style="height:300px"></div></div>
+    </section>
+
+    <section>
+      <h2>Insights &amp; Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          <li><strong>4.3× product match lift</strong> (30.9% vs. 7.2% random) exceeds the healthy ≥2× threshold — the model is reliably recommending items users actually go on to buy.</li>
+          <li><strong>3.0× category match lift</strong> (51.3% vs. 17.1% random) confirms strong category-level preference capture even when exact product match misses.</li>
+          <li>Precision distribution is right-skewed: most users have precision of 0.2–0.4, with a long tail of highly-precise recommendations — the model performs well across diverse user types, not just heavy purchasers.</li>
+          <li>Recall is lower than precision (peak bin: 0.1–0.2) — expected for a top-5 recommendation list against a broad holdout purchase set. Consider increasing <code>max_recommended_items</code> to 10 to improve recall at acceptable precision cost.</li>
+          <li>Test set evaluation is enabled (<code>run_model_test_set: yes</code>). Re-run after any config change (window, threshold, algorithm) to verify performance is maintained.</li>
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+</main>
+
+<footer>
+  Generated from <code>nbp_dash_*</code> tables · acme_ml_output · session 1748563200 · Next Best Product workflow · <em>PREVIEW with sample data</em>
+</footer>
+
+<script>
+  // TD brand palette — DO NOT substitute.
+  const TD = ["#B4E3E3","#ABB3DB","#D9BFDF","#F8E1B0","#8FD6D4","#828DCA","#C69ED0","#F5D389","#6AC8C6","#5867B8","#B37EC0","#F1C461","#44BAB8","#2E41A6","#8CC97E","#A05EB0"];
+  const BASE = {
+    paper_bgcolor:'white', plot_bgcolor:'white',
+    font:{ family:'-apple-system, BlinkMacSystemFont, sans-serif', color:'#1F2147', size:12 },
+    margin:{ t:50, r:20, b:60, l:60 }
+  };
+  const CFG = { responsive:true, displayModeBar:false };
+
+  // ── Sample data (PREVIEW only) ─────────────────────────────────────────────
+
+  const COVERAGE = { withRecs: 43820, withoutRecs: 6374 };
+
+  const TOP_ITEMS = {
+    labels: ["Wireless Earbuds Pro","Monitor 27\" 4K IPS","Webcam 4K HD","Bluetooth Speaker Pro","Mechanical Keyboard TKL","Portable SSD 1TB","Smart Watch Series 4","USB-C Laptop Charger 65W","Laptop Stand Adjustable","Wireless Noise-Cancelling Headphones"],
+    values: [1680, 1890, 2340, 2780, 3102, 3418, 3902, 4381, 4890, 5214],
+    text:   ["1,680","1,890","2,340","2,780","3,102","3,418","3,902","4,381","4,890","5,214"]
+  };
+
+  const CAT_RANK1 = {
+    labels: ["Audio & Wearables","Computing Accessories","Peripherals","Displays","Storage"],
+    values: [16732, 12690, 8814, 3192, 2392]
+  };
+
+  const RANK_CATS = ["Audio & Wearables","Computing Accessories","Peripherals","Displays","Storage"];
+  const RANK1_V   = [16732, 12690, 8814, 3192, 2392];
+  const RANK2_V   = [15820, 13410, 9210, 2980, 2400];
+  const RANK3_V   = [14910, 13980, 9620, 2850, 2460];
+
+  const CAT_CATALOG = {
+    labels: ["Computing Accessories","Audio & Wearables","Peripherals","Displays","Storage","Smart Home","Other"],
+    values: [112, 78, 64, 42, 28, 10, 6]
+  };
+
+  const MOST_ORDERED = {
+    labels: ["Laptop Stand Adjustable","Bluetooth Speaker Pro","Portable SSD 1TB","Mechanical Keyboard TKL","Smart Watch Series 4","Wireless Earbuds Pro","USB Hub 7-Port","Webcam 4K HD","Monitor 27\" 4K IPS","USB-C Laptop Charger 65W"],
+    values: [4210, 5380, 5890, 6340, 7120, 7680, 7890, 8100, 8490, 8920],
+    text:   ["4,210","5,380","5,890","6,340","7,120","7,680","7,890","8,100","8,490","8,920"]
+  };
+
+  const MOST_REC = {
+    labels: ["Wireless Earbuds Pro","Monitor 27\" 4K IPS","Webcam 4K HD","Bluetooth Speaker Pro","Mechanical Keyboard TKL","Portable SSD 1TB","Smart Watch Series 4","USB-C Laptop Charger 65W","Laptop Stand Adjustable","Wireless Noise-Cancelling Headphones"],
+    values: [1680, 1890, 2340, 2780, 3102, 3418, 3902, 4381, 4890, 5214],
+    text:   ["1,680","1,890","2,340","2,780","3,102","3,418","3,902","4,381","4,890","5,214"]
+  };
+
+  const HIST = {
+    runs:        ["2025-11-18","2026-01-15","2026-03-12","2026-05-30"],
+    coveragePct: [81.2, 79.8, 85.6, 87.3],
+    itemsRec:    [218, 224, 261, 284],
+    usersRec:    [34210, 33640, 41020, 43820]
+  };
+
+  const TESTSET = {
+    barModel:   [30.9, 51.3],
+    barRandom:  [7.2,  17.1],
+    precLabels: ["0.0","0.2","0.4","0.6","0.8","1.0"],
+    precValues: [420,  2840, 3120, 1380, 540,  120],
+    recLabels:  ["0.0","0.2","0.4","0.6","0.8","1.0"],
+    recValues:  [310,  3620, 2810, 1050, 490,  140]
+  };
+
+  // ── Tab switching ──────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(btn.dataset.tab).classList.add('active');
+      window.dispatchEvent(new Event('resize'));
+    });
+  });
+
+  // ── TAB 1 charts ──────────────────────────────────────────────────────────
+  Plotly.newPlot('chart-coverage-pie', [{
+    type:'pie',
+    labels:['With Recommendations','Without Recommendations'],
+    values:[COVERAGE.withRecs, COVERAGE.withoutRecs],
+    marker:{ colors:[TD[0], TD[7]] },
+    hole:0.45,
+    textinfo:'label+percent', textposition:'outside', sort:false
+  }], {
+    ...BASE, title:{ text:'Recommendation Coverage — 87.3% of users', font:{ size:14 } }, showlegend:true,
+    margin:{ t:50, r:20, b:60, l:20 }
+  }, CFG);
+
+  // ── TAB 2 charts ──────────────────────────────────────────────────────────
+
+  Plotly.newPlot('chart-top-items', [{
+    type:'bar', orientation:'h',
+    x:TOP_ITEMS.values, y:TOP_ITEMS.labels,
+    marker:{ color: TD[0] },
+    text:TOP_ITEMS.text, textposition:'outside', cliponaxis:false
+  }], {
+    ...BASE,
+    title:{ text:'Users Receiving Each Item as Their Top-1 Recommendation', font:{ size:14 } },
+    xaxis:{ title:'Users' }, yaxis:{ automargin:true },
+    margin:{ t:50, r:80, b:60, l:260 }
+  }, CFG);
+
+  Plotly.newPlot('chart-cat-rank1-pie', [{
+    type:'pie',
+    labels:CAT_RANK1.labels, values:CAT_RANK1.values,
+    marker:{ colors:TD.slice(0, CAT_RANK1.labels.length) },
+    textinfo:'label+percent', textposition:'outside', sort:false
+  }], {
+    ...BASE, title:{ text:'Category Distribution — Rank 1', font:{ size:14 } }, showlegend:false,
+    margin:{ t:50, r:20, b:60, l:20 }
+  }, CFG);
+
+  const rankTraces = RANK_CATS.map((cat, i) => ({
+    name:cat, type:'bar',
+    x:['Rank 1','Rank 2','Rank 3'],
+    y:[RANK1_V[i], RANK2_V[i], RANK3_V[i]],
+    marker:{ color:TD[i % TD.length] }
+  }));
+  Plotly.newPlot('chart-cat-ranks-stacked', rankTraces, {
+    ...BASE,
+    title:{ text:'Category Spread Across Ranks 1–3', font:{ size:14 } },
+    barmode:'stack',
+    xaxis:{ title:'Rank' }, yaxis:{ title:'Users' },
+    legend:{ orientation:'h', y:-0.25 },
+    margin:{ t:50, r:20, b:100, l:60 }
+  }, CFG);
+
+  // ── TAB 3 charts ──────────────────────────────────────────────────────────
+
+  Plotly.newPlot('chart-catalog-pie', [{
+    type:'pie',
+    labels:CAT_CATALOG.labels, values:CAT_CATALOG.values,
+    marker:{ colors:TD.slice(0, CAT_CATALOG.labels.length) },
+    textinfo:'label+value', textposition:'outside', sort:false
+  }], {
+    ...BASE, title:{ text:'Product Catalog — Items per Category (340 total)', font:{ size:14 } }, showlegend:true,
+    margin:{ t:50, r:20, b:60, l:20 }
+  }, CFG);
+
+  Plotly.newPlot('chart-most-ordered', [{
+    type:'bar', orientation:'h',
+    x:MOST_ORDERED.values, y:MOST_ORDERED.labels,
+    marker:{ color:TD[3] },
+    text:MOST_ORDERED.text, textposition:'outside', cliponaxis:false
+  }], {
+    ...BASE, title:{ text:'Most Ordered Items (Source Data)', font:{ size:14 } },
+    xaxis:{ title:'Times Ordered' }, yaxis:{ automargin:true },
+    margin:{ t:50, r:80, b:60, l:220 }
+  }, CFG);
+
+  Plotly.newPlot('chart-most-recommended', [{
+    type:'bar', orientation:'h',
+    x:MOST_REC.values, y:MOST_REC.labels,
+    marker:{ color:TD[0] },
+    text:MOST_REC.text, textposition:'outside', cliponaxis:false
+  }], {
+    ...BASE, title:{ text:'Most Recommended Items (Rank 1)', font:{ size:14 } },
+    xaxis:{ title:'Users Receiving' }, yaxis:{ automargin:true },
+    margin:{ t:50, r:80, b:60, l:260 }
+  }, CFG);
+
+  // ── TAB 4 charts ──────────────────────────────────────────────────────────
+
+  Plotly.newPlot('chart-historic-coverage', [{
+    type:'scatter', mode:'lines+markers',
+    x:HIST.runs, y:HIST.coveragePct,
+    line:{ color:TD[0], width:3 },
+    marker:{ size:10, color:TD[8] },
+    hovertemplate:'%{x}<br>Coverage: %{y:.1f}%<extra></extra>'
+  }], {
+    ...BASE, title:{ text:'Coverage Rate per Run (%) — window expanded to 180d at Run 3', font:{ size:14 } },
+    xaxis:{ title:'Run date', type:'category' },
+    yaxis:{ title:'Coverage (%)', rangemode:'tozero' }
+  }, CFG);
+
+  Plotly.newPlot('chart-historic-users', [{
+    type:'scatter', mode:'lines+markers',
+    x:HIST.runs, y:HIST.usersRec,
+    line:{ color:TD[1], width:3 },
+    marker:{ size:10, color:TD[5] },
+    hovertemplate:'%{x}<br>Users: %{y:,}<extra></extra>'
+  }], {
+    ...BASE, title:{ text:'Users with Recommendations per Run', font:{ size:14 } },
+    xaxis:{ title:'Run date', type:'category' },
+    yaxis:{ title:'Users', rangemode:'tozero' }
+  }, CFG);
+
+  Plotly.newPlot('chart-historic-items', [{
+    type:'scatter', mode:'lines+markers',
+    x:HIST.runs, y:HIST.itemsRec,
+    line:{ color:TD[2], width:3 },
+    marker:{ size:10, color:TD[6] },
+    hovertemplate:'%{x}<br>Items: %{y:,}<extra></extra>'
+  }], {
+    ...BASE, title:{ text:'Distinct Items Appearing in Recommendations per Run', font:{ size:14 } },
+    xaxis:{ title:'Run date', type:'category' },
+    yaxis:{ title:'Items', rangemode:'tozero' }
+  }, CFG);
+
+  // ── TAB 5 charts ──────────────────────────────────────────────────────────
+
+  Plotly.newPlot('chart-testset-baseline', [
+    { name:'Model', type:'bar', x:['Product Match','Category Match'], y:TESTSET.barModel,
+      marker:{ color:[TD[0], TD[1]] }, text:TESTSET.barModel.map(v=>v.toFixed(1)+'%'), textposition:'outside' },
+    { name:'Random Baseline', type:'bar', x:['Product Match','Category Match'], y:TESTSET.barRandom,
+      marker:{ color:[TD[7], TD[7]] }, text:TESTSET.barRandom.map(v=>v.toFixed(1)+'%'), textposition:'outside' }
+  ], {
+    ...BASE, title:{ text:'Model vs. Random Baseline — Product 4.3× lift · Category 3.0× lift', font:{ size:14 } },
+    barmode:'group', yaxis:{ title:'Match Rate (%)', rangemode:'tozero' },
+    legend:{ orientation:'h', y:-0.2 }, margin:{ t:50, r:20, b:90, l:60 }
+  }, CFG);
+
+  Plotly.newPlot('chart-testset-prec', [{
+    type:'bar', x:TESTSET.precLabels, y:TESTSET.precValues,
+    marker:{ color:TD[0] }, name:'Precision',
+    text:TESTSET.precValues.map(v=>v.toLocaleString()), textposition:'outside'
+  }], {
+    ...BASE, title:{ text:'Precision Distribution (test holdout)', font:{ size:14 } },
+    xaxis:{ title:'Precision Bin' }, yaxis:{ title:'User Count' }
+  }, CFG);
+
+  Plotly.newPlot('chart-testset-rec', [{
+    type:'bar', x:TESTSET.recLabels, y:TESTSET.recValues,
+    marker:{ color:TD[1] }, name:'Recall',
+    text:TESTSET.recValues.map(v=>v.toLocaleString()), textposition:'outside'
+  }], {
+    ...BASE, title:{ text:'Recall Distribution (test holdout)', font:{ size:14 } },
+    xaxis:{ title:'Recall Bin' }, yaxis:{ title:'User Count' }
+  }, CFG);
+</script>
+
+</body>
+</html>

@@ -1,0 +1,78 @@
+#####################################################################
+########################## GLOBAL PARAMS ############################
+#####################################################################
+
+# ── Output ─────────────────────────────────────────────────────────
+sink_database: <sink_database>                      # where output tables will be stored
+prefix: 'nbp_'                                # prefix for all intermediate/output tables
+user_master_attr_table: nbp_user_master       # final attribute table with per-rank recommendation columns
+cleanup_temp_tables: no                       # 'yes' to drop temp tables after run
+
+# ── Model Type ─────────────────────────────────────────────────────
+# 'hive'   = custom PS Hivemall collaborative filtering (no API dependency)
+# 'automl' = PrecisionML via ml-batch-api
+model_type: 'automl'
+automl_model_type: als                        # als, similar_to_latest, or popular (automl only)
+ml_batch_api_endpoint: 'https://ml-batch-api.treasuredata.com'  # varies by site (see SKILL.md Step 4)
+als_sample_rate: 1.0                          # user sampling ratio for ALS (1.0 = no sampling). Use < 1.0 for > 200K users.
+als_max_users: 100000                         # max distinct users after sampling for ALS training
+filter_viewed: false                          # exclude already-purchased items from recommendations (automl only; hive does this automatically)
+
+#####################################################################
+########################## INPUT PARAMS #############################
+#####################################################################
+
+# ── Source Tables ──────────────────────────────────────────────────
+in_db: gldn                                           # database containing source tables
+original_item_transactions_table: enrich_orders       # transaction table (requires userid, itemid, timestamp)
+original_item_info_table: enrich_orders               # item info table (requires itemid, item_name, item_category)
+                                                      ## can be the same as the transactions table
+
+# ── Column Mappings ────────────────────────────────────────────────
+original_user_id_column_name: td_canonical_id         # USER ID column from transactions table
+original_item_id_column_name: item_sku                # ITEM ID column from transactions table
+original_item_name_column_name: item_name             # ITEM NAME column from transactions/info table
+original_item_category_column_name: item_category     # ITEM CATEGORY column from transactions/info table
+original_timestamp_name: time                         # order timestamp column (unix timestamp)
+
+# ── Time Filter ────────────────────────────────────────────────────
+orders_lookback: ''                                   # number of days (e.g., 180), or '' for all history
+
+#####################################################################
+######################## EXCLUSION FILTERS ##########################
+#####################################################################
+
+# Two-stage filtering:
+#   exclude_product_train = remove items from training data
+#   exclude_product_recs  = remove items from final recommendations
+#
+# exclusion_values:
+#   - Regex pattern to match against exclusion_column (e.g., 'Gift Card|Membership')
+#   - Or 'query' to use custom SQL in queries/create_transaction_table_filters.sql
+
+transaction_filter: ''                        # if applicable, begin with 'AND ...' to dynamically apply to the queries/create_transaction_table.sql
+exclusion_column: item                        # which column to filter on
+exclusion_values: query                       # regex pattern, or 'query' for custom SQL
+exclude_product_train: yes                    # edit queries/create_transaction_table_filters.sql
+exclude_product_recs: no                      # edit queries/filter_products_recs.sql
+
+#####################################################################
+################### HIVE ENGINE PARAMETERS ##########################
+#####################################################################
+# These params are ONLY used when model_type = 'hive'
+# Ignored when model_type = 'automl'
+
+topk_similar_items: 3                         # item-item similarities per item (default: 3)
+recent_items: 1                               # recent user purchases to seed from (default: 1)
+max_recommended_items: 5                      # recommendations per user (default: 5)
+min_cooccurence_filter: 1                     # minimum purchases per item (default: 1)
+dimsum_similarity_threshold: 0.25             # similarity cutoff 0-1 (default: 0.25)
+
+#####################################################################
+################### MODEL EVALUATION ################################
+#####################################################################
+
+run_model_test_set: yes                       # run holdout test comparison
+test_params:
+  test_lookback: 30d                          # holdout period for test comparison
+

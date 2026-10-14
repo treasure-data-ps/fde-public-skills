@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<!--
+================================================================================
+  Binary Classification Model Summary — Dashboard Template (4-tab layout)
+================================================================================
+
+  HOW THIS TEMPLATE WORKS
+  -----------------------
+  Self-contained HTML dashboard with placeholder tokens that the classifier-insights
+  agent substitutes with real data from the classification output tables.
+
+  The generator (`references/generate-data.js`):
+    1. Resolves the sink database, table prefix, and optional profile identifier
+    2. Runs the eight documented queries concurrently
+    3. STRIPS this leading HTML comment (the one you're reading)
+    4. Replaces every {{TOKEN}} and validates that none remain
+    5. Writes the result to:
+         agent_outputs/<customer_slug>/classifier/dashboards/classifier_summary_dashboard.html
+
+  All visual structure (TD palette, layout, tabs, chart shapes) is fixed.
+  Only the data behind the tokens changes per customer / per run.
+
+  DASHBOARD LAYOUT — 4 TABS
+  ─────────────────────────
+    TAB 1: Model Performance
+      - Key metrics cards (AUC-ROC, AUC-PR, Threshold, Precision, Recall, F-beta)
+      - Train vs. Test metrics grouped bar chart
+      - Confusion Matrix heat-grid
+      - Model training config table
+      - Performance and overfitting insights
+
+    TAB 2: Feature Drivers
+      - Global SHAP feature importance horizontal bar chart
+      - Diverging bar chart showing directional SHAP push (positive/negative)
+      - Complete directional features detail table
+      - Insights on top feature contributors
+
+    TAB 3: Score & Drift
+      - Score-run KPIs (Records Scored, Average Score, Positives Rate, PSI Drift Index)
+      - Prediction Score Distribution histogram
+      - Score bucket counts table
+      - PSI drift classification and warning callouts
+      - Score distribution & drift insights
+
+    TAB 4: Historic Tracker
+      - Trend lines for training quality metrics over sessions (AUC, Precision, Recall, Threshold)
+      - Trend line for records scored + PSI drift
+      - Insights on model drift, performance stability, and run comparisons
+      - Graceful single-run mode: when only 1 session exists, render snapshot with
+        a "Trend will appear after the next run" callout
+
+  ──────────────────────────────────────────────────────────────────────────
+  TOKEN REFERENCE
+  ──────────────────────────────────────────────────────────────────────────
+
+  ── Header / metadata tokens (strings) ─────────────────────────────────────
+  {{customer_name}}            — e.g. "ACME Corp"
+  {{sink_database}}            — e.g. "ml_output"
+  {{table_prefix}}             — e.g. "lead_scoring_"
+  {{user_id_col}}              — identifier detected from the predictions schema (metadata only)
+  {{session_id}}               — latest training session_id (bigint/string)
+  {{pred_session_id}}          — latest prediction session_id (bigint/string)
+  {{run_time_utc}}             — e.g. "2026-05-18 21:02 UTC"
+  {{model_type}}               — "xgboost" | "catboost" | "logistic"
+  {{best_threshold}}           — classification threshold (e.g. 0.3524)
+  {{run_count}}                — int, total number of training runs
+  {{pred_run_count}}           — int, total number of prediction runs
+
+  ── TAB 1 (Model Performance) tokens ────────────────────────────────────────
+  ⚠️ SCALE: in the live run_log/train_run_log tables, `auc_roc`/`aucpr`/`f1_score`
+  are stored 0-100 while `precision`/`recall`/`fbeta` are stored 0-1. Divide the
+  0-100 columns by 100 when populating the tokens below so every token here is
+  on a consistent 0-1 scale (see SOURCE QUERIES Q1/Q2/Q7 for exact mapping).
+  {{test_auc_roc}}             — e.g. "0.8471"
+  {{test_aucpr}}               — e.g. "0.7654"
+  {{test_precision}}           — e.g. "0.7231"
+  {{test_recall}}              — e.g. "0.6845"
+  {{test_f1}}                  — e.g. "0.7032"
+  {{test_fbeta}}               — e.g. "0.7145"
+  {{train_auc_roc}}            — e.g. "0.8924"
+  {{train_fbeta}}              — e.g. "0.7642"
+  {{train_precision}}          — e.g. "0.7812"
+  {{train_recall}}             — e.g. "0.7481"
+  {{auc_gap}}                  — e.g. "0.0453" (train_auc_roc - test_auc_roc)
+  {{fbeta_gap}}                — e.g. "0.0497" (train_fbeta - test_fbeta)
+
+  {{test_tp}}                  — True Positives count (e.g. 1,425)
+  {{test_tn}}                  — True Negatives count (e.g. 8,241)
+  {{test_fp}}                  — False Positives count (e.g. 431)
+  {{test_fn}}                  — False Negatives count (e.g. 562)
+  {{test_tp_pct}}              — e.g. "13.4%"
+  {{test_tn_pct}}              — e.g. "77.3%"
+  {{test_fp_pct}}              — e.g. "4.0%"
+  {{test_fn_pct}}              — e.g. "5.3%"
+  {{test_total}}               — total test set records (e.g. 10,659)
+
+  {{tab1_insights_html_li}}    — pre-rendered <li>...</li> bullets for Tab 1
+
+  ── TAB 2 (Feature Drivers) tokens ──────────────────────────────────────────
+  {{feature_importance_labels_json}}  — array<string> of feature names, DESC by importance
+  {{feature_importance_values_json}}  — array<number> of mean_abs_shap, parallel
+
+  {{shap_directional_labels_json}}    — array<string> of feature names, DESC by importance
+  {{shap_directional_values_json}}    — array<number> of mean_shap (signed), parallel
+
+  {{shap_directional_rows}}           — pre-rendered <tr>...</tr> rows for the features table
+
+  {{tab2_insights_html_li}}    — pre-rendered <li>...</li> bullets for Tab 2
+
+  ── TAB 3 (Score & Drift) tokens ────────────────────────────────────────────
+  {{records_scored}}           — total records scored (e.g. 125,412)
+  {{score_mean}}               — e.g. "0.2452"
+  {{score_min}}                — e.g. "0.0012"
+  {{score_max}}                — e.g. "0.9984"
+  {{psi}}                      — e.g. "0.0412"
+  {{psi_status_pill}}          — e.g. "<span class='pill ok'>Stable (0.0412)</span>"
+  {{predicted_positive_count}} — records above threshold (e.g. 21,465)
+  {{predicted_positive_pct}}   — e.g. "17.1%"
+
+  {{score_bins_labels_json}}   — array<string> of bin ranges, e.g. ["0.0-0.1","0.1-0.2",...]
+  {{score_bins_values_json}}   — array<number> of record counts per bin, parallel
+  {{score_bins_text_json}}     — array<string> of formatted counts/percentages, parallel
+
+  {{tab3_insights_html_li}}    — pre-rendered <li>...</li> bullets for Tab 3
+
+  ── TAB 4 (Historic Tracker) tokens ──────────────────────────────────────────
+  {{historic_run_labels_json}}        — array<string> of run dates, e.g. ["2026-04-18", "2026-05-18"], ASC
+  {{historic_session_ids_json}}       — array<string/int> of session_ids, parallel
+
+  {{historic_auc_roc_json}}           — array<number> of auc_roc DIVIDED BY 100 (see Tab 1 scale note), parallel
+  {{historic_fbeta_json}}             — array<number> of fbeta as-is (already 0-1), parallel
+  {{historic_precision_json}}         — array<number> of precision as-is (already 0-1), parallel
+  {{historic_recall_json}}            — array<number> of recall as-is (already 0-1), parallel
+
+  {{historic_pred_run_labels_json}}   — array<string> of pred dates, e.g. ["2026-04-19", "2026-05-19"], ASC
+  {{historic_records_scored_json}}    — array<number> of records_scored, parallel
+  {{historic_psi_json}}               — array<number> of psi, parallel
+
+  {{historic_single_run_callout}}     — empty string when run_count >= 2; OR full
+                                        <div class="callout">...</div> block when run_count == 1
+  {{tab4_insights_html_li}}    — pre-rendered <li>...</li> bullets for Tab 4
+
+  ────────────────────────────────================================──────────
+  SOURCE QUERIES
+  ──────────────────────────────────────────────────────────────────────────
+
+  ⚠️ IMPORTANT — column names below are the ACTUAL deployed schema, verified
+  against a live run. There is NO `test_`/`train_` prefix on run_log /
+  train_run_log columns (both tables share the same unprefixed names —
+  `precision`, `recall`, `fbeta`, `auc_roc`, etc. — distinguish them by which
+  table you're querying, not by column name). Most metric columns are already
+  `double`/`bigint`; CAST is harmless but unnecessary.
+
+  ⚠️ SCALE WARNING — within run_log / train_run_log, `precision`, `recall`,
+  `fbeta`, `test_accuracy` are 0–1, but `f1_score`, `auc_roc`, `aucpr` are
+  0–100. Divide the 0–100 group by 100 (or multiply the 0–1 group by 100)
+  before combining them in the same token/chart — e.g. `{{test_auc_roc}}`
+  should be populated as `auc_roc / 100`, not the raw value, so it lands on
+  the same 0–1 scale as `{{test_precision}}` for the grouped bar chart.
+
+  ⚠️ TIMESTAMP WARNING — run_log / train_run_log have ONLY a `time` column
+  (unix epoch seconds) — no `created_at`, no `run_timestamp`. Use
+  `TD_TIME_FORMAT(time, 'yyyy-MM-dd HH:mm', 'UTC')` for a human-readable date.
+  Other tables (feature_importance, shap_directional, bins, correlations,
+  optuna_trials) DO have `created_at`. `prediction_run_log` uniquely has
+  `run_timestamp` instead. Always check `data-dictionary.md` per-table before
+  assuming a timestamp column name.
+
+  Run `DESCRIBE ${sink_database}.${table_prefix}<table>` first if anything
+  below fails with COLUMN_NOT_FOUND — table-generation logic can drift
+  between template versions.
+
+  Q1 — Latest training run metrics (Tab 1):
+      SELECT session_id, model_type, best_threshold, precision, recall,
+             f1_score, fbeta, auc_roc, aucpr, true_positives, true_negatives,
+             false_positives, false_negatives,
+             TD_TIME_FORMAT(time, 'yyyy-MM-dd HH:mm', 'UTC') AS run_time
+      FROM ${sink_database}.${table_prefix}run_log
+      WHERE session_id = (SELECT MAX(session_id) FROM ${sink_database}.${table_prefix}run_log)
+      LIMIT 1
+      -- test_auc_roc token = auc_roc / 100 ; test_aucpr token = aucpr / 100 ; test_f1 token = f1_score / 100
+      -- test_precision/test_recall/test_fbeta tokens = precision/recall/fbeta as-is (already 0-1)
+      -- test_tp/test_tn/test_fp/test_fn tokens = true_positives/true_negatives/false_positives/false_negatives
+
+  Q2 — Latest training overfitting check (Tab 1):
+      SELECT auc_roc, fbeta, precision, recall
+      FROM ${sink_database}.${table_prefix}train_run_log
+      WHERE session_id = <latest_session_id>
+      LIMIT 1
+      -- train_auc_roc token = auc_roc / 100 (train_run_log's auc_roc is also 0-100)
+      -- train_fbeta/train_precision/train_recall tokens = fbeta/precision/recall as-is
+
+  Q3 — Feature global SHAP importance (Tab 2):
+      SELECT feature_name, mean_abs_shap_value
+      FROM ${sink_database}.${table_prefix}feature_importance
+      WHERE session_id = <latest_session_id>
+      ORDER BY mean_abs_shap_value DESC
+      LIMIT 15
+      -- NOTE: this table's column is `mean_abs_shap_value`, not `mean_abs_shap`
+      --       (shap_directional below uses the shorter name `mean_abs_shap` for the same concept)
+
+  Q4 — Feature SHAP directional influence (Tab 2):
+      SELECT feature_name, direction, mean_shap, direction_confidence,
+             pct_pushing_up, pct_pushing_down
+      FROM ${sink_database}.${table_prefix}shap_directional
+      WHERE session_id = <latest_session_id>
+      ORDER BY mean_abs_shap DESC
+      LIMIT 15
+
+  Q5 — Latest prediction run metadata (Tab 3):
+      SELECT pred_session_id, records_scored, score_mean, score_min, score_max,
+             psi, threshold_applied
+      FROM ${sink_database}.${table_prefix}prediction_run_log
+      WHERE pred_session_id = (SELECT MAX(pred_session_id) FROM ${sink_database}.${table_prefix}prediction_run_log)
+      LIMIT 1
+      -- NOTE: the column is `threshold_applied`, not `threshold_used`.
+      -- Compare this value against Q1's `best_threshold` — if they differ, the
+      -- deployment likely hit the known threshold-fallback bug (see
+      -- business-context.md); predicted_label / score_bucket on the
+      -- predictions table cannot be trusted at face value in that case.
+
+  Q6 — Score distribution bins (Tab 3):
+      SELECT bin_range, count, percentage
+      FROM ${sink_database}.${table_prefix}prediction_bins
+      WHERE pred_session_id = <latest_pred_session_id>
+      ORDER BY bin_range ASC
+
+  Q7 — Historic training metrics (Tab 4):
+      SELECT session_id, TD_TIME_FORMAT(time, 'yyyy-MM-dd', 'UTC') AS run_date,
+             auc_roc, fbeta, precision, recall
+      FROM ${sink_database}.${table_prefix}run_log
+      ORDER BY session_id ASC
+      -- historic_auc_roc_json values = auc_roc / 100 per row (0-100 -> 0-1)
+      -- historic_fbeta/historic_precision/historic_recall json values = fbeta/precision/recall as-is
+
+  Q8 — Historic prediction runs (Tab 4):
+      SELECT pred_session_id, records_scored, psi
+      FROM ${sink_database}.${table_prefix}prediction_run_log
+      ORDER BY pred_session_id ASC
+
+================================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Binary Classification Summary — {{customer_name}}</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+  :root {
+    --td-1: #B4E3E3; --td-2: #ABB3DB; --td-3: #D9BFDF; --td-4: #F8E1B0;
+    --td-5: #8FD6D4; --td-6: #828DCA; --td-7: #C69ED0; --td-8: #F5D389;
+    --td-9: #6AC8C6; --td-10: #5867B8; --td-11: #B37EC0; --td-12: #F1C461;
+    --td-13: #44BAB8; --td-14: #2E41A6; --td-15: #8CC97E; --td-16: #A05EB0;
+    --bg: #F7F8FB; --card: #FFFFFF; --ink: #1F2147; --muted: #6A6F8A; --line: #E6E8F2;
+    --tp: #44BAB8; --tn: #B4E3E3; --fp: #F1C461; --fn: #A05EB0;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+         background: var(--bg); color: var(--ink); line-height: 1.4; }
+  header { background: linear-gradient(135deg, var(--td-14) 0%, var(--td-10) 100%); color: white;
+           padding: 32px 48px 0; }
+  header h1 { margin: 0 0 8px; font-size: 28px; font-weight: 600; }
+  header p { margin: 0; opacity: 0.85; font-size: 14px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 16px; font-size: 13px; padding-bottom: 24px; }
+  .meta-row span strong { font-weight: 600; }
+
+  /* Tab navigation */
+  .tab-nav { background: linear-gradient(135deg, var(--td-14) 0%, var(--td-10) 100%); padding: 0 48px; }
+  .tab-nav-inner { display: flex; gap: 4px; max-width: 1400px; margin: 0 auto; }
+  .tab-button {
+    background: rgba(255,255,255,0.12); color: white; border: none; padding: 14px 24px;
+    cursor: pointer; font-size: 14px; font-weight: 500; border-radius: 8px 8px 0 0;
+    transition: background 0.15s ease; font-family: inherit;
+  }
+  .tab-button:hover { background: rgba(255,255,255,0.22); }
+  .tab-button.active { background: var(--bg); color: var(--td-14); font-weight: 600; }
+
+  main { padding: 32px 48px; max-width: 1400px; margin: 0 auto; }
+
+  /* Tab content panels */
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  section { margin-bottom: 40px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px; padding-bottom: 8px;
+       border-bottom: 2px solid var(--td-1); color: var(--td-14); }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px;
+         box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .kpi .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi .value { font-size: 28px; font-weight: 700; margin-top: 6px; color: var(--td-14); }
+  .kpi .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .chart { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 16px 8px;
+           box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid var(--line); }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); font-size: 13px; }
+  th { background: var(--td-1); color: var(--td-14); font-weight: 600; font-size: 12px;
+       text-transform: uppercase; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;
+          background: var(--td-1); color: var(--td-14); }
+  .pill.warn { background: var(--td-4); color: #8a6d1c; }
+  .pill.ok { background: var(--td-15); color: #2c5e1f; }
+  .pill.error { background: #F8D7DA; color: #721C24; }
+
+  .insights ul { margin: 0; padding-left: 20px; }
+  .insights li { margin-bottom: 8px; font-size: 14px; }
+  .insights li strong { color: var(--td-14); }
+
+  .callout { background: var(--td-4); border: 1px solid #e6c87e; color: #8a6d1c;
+             padding: 14px 18px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
+  .callout strong { color: #6a5316; }
+
+  /* Confusion Matrix styling */
+  .matrix-wrapper { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; }
+  .matrix-title { font-size: 14px; font-weight: 600; color: var(--td-14); margin-bottom: 16px; align-self: flex-start; }
+  .matrix-grid { display: grid; grid-template-columns: 80px 120px 120px; gap: 8px; font-size: 13px; margin-bottom: 16px; }
+  .matrix-cell { display: flex; flex-direction: column; align-items: center; justify-content: center;
+                 height: 90px; border-radius: 6px; border: 1px solid var(--line); padding: 8px; text-align: center; }
+  .matrix-header-row { font-weight: 600; color: var(--muted); display: flex; align-items: center; justify-content: center; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+  .matrix-header-col { font-weight: 600; color: var(--muted); display: flex; align-items: center; justify-content: flex-start; text-transform: uppercase; font-size: 11px; letter-spacing: 0.5px; }
+
+  .cell-tp { background: rgba(68, 186, 184, 0.15); border-color: var(--tp); }
+  .cell-tn { background: rgba(180, 227, 227, 0.25); border-color: #92d9d9; }
+  .cell-fp { background: rgba(241, 196, 97, 0.15); border-color: var(--fp); }
+  .cell-fn { background: rgba(160, 94, 176, 0.15); border-color: var(--fn); }
+
+  .matrix-count { font-size: 18px; font-weight: 700; color: var(--ink); margin-bottom: 4px; }
+  .matrix-label { font-size: 11px; color: var(--muted); font-weight: 500; }
+  .matrix-pct { font-size: 11px; font-weight: 600; color: var(--td-14); }
+
+  footer { text-align: center; padding: 24px; color: var(--muted); font-size: 12px; }
+  @media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Binary Classification Summary</h1>
+  <p>{{customer_name}} · {{sink_database}} · Session {{session_id}}</p>
+  <div class="meta-row">
+    <span><strong>Run time:</strong> {{run_time_utc}}</span>
+    <span><strong>Profile ID:</strong> {{user_id_col}}</span>
+    <span><strong>Model type:</strong> {{model_type}}</span>
+    <span><strong>Best threshold:</strong> {{best_threshold}}</span>
+    <span><strong>Records scored:</strong> {{records_scored}}</span>
+    <span><strong>Train runs tracked:</strong> {{run_count}}</span>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-button active" data-tab="tab-performance">Model Performance</button>
+    <button class="tab-button" data-tab="tab-features">Feature Drivers</button>
+    <button class="tab-button" data-tab="tab-drift">Score & Drift</button>
+    <button class="tab-button" data-tab="tab-historic">Historic Tracker</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1 — MODEL PERFORMANCE                                           -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div id="tab-performance" class="tab-panel active">
+
+    <section>
+      <h2>Test-Set Evaluation Metrics</h2>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="label">AUC-ROC</div><div class="value">{{test_auc_roc}}</div><div class="sub">Overall ranking quality</div></div>
+        <div class="kpi"><div class="label">AUC-PR</div><div class="value">{{test_aucpr}}</div><div class="sub">Precision-Recall curve area</div></div>
+        <div class="kpi"><div class="label">F-beta Score</div><div class="value">{{test_fbeta}}</div><div class="sub">Targeted optimization metric</div></div>
+        <div class="kpi"><div class="label">Precision</div><div class="value">{{test_precision}}</div><div class="sub">True Positives / Predicted Pos</div></div>
+        <div class="kpi"><div class="label">Recall</div><div class="value">{{test_recall}}</div><div class="sub">True Positives / Actual Pos</div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Performance Diagnostics</h2>
+      <div class="chart-row">
+        <div class="chart"><div id="chart-train-test" style="height:320px"></div></div>
+        <div class="chart">
+          <div class="matrix-wrapper">
+            <div class="matrix-title">Confusion Matrix (Held-out Test Set)</div>
+            <div class="matrix-grid">
+              <!-- Grid Header -->
+              <div></div>
+              <div class="matrix-header-row">Predicted 0</div>
+              <div class="matrix-header-row">Predicted 1</div>
+
+              <!-- Row 1: Actual 0 -->
+              <div class="matrix-header-col">Actual 0</div>
+              <div class="matrix-cell cell-tn">
+                <div class="matrix-count">{{test_tn}}</div>
+                <div class="matrix-label">True Negative (TN)</div>
+                <div class="matrix-pct">{{test_tn_pct}}</div>
+              </div>
+              <div class="matrix-cell cell-fp">
+                <div class="matrix-count">{{test_fp}}</div>
+                <div class="matrix-label">False Positive (FP)</div>
+                <div class="matrix-pct">{{test_fp_pct}}</div>
+              </div>
+
+              <!-- Row 2: Actual 1 -->
+              <div class="matrix-header-col">Actual 1</div>
+              <div class="matrix-cell cell-fn">
+                <div class="matrix-count">{{test_fn}}</div>
+                <div class="matrix-label">False Negative (FN)</div>
+                <div class="matrix-pct">{{test_fn_pct}}</div>
+              </div>
+              <div class="matrix-cell cell-tp">
+                <div class="matrix-count">{{test_tp}}</div>
+                <div class="matrix-label">True Positive (TP)</div>
+                <div class="matrix-pct">{{test_tp_pct}}</div>
+              </div>
+            </div>
+            <div style="font-size: 11px; color: var(--muted);">Test set size: <strong>{{test_total}} records</strong> · Threshold applied: <strong>{{best_threshold}}</strong></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Overfitting Check & Config</h2>
+      <div class="chart-row">
+        <table>
+          <thead>
+            <tr><th>Metric</th><th>Train Set</th><th>Test Set</th><th>Generalization Gap</th><th>Status</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>AUC-ROC</strong></td><td>{{train_auc_roc}}</td><td>{{test_auc_roc}}</td><td class="num">{{auc_gap}}</td>
+              <td><span class="pill ok">Excellent</span></td>
+            </tr>
+            <tr>
+              <td><strong>F-beta Score</strong></td><td>{{train_fbeta}}</td><td>{{test_fbeta}}</td><td class="num">{{fbeta_gap}}</td>
+              <td><span class="pill ok">Stable</span></td>
+            </tr>
+            <tr>
+              <td><strong>Precision</strong></td><td>{{train_precision}}</td><td>{{test_precision}}</td><td class="num">—</td>
+              <td>—</td>
+            </tr>
+            <tr>
+              <td><strong>Recall</strong></td><td>{{train_recall}}</td><td>{{test_recall}}</td><td class="num">—</td>
+              <td>—</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <table>
+          <thead>
+            <tr><th colspan="2">Training Configuration Parameters</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Session ID</strong></td><td>{{session_id}}</td></tr>
+            <tr><td><strong>Model Algorithm</strong></td><td><span class="pill">{{model_type}}</span></td></tr>
+            <tr><td><strong>Classification Threshold</strong></td><td><code>{{best_threshold}}</code></td></tr>
+            <tr><td><strong>Output Sink Database</strong></td><td><code>{{sink_database}}</code></td></tr>
+            <tr><td><strong>Table Prefix</strong></td><td><code>{{table_prefix}}</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Insights & Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          {{tab1_insights_html_li}}
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2 — FEATURE DRIVERS                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div id="tab-features" class="tab-panel">
+
+    <section>
+      <h2>Global Feature Impact (SHAP)</h2>
+      <div class="chart-row">
+        <div class="chart"><div id="chart-feature-importance" style="height:420px"></div></div>
+        <div class="chart"><div id="chart-shap-directional" style="height:420px"></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Feature Directional Detail</h2>
+      <table>
+        <thead>
+          <tr><th>Feature Name</th><th>SHAP Direction</th><th class="num">Mean SHAP</th><th class="num">Direction Confidence</th><th class="num">Push Up %</th><th class="num">Push Down %</th></tr>
+        </thead>
+        <tbody>
+          {{shap_directional_rows}}
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Insights & Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          {{tab2_insights_html_li}}
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 3 — SCORE & DRIFT                                              -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div id="tab-drift" class="tab-panel">
+
+    <section>
+      <h2>Prediction Run Metrics</h2>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="label">Records Scored</div><div class="value">{{records_scored}}</div><div class="sub">Audience size scored</div></div>
+        <div class="kpi"><div class="label">Average Score</div><div class="value">{{score_mean}}</div><div class="sub">Average predicted probability</div></div>
+        <div class="kpi"><div class="label">Predicted Positive</div><div class="value">{{predicted_positive_count}}</div><div class="sub">{{predicted_positive_pct}} of scored records</div></div>
+        <div class="kpi"><div class="label">Min / Max Score</div><div class="value">{{score_min}} / {{score_max}}</div><div class="sub">Score range bounds</div></div>
+        <div class="kpi"><div class="label">PSI Drift Metric</div><div class="value" style="font-size: 22px; margin-top: 12px;">{{psi_status_pill}}</div><div class="sub">Population Stability Index</div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Prediction Score Distribution</h2>
+      <div class="chart-row">
+        <div class="chart" style="grid-column: span 1;"><div id="chart-score-dist" style="height:360px"></div></div>
+        <div>
+          <table>
+            <thead>
+              <tr><th>Score Bucket</th><th class="num">Record Count</th><th class="num">% of Audience</th><th class="num">Action Strategy</th></tr>
+            </thead>
+            <tbody>
+              {{score_bins_table_rows}}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Insights & Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          {{tab3_insights_html_li}}
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 4 — HISTORIC TRACKER                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div id="tab-historic" class="tab-panel">
+
+    {{historic_single_run_callout}}
+
+    <section>
+      <h2>Model Metrics Over Training Runs</h2>
+      <div class="chart"><div id="chart-historic-metrics" style="height:360px"></div></div>
+    </section>
+
+    <section>
+      <h2>Scored Audience Volume & Drift over Prediction Runs</h2>
+      <div class="chart"><div id="chart-historic-drift" style="height:340px"></div></div>
+    </section>
+
+    <section>
+      <h2>Insights & Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          {{tab4_insights_html_li}}
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+</main>
+
+<footer>
+  Generated from <code>{{table_prefix}}*</code> tables · {{sink_database}} · session {{session_id}} · Binary Classification workflow
+</footer>
+
+<script>
+  // TD brand palette — DO NOT substitute. Fixed across all customers/runs.
+  const TD_PALETTE = ["#B4E3E3","#ABB3DB","#D9BFDF","#F8E1B0","#8FD6D4","#828DCA","#C69ED0","#F5D389","#6AC8C6","#5867B8","#B37EC0","#F1C461","#44BAB8","#2E41A6","#8CC97E","#A05EB0"];
+  const baseLayout = {
+    paper_bgcolor: 'white', plot_bgcolor: 'white',
+    font: { family: '-apple-system, BlinkMacSystemFont, sans-serif', color: '#1F2147', size: 12 },
+    margin: { t: 50, r: 20, b: 60, l: 60 }
+  };
+  const cfg = { responsive: true, displayModeBar: false };
+
+  // ── Data injected by agent ────────────────────────────────────────────────
+
+  // Tab 1 Performance Grouped Bar Chart
+  const PERFORMANCE_CHART = {
+    labels: ["AUC-ROC", "Precision", "Recall", "F-beta"],
+    train: [{{train_auc_roc}}, {{train_precision}}, {{train_recall}}, {{train_fbeta}}],
+    test: [{{test_auc_roc}}, {{test_precision}}, {{test_recall}}, {{test_fbeta}}]
+  };
+
+  // Tab 2 Features
+  const FEAT_IMPORTANCE = {
+    labels: {{feature_importance_labels_json}},
+    values: {{feature_importance_values_json}}
+  };
+  const FEAT_DIRECTIONAL = {
+    labels: {{shap_directional_labels_json}},
+    values: {{shap_directional_values_json}}
+  };
+
+  // Tab 3 Score Bins
+  const SCORE_BINS = {
+    labels: {{score_bins_labels_json}},
+    values: {{score_bins_values_json}},
+    text: {{score_bins_text_json}}
+  };
+
+  // Tab 4 Historic Tracker
+  const HISTORIC = {
+    runs: {{historic_run_labels_json}},
+    sessions: {{historic_session_ids_json}},
+    auc_roc: {{historic_auc_roc_json}},
+    fbeta: {{historic_fbeta_json}},
+    precision: {{historic_precision_json}},
+    recall: {{historic_recall_json}},
+
+    pred_runs: {{historic_pred_run_labels_json}},
+    records_scored: {{historic_records_scored_json}},
+    psi: {{historic_psi_json}}
+  };
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.tab;
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(targetId).classList.add('active');
+      // Plotly charts inside hidden panels need a resize when revealed
+      window.dispatchEvent(new Event('resize'));
+    });
+  });
+
+  // ── TAB 1 charts ──────────────────────────────────────────────────────────
+
+  // Train vs Test Metrics Grouped Bar
+  Plotly.newPlot('chart-train-test', [
+    { name: 'Train Set', type: 'bar', x: PERFORMANCE_CHART.labels, y: PERFORMANCE_CHART.train,
+      marker: { color: TD_PALETTE[1] } },
+    { name: 'Held-out Test Set', type: 'bar', x: PERFORMANCE_CHART.labels, y: PERFORMANCE_CHART.test,
+      marker: { color: TD_PALETTE[12] } }
+  ], {
+    ...baseLayout, title: { text: 'Train vs Test Set Performance', font: { size: 14 } },
+    yaxis: { title: 'Score', range: [0, 1.05] }, barmode: 'group',
+    legend: { orientation: 'h', y: -0.25 }
+  }, cfg);
+
+  // ── TAB 2 charts ──────────────────────────────────────────────────────────
+
+  // Global Feature Importance horizontal bar
+  Plotly.newPlot('chart-feature-importance', [{
+    type: 'bar', orientation: 'h',
+    x: FEAT_IMPORTANCE.values.slice().reverse(), y: FEAT_IMPORTANCE.labels.slice().reverse(),
+    marker: { color: TD_PALETTE.slice(0, FEAT_IMPORTANCE.labels.length).reverse() },
+    text: FEAT_IMPORTANCE.values.slice().reverse().map(v => v.toFixed(4)), textposition: 'outside', cliponaxis: false
+  }], {
+    ...baseLayout, title: { text: 'Top 15 Features by SHAP Importance', font: { size: 14 } },
+    xaxis: { title: 'Mean Absolute SHAP Value' }, yaxis: { automargin: true }
+  }, cfg);
+
+  // Diverging SHAP directional push chart (horizontal bar)
+  const dirColors = FEAT_DIRECTIONAL.values.map(v => v >= 0 ? '#44BAB8' : '#A05EB0'); // Teal push up, Purple push down
+  Plotly.newPlot('chart-shap-directional', [{
+    type: 'bar', orientation: 'h',
+    x: FEAT_DIRECTIONAL.values.slice().reverse(), y: FEAT_DIRECTIONAL.labels.slice().reverse(),
+    marker: { color: dirColors.slice().reverse() },
+    text: FEAT_DIRECTIONAL.values.slice().reverse().map(v => (v >= 0 ? '+' : '') + v.toFixed(4)), textposition: 'outside', cliponaxis: false
+  }], {
+    ...baseLayout, title: { text: 'Directional SHAP Impact (Teal = push up, Purple = push down)', font: { size: 14 } },
+    xaxis: { title: 'Mean Signed SHAP Value' }, yaxis: { automargin: true }
+  }, cfg);
+
+  // ── TAB 3 charts ──────────────────────────────────────────────────────────
+
+  // Score Distribution Bar chart (histogram bins)
+  Plotly.newPlot('chart-score-dist', [{
+    type: 'bar',
+    x: SCORE_BINS.labels, y: SCORE_BINS.values,
+    marker: { color: TD_PALETTE[9] },
+    text: SCORE_BINS.text, textposition: 'outside', cliponaxis: false
+  }], {
+    ...baseLayout, title: { text: 'Prediction Score Distribution', font: { size: 14 } },
+    xaxis: { title: 'Score Ranges (Probability)' }, yaxis: { title: 'Records' }
+  }, cfg);
+
+  // ── TAB 4 charts ──────────────────────────────────────────────────────────
+
+  // Model performance metrics trend over sessions
+  Plotly.newPlot('chart-historic-metrics', [
+    { name: 'AUC-ROC', type: 'scatter', mode: 'lines+markers', x: HISTORIC.runs, y: HISTORIC.auc_roc, line: { color: TD_PALETTE[9], width: 3 } },
+    { name: 'F-beta', type: 'scatter', mode: 'lines+markers', x: HISTORIC.runs, y: HISTORIC.fbeta, line: { color: TD_PALETTE[12], width: 2 } },
+    { name: 'Precision', type: 'scatter', mode: 'lines+markers', x: HISTORIC.runs, y: HISTORIC.precision, line: { color: TD_PALETTE[13], width: 2 } },
+    { name: 'Recall', type: 'scatter', mode: 'lines+markers', x: HISTORIC.runs, y: HISTORIC.recall, line: { color: TD_PALETTE[15], width: 2 } }
+  ], {
+    ...baseLayout, title: { text: 'Model Evaluation Trend - Retraining History', font: { size: 14 } },
+    xaxis: { title: 'Run Date / Session ID', type: 'category' }, yaxis: { title: 'Metric Score', range: [0, 1.05] },
+    legend: { orientation: 'h', y: -0.2 }
+  }, cfg);
+
+  // Scored Audience volume & drift over time (dual axes or subplots)
+  Plotly.newPlot('chart-historic-drift', [
+    { name: 'Audience Scored', type: 'scatter', mode: 'lines+markers', x: HISTORIC.pred_runs, y: HISTORIC.records_scored, line: { color: TD_PALETTE[5], width: 3 } },
+    { name: 'PSI Drift', type: 'scatter', mode: 'lines+markers', x: HISTORIC.pred_runs, y: HISTORIC.psi, yaxis: 'y2', line: { color: '#A05EB0', width: 2, dash: 'dot' } }
+  ], {
+    ...baseLayout, title: { text: 'Audience Volume & Population Stability (PSI) Trend', font: { size: 14 } },
+    xaxis: { title: 'Prediction Run', type: 'category' },
+    yaxis: { title: 'Scored Records', rangemode: 'tozero' },
+    yaxis2: { title: 'PSI Drift Metric', overlaying: 'y', side: 'right', range: [0, 0.5], showgrid: false },
+    legend: { orientation: 'h', y: -0.2 }
+  }, cfg);
+
+</script>
+
+</body>
+</html>

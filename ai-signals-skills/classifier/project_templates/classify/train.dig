@@ -1,0 +1,176 @@
+_export:
+  !include : config.yml
+  td:
+    database: ${sink_database}
+
+  current_session: ${moment(session_time).format("YYYYMMDDHH")}
+  start_date: ${moment(session_time).subtract(look_back_months_training, 'months').startOf('month').format('YYYY-MM-DD')}
+  end_date: ${moment(session_time).subtract(train_end_months_from_now, 'months').endOf('month').format('YYYY-MM-DD')}
+  mode: 'train'
+
+
+# ============================================================
+# DATA PREP FOR TRAINING
+# ============================================================
+# Add customer-specific data prep steps here.
+# These steps should create the following tables:
+#
+#   1. Base input tables - source data joined/filtered for
+#      training (e.g., leads_data_train with user_id,
+#      reference_date, target variable, and raw features)
+#
+#   2. Feature tables - call the shared data prep workflow:
+#      call>: data_prep.dig
+#
+#   3. Final features table - join all feature tables into
+#      a single training dataset:
+#      create_table: lead_final_features_${mode}
+#
+# Example:
+#   +create_input_table:
+#     td>: sql/your_training_base.sql
+#     create_table: leads_data_train
+#
+#   +create_feature_tables:
+#     call>: data_prep.dig
+#
+#   +create_final_features_table:
+#     td>: sql/your_final_features.sql
+#     create_table: lead_final_features_${mode}
+# ============================================================
+
++get_latest_batchid:
+  td>:
+  query: 'select max(session_id) as session_id FROM ${table_prefix}final_features_${mode} '
+  store_last_results: true
+
++run_training:
+  docker:
+    image: "digdag/digdag-python:3.9.2"
+  py>: python.train.main
+  _env:
+    apikey: ${secret:apikey}
+    database: ${sink_database}
+    session_id: ${td.last_results.session_id}
+    batch_id: ${td.last_results.session_id}
+    MODE: train
+
+    # ── Target ────────────────────────────────────────────────────
+    target_variable: 'app_conversion'
+
+    # ── Tables ────────────────────────────────────────────────────
+    unit: ''
+    train_table: ${table_prefix}final_features_${mode}
+    trgt_table: ${table_prefix}coefficient      # unused for xgboost
+    start_date: ${moment(session_time).subtract(look_back_months_training, 'months').format('YYYY-MM-DD')}
+    end_date: ${moment(session_time).subtract(train_end_months_from_now, 'months').subtract(1, 'days').format('YYYY-MM-DD')}
+    description: ${description}
+
+    # ══════════════════════════════════════════════════════════════
+    # MODEL SELECTION
+    # ══════════════════════════════════════════════════════════════
+    # Choose one of: logistic | xgboost | catboost
+    model_type: ${model_type}
+
+    # ── td-model-store: XGBoost binary chunked into this table ────
+    model_store_table: ${model_store_table}
+    model_name: ${model_name}
+    td_endpoint: ${td_endpoint}
+
+    # ── Output table prefix ──────────────────────────────────────
+    table_prefix: ${table_prefix}
+
+    # ── Parallel TD writes ────────────────────────────────────────
+    # Number of concurrent threads used when flushing artifact tables.
+    # TD enforces per-account connection limits; 6 is safe.  Set to 1
+    # for sequential debugging.
+    write_concurrency: '6'
+
+    # ══════════════════════════════════════════════════════════════
+    # TEST-SET PREDICTIONS
+    # ══════════════════════════════════════════════════════════════
+    # Column in the source feature table that uniquely identifies a lead
+    # (ucp_id / lead_id / customer_id).  When set, every held-out test row
+    # is written to lead_scoring_test_predictions with:
+    #   user_id, predicted_proba, predicted_label, actual_label,
+    #   threshold_used, is_correct, outcome_class (TP/TN/FP/FN),
+    #   score_bucket, created_at
+    #
+    # IMPORTANT: This column is automatically added to columns_to_drop to
+    # prevent feature leakage.  Best practice is to include it in
+    # columns_to_drop below anyway for clarity.
+    #
+    # Leave blank '' to skip the test-prediction write.
+    user_id_col: ${user_id_col} 
+
+    # ══════════════════════════════════════════════════════════════
+    # SHAP EXPLAINABILITY
+    # ══════════════════════════════════════════════════════════════
+    # Always-on SHAP artifacts:
+    #   - lead_scoring_feature_importance   (magnitude; which features matter)
+    #   - lead_scoring_shap_directional     (up/down direction per feature)
+    #
+    # Sample size ceiling for SHAP computation on the test set.
+    # TreeExplainer is fast; 1000 rows gives stable statistics.
+    shap_max_samples: '20000'
+
+    # Pairwise interaction SHAP — O(n_features^2), so opt-in.
+    # XGBoost supported natively; CatBoost best-effort.
+    # When true, writes lead_scoring_shap_interactions with the top-K
+    # feature pairs ranked by mean |interaction value|.
+    shap_interactions_enabled: 'false'
+    shap_interactions_samples: '1000'
+    shap_interactions_top_k:   '50'
+
+    # ── Feature engineering ───────────────────────────────────────
+    # Always include user_id_col here (ucp_id in our case) so it's
+    # explicitly excluded from training — the pipeline also enforces
+    # this defensively.
+    columns_to_drop: >-
+      batch_id,description,reference_date,ucp_id,RPOS_product,
+      approved_app_conversion,booked_app_conversion,session_id,
+      product_latest,time, original_app_conversion
+
+    # ── Train/test split ──────────────────────────────────────────
+    test_size: '0.3'
+
+    # ══════════════════════════════════════════════════════════════
+    # SHARED TUNING
+    # ══════════════════════════════════════════════════════════════
+    fbeta_beta: ${fbeta_beta}     # 0.5=precision-biased
+    n_trials:    ${n_trials}     # XGBoost tunes ~9 hyperparams → more trials
+    corr_threshold:  ${corr_threshold}   # less aggressive than LR; trees handle corr natively
+    min_metric_floor: ${min_metric_floor}    # safety floor: recall floor (beta<1) or precision floor (beta>1)
+
+    # ── Tuning strategy ───────────────────────────────────────────
+    optuna_metric:          ${optuna_metric}
+    threshold_strategy:     ${threshold_strategy}
+    fixed_threshold:        ${fixed_threshold}
+    cv_folds:               ${cv_folds}
+    early_stopping_rounds:  ${early_stopping_rounds}
+    class_balance_strategy: ${class_balance_strategy}
+    xgb_eval_metric:        ${xgb_eval_metric}
+
+    # ══════════════════════════════════════════════════════════════
+    # XGBOOST TUNING — Optuna search ranges
+    # ══════════════════════════════════════════════════════════════
+    # Number of boosting rounds
+    n_estimators_min:  '50'
+    n_estimators_max:  '700'
+
+    # Tree depth — 3–8 is the sweet spot for tabular lead-scoring data
+    max_depth_min:     '3'
+    max_depth_max:     '10'
+
+    # Learning rate (log-uniform sampling)
+    learning_rate_min: '0.01'
+    learning_rate_max: '0.5'
+
+    # NOTE — ignored for xgboost (kept for YAML compat with logistic runs):
+    # max_iter, trgt_table
+    max_iter:  '3000'
+
+    # Note: subsample, colsample_bytree, min_child_weight, reg_alpha,
+    # reg_lambda, gamma are tuned by Optuna with fixed ranges inside
+    # models.py (XGBoostModel._suggest_params).  Expose here if per-run
+    # control is ever needed.
