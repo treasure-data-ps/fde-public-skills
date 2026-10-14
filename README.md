@@ -7,7 +7,7 @@ Templatized skill library for deploying ML solutions and custom AI agents on Tre
 Each solution folder (e.g. `ai-signals-skills/mta/`, `custom-agent-skills/custom-audience-agent/`) contains a `SKILL.md` whose YAML frontmatter `description` is what the skill registry uses to match user requests. The registry compares the user's prompt against every registered skill's description and loads the matching one directly. Shared pattern files (`*/shared/`) are not registered as skills; solution skills read them by path.
 
 ```
-fde-skills-public/
+fde-public-skills/
 ├── README.md                          ← you are here (human docs)
 ├── .claude-plugin/marketplace.json    ← registers skills with the loader
 │
