@@ -294,7 +294,7 @@ The dashboard produces a single self-contained HTML file organized into **five t
 
 **Fast Generation Workflow:**
 
-1. Run `generate-data.js` against the customer's `sink_database` **from the user's working directory** (do not `cd` into the skill folder — the output path is relative to the current directory). `<skill_dir>` is this skill's folder (`ml-skills/nbp/agent-skills/nbp-insights/`), resolved to an absolute path:
+1. Run `generate-data.js` against the customer's `sink_database` **from the user's working directory** (do not `cd` into the skill folder — the output path is relative to the current directory). `<skill_dir>` is this skill's folder (`ai-signals-skills/nbp/agent-skills/nbp-insights/`), resolved to an absolute path:
    ```bash
    SOURCE_DB=<sink_database> node "<skill_dir>/references/generate-data.js" <customer_slug> "<Customer Name>"
    ```

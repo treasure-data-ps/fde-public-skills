@@ -1,6 +1,6 @@
 # RFM Workflow — Deployment Instructions
 
-> **ALWAYS read `../../../shared/push_pattern_td_workflows.md` before proceeding.** It contains the mandatory steps that apply to every ml-skills solution — copying the template into `agent_outputs/`, confirming the project name with the user, and asking the user before triggering a workflow run. The RFM-specific details below extend those steps; they do not replace them.
+> **ALWAYS read `../../../shared/push_pattern_td_workflows.md` before proceeding.** It contains the mandatory steps that apply to every ai-signals-skills solution — copying the template into `agent_outputs/`, confirming the project name with the user, and asking the user before triggering a workflow run. The RFM-specific details below extend those steps; they do not replace them.
 
 ## Template and Working Copy
 

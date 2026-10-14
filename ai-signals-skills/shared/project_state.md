@@ -1,7 +1,7 @@
 ---
 name: shared-project-state
 description: |
-  Cross-session context store for an engagement. Defines the local `agent_outputs/<customer_slug>/<solution_slug>/project_state.md` file format and the rule that every resumed session reads it first. Used by every solution under ml-skills/.
+  Cross-session context store for an engagement. Defines the local `agent_outputs/<customer_slug>/<solution_slug>/project_state.md` file format and the rule that every resumed session reads it first. Used by every solution under ai-signals-skills/.
 ---
 
 # Shared: Project State

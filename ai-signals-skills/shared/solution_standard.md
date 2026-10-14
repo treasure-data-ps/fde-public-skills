@@ -1,7 +1,7 @@
 # ML Solution Standard
 
 **Audience: skill authors and maintainers — not read during a customer engagement.**
-Read this when creating a new ml-skills solution or changing an existing one. During an engagement, Claude follows `SKILL.md` in this folder (the runtime playbook); this file defines the shape every solution must have so it plugs into that playbook the same way. `nba-scores/` is the reference implementation.
+Read this when creating a new ai-signals-skills solution or changing an existing one. During an engagement, Claude follows `playbook.md` in this folder (the runtime playbook); this file defines the shape every solution must have so it plugs into that playbook the same way. `nba-scores/` is the reference implementation.
 
 The plugin is an **orchestrator of templates**: each solution ships a workflow template and an agent template, plus instructions for copying them into the user's working directory and customizing the copies. Templates are the single source of truth — instructions never restate what a template already defines.
 
@@ -10,7 +10,7 @@ The plugin is an **orchestrator of templates**: each solution ships a workflow t
 ## 1. Folder layout
 
 ```
-ml-skills/<solution_slug>/
+ai-signals-skills/<solution_slug>/
 ├── SKILL.md                                  # solution orchestrator (section order in §2)
 ├── references/
 │   ├── workflow-setup.md                     # how to choose config values from the data, deploy details, output validation
@@ -29,14 +29,14 @@ ml-skills/<solution_slug>/
 ```
 
 - `<solution_slug>` = folder name = `agent_outputs/<customer_slug>/<solution_slug>/` folder name.
-- Register the solution and `shared/` in `.claude-plugin/marketplace.json`. Never register anything under `project_templates/`, and no file named `SKILL.md` may exist there.
+- Register the solution in `.claude-plugin/marketplace.json`. Never register `shared/` (a plain reference folder with no `SKILL.md`) or anything under `project_templates/`, and no file named `SKILL.md` may exist in either.
 - Every file ≤ 1 MB (Treasure AI Studio drops larger files when skills are shared).
 
 ## 2. `SKILL.md` section order
 
 1. Frontmatter — `name: fde-<solution>`; `description` with concrete trigger phrases.
 2. `# <Solution Name>` + 1–2 sentence summary.
-3. `## How to Start` — "Read `../shared/SKILL.md` … This file provides the <X>-specific context." Nothing between the title and this section.
+3. `## How to Start` — "Read `../shared/playbook.md` … This file provides the <X>-specific context." Nothing between the title and this section.
 4. `## Phase Summary` — exactly 5 rows, Phase 1–5, matching §4.
 5. `## <X>-Specific Context by Phase` — one `### Phase N` per phase, in order, with explicit steps, the `references/` files to read **at that point**, and solution values.
 6. After the phase sections, in any order: optional solution reference sections; `## How It Works`; `## Quick Reference` (solution slug, both template paths, default workflow project name, entry point, config file, key outputs, default agent name).

@@ -1,7 +1,7 @@
 ---
 name: shared-customer-docs-pattern
 description: |
-  Reusable Phase 5 documentation set, written as local markdown files to `agent_outputs/<customer_slug>/<solution_slug>/docs/`. Defines the standard doc files (Architecture, Behavior, Eval Results, Runbook, Access & Ownership), their create order, and the "what changes when X" rules. Used by every solution under ml-skills/.
+  Reusable Phase 5 documentation set, written as local markdown files to `agent_outputs/<customer_slug>/<solution_slug>/docs/`. Defines the standard doc files (Architecture, Behavior, Eval Results, Runbook, Access & Ownership), their create order, and the "what changes when X" rules. Used by every solution under ai-signals-skills/.
 ---
 
 # Shared: Customer-Specific Documentation Pattern

@@ -8,7 +8,7 @@ The NBP workflow template ships with this skill at:
 <solution_dir>/project_templates/nbp_prod/
 ```
 
-`<solution_dir>` is `ml-skills/nbp/` (the directory containing the NBP `SKILL.md`), resolved to an absolute path. The template is read-only — never edit it.
+`<solution_dir>` is `ai-signals-skills/nbp/` (the directory containing the NBP `SKILL.md`), resolved to an absolute path. The template is read-only — never edit it.
 
 ## Copy into the Engagement Working Copy
 

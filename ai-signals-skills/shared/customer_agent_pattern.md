@@ -1,7 +1,7 @@
 ---
 name: shared-customer-agent-pattern
 description: |
-  Generic mechanics for turning a solution's agent template (`project_templates/agent_template/`) into a customer-specific Claude skill in the Work Folder's `.claude/skills/<agent-name>/`: name gate, placeholder filling, draft vs. final, git-ignore guard, verification. The solution's `references/agent-setup.md` supplies the "what". Used by every solution under ml-skills/.
+  Generic mechanics for turning a solution's agent template (`project_templates/agent_template/`) into a customer-specific Claude skill in the Work Folder's `.claude/skills/<agent-name>/`: name gate, placeholder filling, draft vs. final, git-ignore guard, verification. The solution's `references/agent-setup.md` supplies the "what". Used by every solution under ai-signals-skills/.
 ---
 
 # Shared: Customer Agent Pattern

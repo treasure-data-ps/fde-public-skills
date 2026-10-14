@@ -1,6 +1,6 @@
 # NBP Skill — Gap Analysis
 
-Comparison of what the **`nbp_prod` repo** (Hive + automl) supports vs what the **ml-batch-api multi-algorithm approach** (from `ml-skills/solutions/nbp/`) supports. Only open items remain below.
+Comparison of what the **`nbp_prod` repo** (Hive + automl) supports vs what the **ml-batch-api multi-algorithm approach** (from `ai-signals-skills/solutions/nbp/`) supports. Only open items remain below.
 
 ## Features in ml-batch-api approach NOT in nbp_prod
 

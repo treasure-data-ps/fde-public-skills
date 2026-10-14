@@ -10,7 +10,7 @@ Next Best Product workflow that generates personalized product recommendations f
 
 ## How to Start
 
-Read `../shared/SKILL.md` — it defines the entry point (new vs. resume), the phase sequence, and when to read each shared pattern file. Follow that flow. This file provides the NBP-specific context you need at each phase.
+Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, and when to read each shared pattern file. Follow that flow. This file provides the NBP-specific context you need at each phase.
 
 ## Phase Summary
 

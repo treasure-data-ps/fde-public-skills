@@ -62,7 +62,7 @@ MTA requires tables that represent **marketing touchpoints**. Look for:
 
 ### Step 3: Copy the MTA Workflow Template
 
-The template ships with this skill at `project_templates/mta_journey_agent/` (relative to `ml-skills/mta/`). Never edit it — copy it into the engagement's working directory (see `../../../shared/push_pattern_td_workflows.md` Step 1):
+The template ships with this skill at `project_templates/mta_journey_agent/` (relative to `ai-signals-skills/mta/`). Never edit it — copy it into the engagement's working directory (see `../../../shared/push_pattern_td_workflows.md` Step 1):
 
 ```bash
 dest="agent_outputs/<customer_slug>/mta/workflow"
@@ -70,7 +70,7 @@ mkdir -p "$dest"
 [ -d "$dest/mta_journey_agent" ] || cp -R "<mta_skill_dir>/project_templates/mta_journey_agent" "$dest/"
 ```
 
-`<mta_skill_dir>` is the absolute path of the `ml-skills/mta/` folder.
+`<mta_skill_dir>` is the absolute path of the `ai-signals-skills/mta/` folder.
 
 ### Step 4: Generate the Input YAML Configuration
 

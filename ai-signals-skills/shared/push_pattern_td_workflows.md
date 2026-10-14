@@ -1,7 +1,7 @@
 ---
 name: shared-ml-push-pattern-td-workflows
 description: |
-  Reusable deploy pattern for ml-skills TD Workflow projects. Covers copying the solution's bundled workflow template (`project_templates/workflow_template/`) into the engagement's `agent_outputs/` working copy, config-only edits, the sink-database and project-name confirmation gates, tdx authentication, `tdx wf push` / `tdx wf upload`, run + monitoring, and validation. Used by every solution under ml-skills/.
+  Reusable deploy pattern for ai-signals-skills TD Workflow projects. Covers copying the solution's bundled workflow template (`project_templates/workflow_template/`) into the engagement's `agent_outputs/` working copy, config-only edits, the sink-database and project-name confirmation gates, tdx authentication, `tdx wf push` / `tdx wf upload`, run + monitoring, and validation. Used by every solution under ai-signals-skills/.
 ---
 
 # Shared: Push Pattern — TD Workflows

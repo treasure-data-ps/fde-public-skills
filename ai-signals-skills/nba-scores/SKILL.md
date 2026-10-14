@@ -10,7 +10,7 @@ Unions a customer's touchpoint data (web, email, CRM, orders, …), scores every
 
 ## How to Start
 
-Read `../shared/SKILL.md` — it defines the entry point (new vs. resume), the phase sequence, the name gates and when to read each shared pattern. Follow that flow. This file provides the NBA-specific context for each phase.
+Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, the name gates and when to read each shared pattern. Follow that flow. This file provides the NBA-specific context for each phase.
 
 ## Phase Summary
 

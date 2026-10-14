@@ -7,7 +7,7 @@
 The Classification workflow template ships with this skill at:
 
 ```
-ml-skills/classifier/project_templates/classify/
+ai-signals-skills/classifier/project_templates/classify/
 ```
 
 It is read-only. Copy it into the engagement's working directory (see `../../../shared/local_outputs.md`):

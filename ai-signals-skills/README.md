@@ -14,7 +14,7 @@ Each subfolder is a self-contained solution with its own `SKILL.md` entry point.
 
 ## Shared workflow pattern
 
-Every ML solution follows the same 5 phases (defined in `shared/SKILL.md`):
+Every ML solution follows the same 5 phases (defined in `shared/playbook.md`):
 1. **Data exploration** — explore the customer's TD database via Trino SQL (`tdx-skills:tdx-basic`), identify source tables and key columns
 2. **Requirements doc** — write a customer-fillable `requirements.md` to `agent_outputs/`
 3. **Minimal push** — copy the bundled workflow template from `project_templates/` into `agent_outputs/`, generate the config, push with `tdx wf push`, run, validate

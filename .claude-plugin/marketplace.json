@@ -1,0 +1,40 @@
+{
+  "name": "fde-skills-public",
+  "owner": {
+    "name": "Treasure AI FDE Team",
+    "email": "<Enter list of user emails here>"
+  },
+  "metadata": {
+    "version": "2.0.0-public",
+    "description": "Skills for deploying Treasure AI ML solutions and custom AI agents — templates bundled locally, all engagement outputs written to a git-ignored agent_outputs/ folder"
+  },
+  "plugins": [
+    {
+      "name": "ai-signals-skills",
+      "description": "AI Signals ML workflow skills for Treasure AI including RFM segmentation, multi-touch attribution (MTA), binary classification, journey analytics, next best action (NBA), and next best product (NBP). Trigger on: RFM, CLV, churn, classifier, classification, propensity, lead scoring, MTA, attribution, NBA, NBP, customer segmentation, predictive model, ML workflow.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./ai-signals-skills/rfm",
+        "./ai-signals-skills/rfm/agent-skills/rfm-analysis",
+        "./ai-signals-skills/classifier",
+        "./ai-signals-skills/classifier/agent-skills/classifier-insights",
+        "./ai-signals-skills/mta",
+        "./ai-signals-skills/mta/agent-skills/mta-journey-analysis",
+        "./ai-signals-skills/nba-scores",
+        "./ai-signals-skills/nbp",
+        "./ai-signals-skills/nbp/agent-skills/nbp-insights"
+      ]
+    },
+    {
+      "name": "custom-agent-skills",
+      "description": "Custom AI agent skills for Treasure AI: the Custom Audience Agent for CDP audience, customer-data and segment analysis and segment creation on any parent segment, and the Custom Dashboard Builder for building or resuming custom HTML dashboards from Treasure Data through a questionnaire-led 5-phase pipeline. Trigger on: audience agent, audience analysis, segment analysis, create a segment, CDP analysis, build a dashboard, KPI dashboard, HTML dashboard, resume dashboard, Sisense .dash migration.",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./custom-agent-skills/custom-audience-agent",
+        "./custom-agent-skills/custom-dashboard-builder"
+      ]
+    }
+  ]
+}

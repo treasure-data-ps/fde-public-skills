@@ -10,7 +10,7 @@ RFM workflow that unions customer behavioral data from multiple sources, compute
 
 ## How to Start
 
-Read `../shared/SKILL.md` — it defines the entry point (new vs. resume), the phase sequence, and when to read each shared pattern file. Follow that flow. This file provides the RFM-specific context you need at each phase.
+Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, and when to read each shared pattern file. Follow that flow. This file provides the RFM-specific context you need at each phase.
 
 ## Phase Summary
 

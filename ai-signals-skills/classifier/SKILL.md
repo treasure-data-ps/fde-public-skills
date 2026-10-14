@@ -10,7 +10,7 @@ Generic binary classification workflow that trains and scores models to predict 
 
 ## How to Start
 
-Read `../shared/SKILL.md` — it defines the entry point (new vs. resume), the phase sequence, and when to read each shared pattern file. Follow that flow. This file provides the Classifier-specific context you need at each phase.
+Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, and when to read each shared pattern file. Follow that flow. This file provides the Classifier-specific context you need at each phase.
 
 ## Phase Summary
 

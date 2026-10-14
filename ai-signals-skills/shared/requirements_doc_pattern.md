@@ -1,7 +1,7 @@
 ---
 name: shared-requirements-doc-pattern
 description: |
-  Reusable workflow for creating a customer-fillable requirements doc as a local markdown file in `agent_outputs/`. Handles writing the doc, handing its path to the user to share with the customer, the session-end pause-for-customer-response pattern, and reading the filled doc back. Used by every solution under ml-skills/.
+  Reusable workflow for creating a customer-fillable requirements doc as a local markdown file in `agent_outputs/`. Handles writing the doc, handing its path to the user to share with the customer, the session-end pause-for-customer-response pattern, and reading the filled doc back. Used by every solution under ai-signals-skills/.
 ---
 
 # Shared: Customer Requirements Doc Pattern

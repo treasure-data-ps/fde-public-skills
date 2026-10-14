@@ -12,7 +12,7 @@ Instead of manually executing queries and substituting tokens in context, use `g
 
 ```bash
 # Run from the user's working directory (output path is relative to it).
-# <skill_dir> = absolute path of ml-skills/nbp/agent-skills/nbp-insights/
+# <skill_dir> = absolute path of ai-signals-skills/nbp/agent-skills/nbp-insights/
 
 # Recommended: Provide sink_database via SOURCE_DB environment variable
 SOURCE_DB=<sink_database> node "<skill_dir>/references/generate-data.js" <customer_slug> "<Customer Name>"

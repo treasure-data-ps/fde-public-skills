@@ -1,7 +1,7 @@
 ---
 name: shared-local-outputs
 description: |
-  Where every engagement artifact is written: a local, git-ignored `agent_outputs/` folder in the user's working directory. Defines the folder layout, customer/solution slug rules, the mandatory git-ignore bootstrap, and what may / may not be stored there. Used by every solution under ml-skills/.
+  Where every engagement artifact is written: a local, git-ignored `agent_outputs/` folder in the user's working directory. Defines the folder layout, customer/solution slug rules, the mandatory git-ignore bootstrap, and what may / may not be stored there. Used by every solution under ai-signals-skills/.
 ---
 
 # Shared: Local Outputs (`agent_outputs/`)

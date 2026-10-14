@@ -12,7 +12,7 @@ Instead of manually executing queries and substituting tokens, use `generate-dat
 
 ```bash
 # Run from the user's working directory (output defaults to ./agent_outputs/...).
-# <skill_dir> = absolute path of ml-skills/mta/agent-skills/mta-journey-analysis
+# <skill_dir> = absolute path of ai-signals-skills/mta/agent-skills/mta-journey-analysis
 SOURCE_DB=<sink_database> node "<skill_dir>/references/generate-data.js" <customer_slug> "<Customer Name>"
 
 # Alternative: Positional arguments

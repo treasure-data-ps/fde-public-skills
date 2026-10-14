@@ -12,7 +12,7 @@ mkdir -p "$dest"
 [ -d "$dest/nbp_prod" ] || cp -R "<solution_dir>/project_templates/nbp_prod" "$dest/"
 ```
 
-`<solution_dir>` is the NBP skill folder (`ml-skills/nbp/`), resolved to an absolute path. Never edit `project_templates/` directly.
+`<solution_dir>` is the NBP skill folder (`ai-signals-skills/nbp/`), resolved to an absolute path. Never edit `project_templates/` directly.
 
 ## Step 2: Place the Generated Configuration
 

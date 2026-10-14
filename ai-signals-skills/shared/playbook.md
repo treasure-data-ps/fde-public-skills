@@ -1,9 +1,3 @@
----
-name: ml-solution-patterns
-description: |
-  Runtime playbook shared by all ml-skills solutions (rfm, mta, classifier, nba-scores, nbp): the 5-phase engagement flow, default-then-confirm name gates, and the shared patterns for local outputs, project state, workflow deploy, customer agent creation, requirements doc, Parent Segment update and documentation. Not invoked directly — each solution's SKILL.md reads it first. FOR ML-SKILLS ONLY.
----
-
 # ML Solution Playbook
 
 This plugin is an **orchestrator of templates**. Each solution ships read-only blueprints in `<solution_dir>/project_templates/`:
