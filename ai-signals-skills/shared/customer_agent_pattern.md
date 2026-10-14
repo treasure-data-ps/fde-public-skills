@@ -1,7 +1,7 @@
 ---
 name: shared-customer-agent-pattern
 description: |
-  Generic mechanics for turning a solution's agent template (`project_templates/agent_template/`) into a customer-specific Claude skill in the Work Folder's `.claude/skills/<agent-name>/`: name gate, placeholder filling, draft vs. final, git-ignore guard, verification. The solution's `references/agent-setup.md` supplies the "what". Used by every solution under ai-signals-skills/.
+  Generic mechanics for turning a solution's agent template (`project_templates/agent_template/`) into a customer-specific Claude skill in the Work Folder's `.claude/skills/<agent-name>/`: name gate, placeholder filling, hands-on build vs. final, interim and final guides, git-ignore guard, verification. The solution's `references/agent-setup.md` supplies the "what". Used by every solution under ai-signals-skills/.
 ---
 
 # Shared: Customer Agent Pattern
@@ -12,7 +12,7 @@ Each solution ships a **blueprint** of its analysis agent in `<solution_dir>/pro
 <working directory>/.claude/skills/<agent-name>/
 ├── SKILL.md          # from agent_template/SKILL.template.md, placeholders filled
 ├── .gitignore        # "*" — the agent holds customer context; never committable
-└── references/       # template references + customer files added at finalize time
+└── references/       # template references + guides (Phase 4/5) + customer files added at finalize time
 ```
 
 A skill in the Work Folder's `.claude/skills/` is loaded in every chat in that folder (Treasure AI Studio lists it under the folder's Actions and Skills; in Claude Code it is a project skill). It can later be shared to the account with Studio's Develop → Share — keep every file ≤ 1 MB.
@@ -21,14 +21,14 @@ The solution's `references/agent-setup.md` lists the placeholders, the extra fil
 
 ## When
 
-| Stage | When | Result |
-|---|---|---|
-| **Draft** | Right after the first validated workflow run (end of Phase 3) | Agent can query the real output tables and build dashboards during Phase 4 |
-| **Finalize** | Phase 5, after the documentation set is written | Agent carries the confirmed business context, the as-built workflow guide, the setup walkthrough and the runbook |
+| Stage | When | Steps | Result |
+|---|---|---|---|
+| **Hands-on build** | Phase 4 Part A — after the first validated run, if the user chose the hands-on kit | 1–3, then 4 (interim) if the guides were chosen | Agent queries the real output tables and builds dashboards; the interim guides explain the setup so far to testers |
+| **Finalize** | Phase 5, after the documentation set is written | 5, then 4 (final) if the user agrees | Agent carries the confirmed business context and runbook; the guides describe the production setup |
 
-Re-run **Finalize** whenever the workflow config, business context or docs change materially.
+Re-run Steps 2–3 (and refresh the guides with Step 4) whenever the workflow config, business context or docs change materially.
 
-## Step 1: Name gate (draft only)
+## Step 1: Name gate (first build only)
 
 Default name: `<customer_slug>-<solution_slug>-agent` (e.g. `acme-rfm-agent`). Ask with `AskUserQuestion`: "Use `<default>` (Recommended)" / "Use a different name". Names: lowercase letters, digits, hyphens. If `.claude/skills/<name>/` already exists for a different engagement, ask before overwriting. Record the name in `project_state.md`.
 
@@ -41,7 +41,7 @@ stage="agent_outputs/<customer_slug>/<solution_slug>/agent_build/<agent-name>"
 mkdir -p "$stage"
 cp -R "<solution_dir>/project_templates/agent_template/." "$stage/"
 mv "$stage/SKILL.template.md" "$stage/SKILL.md"
-rm -f "$stage"/references/*.template.md   # finalize-time skeletons — filled in Step 4, never installed unfilled
+rm -f "$stage"/references/*.template.md   # guide skeletons — filled in Step 4, never installed unfilled
 ```
 
 Fill every `{{placeholder}}` in the **`.md` files** of `$stage` (Edit/Write tools) from `project_state.md`. Never edit scripts or HTML (`*.js`, `*.html`, …): they are copied verbatim and their `{{…}}` tokens are runtime tokens filled by the script itself. At minimum:
@@ -68,17 +68,21 @@ printf '*\n' > ".claude/skills/<agent-name>.new/.gitignore"
 rm -rf ".claude/skills/<agent-name>" && mv ".claude/skills/<agent-name>.new" ".claude/skills/<agent-name>"
 ```
 
-## Step 4: Finalize (Phase 5)
+## Step 4: Workflow guide and setup walkthrough (interim in Phase 4, final in Phase 5)
 
-Add the customer files listed in `references/agent-setup.md` to the staging folder, update `SKILL.md`'s file list, then repeat Steps 2 (placeholder check) and 3. Every solution adds at least:
+Run only when the user chose the guides (Phase 3 end question, or Phase 5 final question).
 
 | File | Built from | Answers |
 |---|---|---|
 | `references/workflow-guide.md` | `agent_template/references/workflow-guide.template.md` | How the deployed workflow works end to end (pipeline, config, mappings, customizations, output tables) |
 | `references/model-setup-walkthrough.md` | `agent_template/references/model-setup-walkthrough.template.md` | What was decided and done during setup (discovery, requirements, decision log, cleaning, validation baseline, artifacts, presentation recipe, accuracy rules) |
-| `references/customer-context.md`, `references/runbook.md` | `docs/` | Business context; operations |
 
-To fill a skeleton: copy it from `<solution_dir>` (not from the installed agent — the draft does not contain it) to `$stage/references/<name>.md`, follow its build instructions, replace every `<!-- fill … -->` block with content, and delete the build-instructions comment. Check nothing is left:
+To fill a skeleton: copy it from `<solution_dir>` (not from the installed agent — it does not contain it) to `$stage/references/<name>.md`, follow its build instructions, replace every `<!-- fill … -->` block with content, and delete the build-instructions comment. Sections with nothing to report yet (e.g. Parent Segment before Phase 5) say "Not done yet — Phase 5". Set the **Status** line:
+
+- **Interim** (Phase 4): `Interim — pre-production, as of <date>`. Describes the setup as deployed so far, including assumed defaults still to be confirmed.
+- **Final** (Phase 5): `Final — production, as of <date>`. Update the existing files in place (keep the Decision Log history), or create them if they were never built.
+
+Check nothing is left, then repeat Step 3:
 
 ```bash
 grep -rln '<!-- fill\|Build instructions' "$stage/references" && echo "UNFILLED SKELETON — fix before installing"
@@ -86,10 +90,14 @@ grep -rln '<!-- fill\|Build instructions' "$stage/references" && echo "UNFILLED 
 
 Refresh `workflow-guide.md` whenever the workflow config or `.dig` files change, and append to the walkthrough's Decision Log and Accuracy Rules whenever the setup changes or a pitfall is found.
 
-## Step 5: Verify and report
+## Step 5: Finalize (Phase 5)
+
+Add the customer files listed in `references/agent-setup.md` (Finalize) to the staging folder, update `SKILL.md`'s file list, then repeat Steps 2 (placeholder check) and 3. Every solution adds at least `references/customer-context.md` and `references/runbook.md` (from `docs/`). Then ask about the final guides (Step 4).
+
+## Step 6: Verify and report
 
 - Frontmatter `name:` equals the folder name; `description` names the customer and the solution's trigger phrases.
-- No `{{` placeholders in `.md` files; no `*.template.md` file and no `<!-- fill` block in `references/`; every file the `SKILL.md` references exists (draft: except the finalize-time files, which `SKILL.md` marks as added at Phase 5); no file > 1 MB.
+- No `{{` placeholders in `.md` files; no `*.template.md` file and no `<!-- fill` block in `references/`; every file the `SKILL.md` references exists (except the guides and finalize-time files not built yet, which `SKILL.md` handles as missing); no file > 1 MB.
 - `git check-ignore -q .claude/skills/<agent-name>/SKILL.md` succeeds when the working directory is a git repo.
 
 Tell the user the agent name and path, that it is available in new chats in this folder, and (Studio) that it can be shared to the account via Skills → Develop. Update `project_state.md`.

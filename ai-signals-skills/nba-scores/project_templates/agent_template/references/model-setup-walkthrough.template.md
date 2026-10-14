@@ -2,7 +2,9 @@
 
 Use this document to answer questions about **how this customer's NBA model was set up**: what data was explored, which decisions were made and why, what changed along the way, how the results were validated, and which artifacts exist. It is also the recipe for rebuilding or extending a customer-facing walkthrough presentation without repeating the discovery. For how the deployed workflow runs, see `workflow-guide.md`.
 
-<!-- Build instructions (Phase 5 finalize — remove this comment and every `fill` block when done):
+<!-- Build instructions (Phase 4 interim or Phase 5 final — remove this comment and every `fill` block when done):
+- Interim (Phase 4): describe the setup deployed so far; mark assumed defaults "to confirm"; sections with nothing yet
+  (e.g. Parent Segment) say "Not done yet — Phase 5". Final (Phase 5): update the interim file in place, keep the history.
 - Save the filled copy as references/model-setup-walkthrough.md in the agent staging folder. Never install this .template.md file.
 - Sources: project_state.md (Key Decisions per phase, validation results), requirements.md (questions and answers),
   docs/ (behavior, eval_results, runbook), the workflow working copy, the Parent Segment / segment YAML files, and the
@@ -13,7 +15,7 @@ Use this document to answer questions about **how this customer's NBA model was 
 - Keep it current: append to Decision Log and Accuracy Rules whenever a later chat changes the setup or finds a pitfall.
 -->
 
-**Engagement period:** <first phase date> → <finalize date>  ·  **Validated run:** <session ID, date>
+**Status:** <Interim — pre-production | Final — production>  ·  **Engagement period:** <first phase date> → <latest update or finalize date>  ·  **Validated run:** <session ID, date>
 
 ---
 

@@ -19,7 +19,7 @@ Before answering any question, read these reference files (once per session):
 
 ## How It Was Built — Workflow Guide and Setup Walkthrough
 
-Two engagement files describe this customer's deployment. They are added when the engagement is finalized (Phase 5):
+Two engagement files describe this customer's deployment, if the user chose to build them: an **interim** version during hands-on testing (Phase 4) and a **final** version at go-live (Phase 5). Their **Status** line says which:
 
 | File | Read it when the user asks… |
 |---|---|
@@ -29,7 +29,8 @@ Two engagement files describe this customer's deployment. They are added when th
 Rules:
 - Answer from these files first, then confirm with a live query when the user needs current numbers — values in the files are a baseline with an "as of" date. If live data and the files disagree, report both and say which is current.
 - Follow every rule in the walkthrough's **Accuracy Rules and Lessons Learned** whenever you query or present this customer's results, not only for walkthrough questions.
-- If a file is missing, the engagement is not finalized yet: answer from `{{engagement_dir}}/project_state.md` and the workflow working copy in `{{engagement_dir}}/workflow/`, and say the setup documentation is not finalized.
+- If a file is **Interim**, say the setup is still pre-production and assumed defaults may change.
+- If a file is missing, it has not been built yet: answer from `{{engagement_dir}}/project_state.md` and the workflow working copy in `{{engagement_dir}}/workflow/`, and say the setup guides have not been built yet.
 - When you learn a new pitfall or the setup changes during a chat, tell the user and propose the update to the relevant file.
 
 ## Database & Tables

@@ -43,7 +43,9 @@ Living context store. Update at the end of every phase. New sessions read this f
 ## Artifacts (paths relative to the working directory)
 - Requirements doc: agent_outputs/<customer_slug>/<solution_slug>/requirements.md (<pending | sent <date> | returned <date>>)
 - Workflow working copy: agent_outputs/<customer_slug>/<solution_slug>/workflow/
-- Customer agent: .claude/skills/<agent-name>/ (<pending | draft <date> | final <date>>)
+- Hands-on kit (Phase 3 end answer): <agent + dashboard + guides | agent + dashboard | not now>
+- Customer agent: .claude/skills/<agent-name>/ (<pending | hands-on <date> | final <date>>)
+- Guides: workflow-guide.md, model-setup-walkthrough.md in the agent's references/ (<not built | interim <date> | final <date>>)
 - Docs: agent_outputs/<customer_slug>/<solution_slug>/docs/ (<pending | list of files>)
 - Dashboards: agent_outputs/<customer_slug>/<solution_slug>/dashboards/ (<pending | list of files>)
 
@@ -60,6 +62,7 @@ Living context store. Update at the end of every phase. New sessions read this f
 |---|---|
 | Phase 1 data exploration | Key Decisions: confirmed source tables + key columns |
 | Phase 2 requirements doc written | Current phase → 3, requirements doc status "sent <date>" |
-| Phase 3 minimal workflow pushed + validated | Current phase → 4, TD workflow project + push date, sink database, validation summary, customer agent draft |
-| Phase 4 workflow updated from requirements | Current phase → 5, requirements doc status "returned <date>", parameter changes in Key Decisions, Round 2 validation summary |
-| Phase 5 Parent Segment + docs + agent finalized | Current phase → "complete — engagement live", Parent Segment, all doc paths, customer agent final |
+| Phase 3 minimal workflow pushed + validated | Current phase → 4, TD workflow project + push date, sink database, validation summary, hands-on kit answer |
+| Phase 4 Part A hands-on kit built | Customer agent "hands-on <date>", dashboard path, guides "interim <date>" (if chosen) |
+| Phase 4 Part B workflow updated from requirements | Current phase → 5, requirements doc status "returned <date>", parameter changes in Key Decisions, Round 2 validation summary, kit refreshed |
+| Phase 5 Parent Segment + docs + agent finalized | Current phase → "complete — engagement live", Parent Segment, all doc paths, customer agent final, guides final (if updated) |

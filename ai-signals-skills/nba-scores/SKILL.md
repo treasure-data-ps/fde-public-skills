@@ -18,9 +18,9 @@ Read `../shared/playbook.md` — it defines the entry point (new vs. resume), th
 |---|---|
 | Phase 1 | Data exploration — list and classify tables, confirm the touchpoint and conversion sources, run discovery queries |
 | Phase 2 | `agent_outputs/` + `project_state.md` + `requirements.md` — then continue without waiting |
-| Phase 3 | Copy the workflow template, configure from Phase 1, push, run, validate; build the customer agent draft |
-| Phase 4 | Apply the customer's requirements to the config, re-push, re-run, re-validate, rebuild the agent if needed |
-| Phase 5 | Parent Segment attributes + example audiences, documentation set, finalize the customer agent |
+| Phase 3 | Copy the workflow template, configure from Phase 1, push, run, validate; ask which hands-on kit to build |
+| Phase 4 | Hands-on kit (customer agent, dashboard, interim workflow guide + setup walkthrough); apply the customer's requirements, re-push, re-run, re-validate, refresh the kit |
+| Phase 5 | Parent Segment attributes + example audiences, documentation set, finalize the customer agent, offer the final guides |
 
 ---
 
@@ -62,7 +62,7 @@ Use `tdx-skills:tdx-basic`. Do not search by table-name patterns.
 
 Hand the path to the user and continue to Phase 3.
 
-### Phase 3: Minimal Workflow + Agent Draft
+### Phase 3: Minimal Workflow
 
 1. Read `../shared/push_pattern_td_workflows.md` and `references/workflow-setup.md`.
 2. Copy `project_templates/workflow_template/` to `agent_outputs/<customer_slug>/nba-scores/workflow/` and read its `README.md`.
@@ -70,23 +70,33 @@ Hand the path to the user and continue to Phase 3.
 4. Edit `workflow/config/input_params.yml` in place from Phase 1 findings, following `references/workflow-setup.md` §1–2 (minimal-push rule for anything not yet answered). Set or remove the failure email and decide on the schedule in `workflow/nba_eng_launch.dig`.
 5. **Project-name gate** (default `nba_eng_prod`; first check it isn't already taken), push, ask before running, run, monitor.
 6. Validate with `references/workflow-setup.md` §4. If check 4 shows the paid channels or add-to-cart rule do not match, fix the config and re-run before continuing.
-7. Continue straight here after validation — the agent draft is part of Phase 3, also for a "basic" setup. **Agent-name gate** (default `<customer_slug>-nba-scores-agent`), then build and install the draft: `../shared/customer_agent_pattern.md` + `references/agent-setup.md`. Run the draft checks there.
-8. Update `project_state.md` (names, assumed defaults, validation results, agent status).
+7. Update `project_state.md` (names, assumed defaults, validation results).
+8. **Hands-on kit question** — playbook Phase 3 step 4: summarize the run, then ask whether to build the agent, dashboard and both guides (Recommended), the agent and dashboard only, or nothing yet. Continue with Phase 4 Part A.
 
-### Phase 4: Update from Customer Requirements
+### Phase 4: Hands-on Testing and Customer Requirements
+
+**Part A — Hands-on kit** (per the Phase 3 answer, or whenever the user asks):
+
+1. **Agent-name gate** (default `<customer_slug>-nba-scores-agent`), then build and install the agent: `../shared/customer_agent_pattern.md` Steps 1–3 + `references/agent-setup.md`.
+2. Generate the dashboard and run the build checks in `references/agent-setup.md`.
+3. If the guides were chosen: fill `workflow-guide.md` and `model-setup-walkthrough.md` as **interim** guides (`../shared/customer_agent_pattern.md` Step 4) and reinstall the agent.
+4. Tell the user what was built and that testers can use the agent and dashboard in new chats in this folder; update `project_state.md`.
+
+**Part B — Customer requirements** (when `requirements.md` comes back; repeat as testing needs):
 
 1. Read `project_state.md`, then the filled `requirements.md`.
 2. Map the answers with the table at the end of `references/requirements_doc.md`; choose values with `references/workflow-setup.md` §2.
 3. Present the planned changes; wait for approval.
 4. Edit the config (and `nba_eng_launch.dig` for schedule/alert email) in `workflow/`, re-push, re-run, re-validate (§4).
-5. Rebuild the agent draft if the sink database, sources or business rules changed.
+5. Refresh the kit if it exists: rebuild the agent if the sink database, sources or business rules changed; regenerate the dashboard; refresh the interim guides. Then ask whether to continue to Phase 5.
 
 ### Phase 5: Parent Segment, Documentation, Final Agent
 
 1. **Parent Segment** — `../shared/parent_segment_update.md` for the process; `references/parent_segment.md` for the attributes and example audiences — read it only after the user approves the plan.
 2. **Documentation** — `../shared/customer_docs_pattern.md` + `references/docs-setup.md` → `docs/`.
-3. **Finalize the agent** — `../shared/customer_agent_pattern.md` (Finalize) + `references/agent-setup.md` (Finalize). This includes filling the two skeletons `workflow-guide.template.md` (as-built workflow) and `model-setup-walkthrough.template.md` (setup decisions, validation baseline, artifacts) from the engagement files.
-4. Update `project_state.md` → "complete — engagement live".
+3. **Finalize the agent** — `../shared/customer_agent_pattern.md` Step 5 + `references/agent-setup.md` (Finalize). If Phase 4 Part A was skipped, build the agent first (Steps 1–3, agent-name gate).
+4. **Final guides question** — ask whether to update `workflow-guide.md` and `model-setup-walkthrough.md` with the final production setup (Recommended), or create them if they were never built; on yes, `../shared/customer_agent_pattern.md` Step 4 (final) and reinstall.
+5. Update `project_state.md` → "complete — engagement live".
 
 ---
 
