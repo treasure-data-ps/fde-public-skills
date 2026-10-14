@@ -36,11 +36,11 @@ Plain English, no YAML. For this customer:
 - Working copy path and TD project name; re-deploy: edit `workflow/config/input_params.yml` → `( cd workflow && tdx wf push -y )` → `tdx wf run <project>.rfm_launch` → validate
 - Monitoring: `tdx wf sessions <project>`, `tdx wf timeline <project>.rfm_launch --follow`, `tdx wf attempt <id> tasks` / `logs +<task>`
 - Schedule and failure-alert recipient (from the `.dig`); how to change them (edit the `.dig`, re-push)
-- Scoring model (`globals.model_type`) and secrets: `td.apikey` for `ai_signals` (who owns the key, how to rotate it: `tdx wf secrets set <project> td.apikey=…`); none for `custom`
+- Scoring model (`globals.model_type`) and secrets: whether a project `td.apikey` secret was set for `ai_signals` (usually not needed — TD Workflow provides it); if one was set, who owns the key and how to rotate it (`tdx wf secrets set <project> td.apikey=…`); none for `custom`
 - The troubleshooting table from `workflow-setup.md`, filtered to what applies to this customer
 - Customizations made beyond the config (from the README Customization Points), with file paths
 - Rebuilding the customer agent after config changes (`../../shared/customer_agent_pattern.md`)
 
 ## 5. `docs/access_ownership.md` (internal)
 
-Standard content per `../../shared/customer_docs_pattern.md`, plus: TD project name, sink database, secret owner (`ai_signals`), Parent Segment name, customer agent name and path (`.claude/skills/<agent-name>/`).
+Standard content per `../../shared/customer_docs_pattern.md`, plus: TD project name, sink database, secret owner (only if a project `td.apikey` secret was set), Parent Segment name, customer agent name and path (`.claude/skills/<agent-name>/`).

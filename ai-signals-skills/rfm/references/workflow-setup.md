@@ -7,6 +7,8 @@ Use with `../../shared/push_pattern_td_workflows.md` (copy, gates, push, run). T
 
 `<workdir>` = `agent_outputs/<customer_slug>/rfm/workflow`. This file adds only what the template can't: how to pick values from the customer's data, RFM deploy details, and the output checks.
 
+> **Minimal push first (Phase 3, before requirements come back).** Configure the real sources, IDs, timestamps, order amounts, context columns and filters from Phase 1; take the "First push" default of every rule below; template values for everything else; schedule and failure email left commented. Record each assumed value and data caveat in `project_state.md` as "default — confirm in requirements" and move on — caveats are resolved in Phase 4, not before the first run.
+
 ---
 
 ## 1. Map Phase 1 tables to sources
@@ -22,45 +24,37 @@ Each confirmed activity table becomes one entry in `aggregate_metrics_tables`. R
 | Other one-to-many activity (app, store, loyalty, reviews) | R, F | `0.0` (or revenue if it carries a value) | Best categorical column | Non-null profile ID |
 
 Rules:
-- **Event time:** TD's `time` column is often the load time. Use the real event column when there is one (`TD_TIME_PARSE(<col>)` if it is a string) — Recency is computed from `unixtime_col`. Check: `SELECT MIN(time), MAX(time)` vs. the event column; if `time` spans a few days but the events span months, use the event column.
+- **Event time:** TD's `time` column is often the load time; Recency is computed from `unixtime_col`. **First push:** use the real event column when the table has one (`TD_TIME_PARSE(<col>)` if it is a string), otherwise `time`. The profile query below shows both ranges — if `time` spans a few days but the event column spans months, the event column is the right one.
 - **Profile ID:** every source must carry the ID the Parent Segment joins on. Set each source's `join_key` to its own column name; `globals.canonical_id` is the name the output uses.
-- **Frequency counts rows.** A table with one row per order line counts every line as a touchpoint, and a page-load table counts every page. Accept it (say so in the docs) or set `query_type: custom` and aggregate in `sql/union_src_tables/<name>.sql`.
-- **No monetary source:** if the customer has no order or revenue data, set `order_amount: 0.0` everywhere and tell the user `m_quartile` and the M-driven segments will not be meaningful.
+- **Frequency counts rows.** A table with one row per order line counts every line as a touchpoint, and a page-load table counts every page. **First push:** accept it and note it as a caveat. Aggregating with `query_type: custom` (`sql/union_src_tables/<name>.sql`) is a Phase 4 option if the customer asks.
+- **Monetary value.** **First push:** the order source's revenue column as it is (e.g. line price), noted as a caveat — gross vs. net, quantity × price and similar questions go into the requirements doc. No order or revenue data at all: `order_amount: 0.0` everywhere, and tell the user `m_quartile` and the M-driven segments will not be meaningful.
 - **Quotes:** string literals inside `custom_filter` use doubled single quotes, as in the template.
 
 ### Discovery queries
 
-Run with `tdx query` against the source database. Replace `<id>`, `<status_col>` etc. with the real column names from `tdx describe`.
+Run with `tdx query` against the source database — yourself, not through subagents. Replace `<id>`, `<event_col>` etc. with the real column names from `tdx describe`. Two kinds of query cover all of Phase 1:
 
-Profile ID coverage per source (NULL IDs are dropped from scoring):
+**1. One profile query for all sources** — a single `UNION ALL` with one block per confirmed table (ID coverage, both time ranges, value column). Omit `amount_rows`/`avg_amount` (use `CAST(NULL AS BIGINT)` / `CAST(NULL AS DOUBLE)`) for tables without a value column, and `event_*` for tables whose only timestamp is `time`:
 
 ```sql
-SELECT COUNT(*) AS total_rows, COUNT(<id>) AS rows_with_id, APPROX_DISTINCT(<id>) AS profiles
+SELECT '<table>' AS src,
+       COUNT(*) AS total_rows, COUNT(<id>) AS rows_with_id, APPROX_DISTINCT(<id>) AS profiles,
+       TD_TIME_FORMAT(MIN(time), 'yyyy-MM-dd') AS time_first, TD_TIME_FORMAT(MAX(time), 'yyyy-MM-dd') AS time_last,
+       TD_TIME_FORMAT(MIN(<event_time>), 'yyyy-MM-dd') AS event_first, TD_TIME_FORMAT(MAX(<event_time>), 'yyyy-MM-dd') AS event_last,
+       COUNT_IF(<amount_col> > 0) AS amount_rows, ROUND(AVG(<amount_col>), 2) AS avg_amount
 FROM <source_database>.<table>
+UNION ALL
+SELECT '<next table>' AS src, …
 ```
 
-Event types and statuses (email, CRM, orders) — decide the `custom_filter`:
+NULL IDs are dropped from scoring; the date ranges decide the event-time column and the time filter (§2).
+
+**2. Status / event-type breakdowns** — only for tables that need a `custom_filter` (email, CRM, orders). Send them as parallel tool calls in one turn:
 
 ```sql
 SELECT <event_type_or_status_col>, COUNT(*) AS n
 FROM <source_database>.<table>
 GROUP BY 1 ORDER BY 2 DESC
-```
-
-Order value column — decide `order_amount`:
-
-```sql
-SELECT COUNT(*) AS orders, COUNT_IF(<amount_col> > 0) AS with_value,
-       ROUND(AVG(<amount_col>), 2) AS avg_value, MAX(<amount_col>) AS max_value
-FROM <source_database>.<orders_table>
-```
-
-Data date range (decides the time filter — §2):
-
-```sql
-SELECT TD_TIME_FORMAT(MIN(<event_time>), 'yyyy-MM-dd') AS first_event,
-       TD_TIME_FORMAT(MAX(<event_time>), 'yyyy-MM-dd') AS last_event
-FROM <source_database>.<table>
 ```
 
 Record the column names and findings in `project_state.md` (Phase 1) — they are needed again in Phase 4.
@@ -69,14 +63,12 @@ Record the column names and findings in `project_state.md` (Phase 1) — they ar
 
 | Decision | Rule |
 |---|---|
-| Scoring model | `globals.model_type: ai_signals` (default). Switch to `custom` if the AI Signals batch API is not available to the account or the `td.apikey` secret cannot be set; record the choice in `project_state.md` |
+| Scoring model | `globals.model_type: ai_signals` (default). Switch to `custom` if the AI Signals scoring step keeps failing on access (401/403 even with `td.apikey` set — §3) or the customer wants fully transparent SQL scoring; record the choice in `project_state.md` |
 | Time filter | First setup: all history (`apply_time_filter: 'no'` everywhere) unless the requirements ask for a window. Rolling window → `interval` with a `lookback_period` long enough to see repeat purchases (6–24 months). Data that ends before today (demo, backfill, paused feed) → `range` covering the data, because `interval` counts back from the run time. Set `apply_time_filter` the same on every source and on the top-level label |
 | Recency on stale data | Recency is days since the last event, counted from the run time. On stale data every profile has a large recency, but quartiles are relative, so `r_quartile` still ranks profiles — say so in `project_state.md` and the docs |
 | `context_col` | Every source needs one; pick the most useful categorical column (title, item, campaign, topic). Never leave it blank |
 | `num_bins` | Keep `10`. It only changes the dashboard histograms — tell the user it does not change the 1–4 scores |
 | Failure email | Uncomment the `_error` block in `rfm_launch.dig` and set the address from the requirements, or leave it commented if none is given. Put the customer name in `subject` |
-
-**Minimal push (Phase 3, before requirements come back):** real sources, IDs, timestamps, order amounts, context columns and filters from Phase 1; the time filter per the rule above; `model_type` per the rule above; template values for everything else; schedule and failure email left commented. Note every assumed value in `project_state.md` as "default — confirm in requirements".
 
 ## 3. Deploy details
 
@@ -84,7 +76,7 @@ Record the column names and findings in `project_state.md` (Phase 1) — they ar
 |---|---|
 | Default project name | `rfm_ais` (from `tdx.json`) |
 | Entry point | `rfm_launch` |
-| Secrets | `td.apikey` when `model_type: ai_signals` — the user sets it before the first run: `! tdx wf secrets set <project> td.apikey=<master API key>`. Never ask for or handle the key yourself. None for `custom` |
+| Secrets | `rfm_ai_signals.dig` reads `${secret:td.apikey}`. TD Workflow usually provides it — a first test run succeeded with no project secret set — so push and run without it. Only if the scoring step fails with 401/403, ask the user to set it themselves: `! tdx wf secrets set <project> td.apikey=<master API key>`. Never ask for or handle the key yourself. None for `custom` |
 | Schedule | Commented out in `rfm_launch.dig`. Ask whether the customer wants scheduled runs; leave it commented for a test account |
 | Sink database | Created by the first step of `rfm_launch.dig` (`+create_sink_database`, `td_ddl>`) if missing. Keep that step and the `td: database:` export above it — `td_ddl>` in the launch file fails with "Parameter 'database' is required" without it. If the project owner can't create databases, the user creates it in the TD Console before the first run |
 
@@ -147,7 +139,7 @@ Pass: the latest session has one `_model_params` row per configured source and t
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `Table not found` / `Column not found` in the union step | Wrong `src_table`, column name or blank `context_col` | `tdx describe` the source; fix the entry |
-| Scoring step fails with 401/403 | `td.apikey` secret missing or wrong (`ai_signals`) | User sets the secret (§3) and re-runs; or switch to `custom` |
+| Scoring step fails with 401/403 | `td.apikey` not available to the project or not allowed to use the AI Signals API (`ai_signals`) | User sets the secret (§3) and re-runs; or switch to `custom` |
 | `<out>` empty | Run failed before or during scoring | `tdx wf attempt <id> tasks`, then `logs +<failed task>` |
 | A source missing from `<union>` | 0 rows after `custom_filter` + time filter | Run the source's filter as a `COUNT(*)`; widen the window or filter |
 | `m_quartile` the same for almost everyone | No monetary source, or `order_amount: 0.0` on the order source | Set the revenue column on the order source |

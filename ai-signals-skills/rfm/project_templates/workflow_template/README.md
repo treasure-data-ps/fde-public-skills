@@ -105,7 +105,7 @@ All tables are written to `globals.sink_database`.
 
 ## Secrets & Requirements
 
-- **Secrets:** `td.apikey` — required when `globals.model_type: ai_signals`; `rfm_ai_signals.dig` sends it to the AI Signals batch API. The user sets it: `tdx wf secrets set <project> td.apikey=<master API key>`. `custom` needs no secret.
+- **Secrets:** `rfm_ai_signals.dig` (`globals.model_type: ai_signals`) sends `${secret:td.apikey}` to the AI Signals batch API. TD Workflow usually provides it without a project secret; if the scoring step fails with 401/403, the user sets it: `tdx wf secrets set <project> td.apikey=<master API key>`. `custom` needs no secret.
 - **Failure email:** the `_error` block in `rfm_launch.dig` is commented out. To enable it, uncomment it, replace `your-team@example.com` with the customer's address and put the customer name in `subject`.
 - **Schedule:** the `schedule:` block in `rfm_launch.dig` is commented out (example: monthly). Uncomment and set it if the customer wants scheduled runs.
 - **Requirements:** `globals.sink_database` exists or can be created; every source has a profile ID column and a usable event timestamp; Trino (`presto`) engine. Large accounts may need a shorter `lookback_period`.

@@ -58,7 +58,12 @@ When in doubt, **read `project_state.md` first**.
 
 ## Workflow Sequence
 
-**Read files just in time.** In each phase, read only the files that phase names (here and in the solution `SKILL.md`). Do not open later-phase files early — for example, the requirements doc body is not needed in Phase 1; what to record there is listed in the solution's Phase 1 steps.
+Rules for every phase:
+
+- **Read files just in time.** In each phase, read only the files that phase names (here and in the solution `SKILL.md`). Do not open later-phase files early — for example, the requirements doc body is not needed in Phase 1; what to record there is listed in the solution's Phase 1 steps.
+- **Keep moving.** After each step, continue straight to the next step of the same phase. At the end of a phase, give a short summary and ask with `AskUserQuestion` whether to continue, with the next phase as the `(Recommended)` option. Never end a turn without either continuing or asking.
+- **Phases 1–3 are a first pass.** Their goal is a validated first run plus the agent draft, fast. Use safe defaults, record every data caveat and assumption in `project_state.md` as "default — confirm in requirements", and do not investigate further unless the user asks or a validation check fails. A "basic" or "quick" request means defaults and no extra analysis — never skipping steps: the agent draft is part of Phase 3.
+- **Query efficiently, without subagents.** Run discovery yourself with `tdx query` — do not launch subagents for it unless the user asks. Combine the same check across tables into one query (`UNION ALL`), and send independent queries as parallel tool calls in one turn rather than one after another.
 
 ### Phase 1: Data Exploration
 

@@ -70,7 +70,7 @@ Hand the path to the user and continue to Phase 3.
 4. Edit `workflow/config/input_params.yml` in place from Phase 1 findings, following `references/workflow-setup.md` §1–2 (minimal-push rule for anything not yet answered). Set or remove the failure email and decide on the schedule in `workflow/nba_eng_launch.dig`.
 5. **Project-name gate** (default `nba_eng_prod`; first check it isn't already taken), push, ask before running, run, monitor.
 6. Validate with `references/workflow-setup.md` §4. If check 4 shows the paid channels or add-to-cart rule do not match, fix the config and re-run before continuing.
-7. **Agent-name gate** (default `<customer_slug>-nba-scores-agent`), then build and install the draft: `../shared/customer_agent_pattern.md` + `references/agent-setup.md`. Run the draft checks there.
+7. Continue straight here after validation — the agent draft is part of Phase 3, also for a "basic" setup. **Agent-name gate** (default `<customer_slug>-nba-scores-agent`), then build and install the draft: `../shared/customer_agent_pattern.md` + `references/agent-setup.md`. Run the draft checks there.
 8. Update `project_state.md` (names, assumed defaults, validation results, agent status).
 
 ### Phase 4: Update from Customer Requirements

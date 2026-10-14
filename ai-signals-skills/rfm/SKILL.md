@@ -49,7 +49,7 @@ Use `tdx-skills:tdx-basic`. Do not search by table-name patterns.
    | Sales / CRM interactions, support tickets, store visits, app sessions, reviews | ETL audit rows, pre-aggregated tables |
 
 4. **Confirm the list with `AskUserQuestion`** — first show a markdown table of every activity table with include/exclude, R/F/M contribution and a one-line reason, then ask one short question ("Confirm as listed" / "Change the list"). Do not put the table inside the question. Do not skip this.
-5. **Run the discovery queries** in `references/workflow-setup.md` §1 for each confirmed table (profile-ID coverage, event types/statuses, order value column, data date range).
+5. **Run the discovery queries** in `references/workflow-setup.md` §1 yourself (no subagents): one `UNION ALL` profile query across all confirmed tables, then status / event-type breakdowns as parallel calls. Do not investigate caveats further — record them (step 6).
 6. **Record** in `project_state.md`: table, profile ID column, real event-time column, order value column (monetary sources), context column, filters needed, R/F/M contribution, first/last event date.
 
 **Solution slug:** `rfm` — all engagement files live in `agent_outputs/<customer_slug>/rfm/`.
@@ -68,9 +68,9 @@ Hand the path to the user and continue to Phase 3.
 2. Copy `project_templates/workflow_template/` to `agent_outputs/<customer_slug>/rfm/workflow/` and read its `README.md`.
 3. **Sink-database gate** (default `td_agents`; first check it holds no `rfm_*` tables from another engagement). The first run creates the database if missing (`references/workflow-setup.md` §3).
 4. Edit `workflow/config/input_params.yml` in place from Phase 1 findings, following `references/workflow-setup.md` §1–2 (minimal-push rule for anything not yet answered). Leave the schedule and failure email in `workflow/rfm_launch.dig` commented unless the user asks for them.
-5. **Project-name gate** (default `rfm_ais`; first check it isn't already taken), push. With `globals.model_type: ai_signals`, ask the user to set the `td.apikey` secret themselves before the run (`references/workflow-setup.md` §3). Ask before running, run, monitor.
+5. **Project-name gate** (default `rfm_ais`; first check it isn't already taken), push. Ask before running, run, monitor. With `globals.model_type: ai_signals`, no secret is needed up front — only if scoring fails with 401/403, ask the user to set `td.apikey` themselves (`references/workflow-setup.md` §3).
 6. Validate with `references/workflow-setup.md` §4. If check 2 or 4 shows a missing monetary source or a source with no rows, fix the config and re-run before continuing.
-7. **Agent-name gate** (default `<customer_slug>-rfm-agent`), then build and install the draft: `../shared/customer_agent_pattern.md` + `references/agent-setup.md`. Run the draft checks there.
+7. Continue straight here after validation — the agent draft is part of Phase 3, also for a "basic" setup. **Agent-name gate** (default `<customer_slug>-rfm-agent`), then build and install the draft: `../shared/customer_agent_pattern.md` + `references/agent-setup.md`. Run the draft checks there.
 8. Update `project_state.md` (names, scoring model, assumed defaults, validation results, agent status).
 
 ### Phase 4: Update from Customer Requirements
@@ -109,4 +109,4 @@ Hand the path to the user and continue to Phase 3.
 - **Scoring model:** `globals.model_type` — `ai_signals` (default, `rfm_ai_signals.dig`) or `custom` (`rfm_custom.dig`)
 - **Key outputs:** `rfm_output_table` (Parent Segment attributes); `rfm_stats`, `rfm_stats_histogram`, `rfm_stats_model_params`, `rfm_stats_daily_agg`
 - **Default agent name:** `<customer_slug>-rfm-agent`
-- **Secrets:** `td.apikey` (only for `ai_signals`)
+- **Secrets:** `td.apikey` read by `ai_signals` — usually provided by TD Workflow; set only on 401/403
