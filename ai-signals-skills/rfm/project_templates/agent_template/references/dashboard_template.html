@@ -6,8 +6,8 @@
 
   HOW THIS TEMPLATE WORKS
   -----------------------
-  Self-contained HTML dashboard with placeholder tokens that the rfm-analysis
-  skill substitutes with real data from the customer's RFM output tables.
+  Self-contained HTML dashboard with placeholder tokens that generate-data.js (run by the
+  customer RFM agent) substitutes with real data from the customer's RFM output tables.
 
   RECOMMENDED EXECUTION (Fast build-time query & bake via generate-data.js):
     node generate-data.js [sink_database] [customer_slug] [customer_name]
@@ -58,7 +58,7 @@
   {{customer_id_col}}        — customer identifier detected from rfm_combined_user_events schema
   {{session_id}}             — latest session_id (bigint)
   {{run_time_utc}}           — e.g. "2026-06-11 15:03 UTC"
-  {{model_type}}             — "automl" | "custom"
+  {{model_type}}             — "ai_signals" | "custom"
   {{time_filter_summary}}    — e.g. "interval · -180d" or "no filter — all history"
 
   ── TAB 1 (Model Overview) tokens ───────────────────────────────────────────

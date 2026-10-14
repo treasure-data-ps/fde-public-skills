@@ -16,7 +16,6 @@
       "strict": false,
       "skills": [
         "./ai-signals-skills/rfm",
-        "./ai-signals-skills/rfm/agent-skills/rfm-analysis",
         "./ai-signals-skills/classifier",
         "./ai-signals-skills/classifier/agent-skills/classifier-insights",
         "./ai-signals-skills/mta",

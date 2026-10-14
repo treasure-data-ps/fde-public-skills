@@ -2,13 +2,13 @@ WITH percentiles AS (
   SELECT
     -- Recency and frequency from all customers
     (SELECT approx_percentile(recency, ARRAY[0.25, 0.5, 0.75])
-     FROM rfm_input_table) AS recency_p,
+     FROM ${input_table}) AS recency_p,
     (SELECT approx_percentile(CAST(frequency AS DOUBLE), ARRAY[0.25, 0.5, 0.75])
-     FROM rfm_input_table) AS frequency_p,
+     FROM ${input_table}) AS frequency_p,
 
     -- Monetary percentiles only for values > 0.05
     (SELECT approx_percentile(monetary_value, ARRAY[0.25, 0.5, 0.75])
-     FROM rfm_input_table
+     FROM ${input_table}
      WHERE monetary_value > 0.05) AS monetary_p
 )
 
@@ -43,7 +43,7 @@ WITH percentiles AS (
       ELSE 4
     END AS m_quartile
 
-  FROM rfm_input_table i
+  FROM ${input_table} i
   CROSS JOIN percentiles p
 )
 

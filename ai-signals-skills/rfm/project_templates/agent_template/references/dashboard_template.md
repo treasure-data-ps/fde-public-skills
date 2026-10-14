@@ -11,12 +11,9 @@ Instead of manually executing queries and substituting tokens, use `generate-dat
 ### Commands
 
 ```bash
-# Run from the user's working directory (where agent_outputs/ lives), not from inside the plugin.
-# <rfm_analysis_dir> = absolute path of the rfm-analysis skill folder.
-SOURCE_DB=<sink_database> node "<rfm_analysis_dir>/references/generate-data.js" <customer_slug> "<Customer Name>"
-
-# Alternative: Positional arguments
-node "<rfm_analysis_dir>/references/generate-data.js" <sink_database> <customer_slug> "<Customer Name>"
+# Run from the Work Folder root (where agent_outputs/ lives).
+node ".claude/skills/{{agent_name}}/references/generate-data.js" {{sink_database}} {{customer_slug}} "{{customer_name}}" \
+  -o "{{engagement_dir}}/dashboards/rfm_summary_dashboard.html"
 ```
 
 ### Options & Environment Variables
@@ -35,13 +32,13 @@ node "<rfm_analysis_dir>/references/generate-data.js" <sink_database> <customer_
 
 The generated dashboard is saved to:
 ```
-agent_outputs/<customer_slug>/rfm/dashboards/rfm_summary_dashboard.html
+{{engagement_dir}}/dashboards/rfm_summary_dashboard.html
 ```
 Open it immediately using:
 ```bash
-open "agent_outputs/<customer_slug>/rfm/dashboards/rfm_summary_dashboard.html"
+open "{{engagement_dir}}/dashboards/rfm_summary_dashboard.html"
 # Or in Treasure Work:
-mcp__work__open_file path: "agent_outputs/<customer_slug>/rfm/dashboards/rfm_summary_dashboard.html"
+mcp__work__open_file path: "{{engagement_dir}}/dashboards/rfm_summary_dashboard.html"
 ```
 
 ---
@@ -55,8 +52,8 @@ These 7 queries are executed against the customer's `sink_database`:
 SELECT session_id, segment_size AS total_profiles, avg_rfm, avg_recency,
        avg_frequency, avg_monetary,
        TD_TIME_FORMAT(time, 'yyyy-MM-dd HH:mm', 'UTC') AS run_time
-FROM <sink_database>.rfm_stats
-WHERE session_id = (SELECT MAX(session_id) FROM <sink_database>.rfm_stats)
+FROM {{sink_database}}.rfm_stats
+WHERE session_id = (SELECT MAX(session_id) FROM {{sink_database}}.rfm_stats)
   AND rfm_segment = 'ALL'
 LIMIT 1
 ```
@@ -64,11 +61,11 @@ LIMIT 1
 ### Q2 — Previous Run Profile Count (% Change KPI)
 ```sql
 SELECT segment_size AS prev_total_profiles
-FROM <sink_database>.rfm_stats_daily_agg
+FROM {{sink_database}}.rfm_stats_daily_agg
 WHERE rfm_segment = 'ALL'
   AND session_id = (
-    SELECT MAX(session_id) FROM <sink_database>.rfm_stats_daily_agg
-    WHERE session_id < (SELECT MAX(session_id) FROM <sink_database>.rfm_stats_daily_agg)
+    SELECT MAX(session_id) FROM {{sink_database}}.rfm_stats_daily_agg
+    WHERE session_id < (SELECT MAX(session_id) FROM {{sink_database}}.rfm_stats_daily_agg)
   )
 LIMIT 1
 ```
@@ -78,7 +75,7 @@ LIMIT 1
 ```sql
 SELECT session_id, rfm_segment, segment_size,
        TD_TIME_FORMAT(time, 'yyyy-MM-dd', 'UTC') AS run_date
-FROM <sink_database>.rfm_stats_daily_agg
+FROM {{sink_database}}.rfm_stats_daily_agg
 WHERE rfm_segment != 'ALL'
 ORDER BY session_id ASC
 ```
@@ -89,7 +86,7 @@ ORDER BY session_id ASC
 SELECT event_name AS source_name, total_profiles, total_events,
        avg_events_per_person, total_spend, avg_spend_per_person,
        min_date, max_date, months_range, table_filters
-FROM <sink_database>.rfm_src_table_summary
+FROM {{sink_database}}.rfm_src_table_summary
 ORDER BY total_profiles DESC
 ```
 *Fallback: If `rfm_src_table_summary` is not present, derives source metrics from `rfm_stats_model_params` or `rfm_combined_user_events`.*
@@ -100,13 +97,13 @@ SELECT s.rfm_segment, s.segment_size, s.population_percent,
        s.avg_recency, s.avg_frequency, s.avg_monetary, s.avg_rfm,
        s.quartile_list,
        COALESCE(d.segment_definition, '') AS segment_definition
-FROM <sink_database>.rfm_stats s
+FROM {{sink_database}}.rfm_stats s
 LEFT JOIN (
   SELECT rfm_segment, segment_definition
-  FROM <sink_database>.rfm_stats_daily_agg
-  WHERE session_id = (SELECT MAX(session_id) FROM <sink_database>.rfm_stats_daily_agg)
+  FROM {{sink_database}}.rfm_stats_daily_agg
+  WHERE session_id = (SELECT MAX(session_id) FROM {{sink_database}}.rfm_stats_daily_agg)
 ) d ON s.rfm_segment = d.rfm_segment
-WHERE s.session_id = (SELECT MAX(session_id) FROM <sink_database>.rfm_stats)
+WHERE s.session_id = (SELECT MAX(session_id) FROM {{sink_database}}.rfm_stats)
   AND s.rfm_segment != 'ALL'
 ORDER BY s.segment_size DESC
 ```
@@ -114,8 +111,8 @@ ORDER BY s.segment_size DESC
 ### Q6 — Score Histograms for All Profiles (Segment Analysis Tab)
 ```sql
 SELECT metric_name, bin_order, bin_label, bin_value, profile_cnt
-FROM <sink_database>.rfm_stats_histogram
-WHERE session_id = (SELECT MAX(session_id) FROM <sink_database>.rfm_stats_histogram)
+FROM {{sink_database}}.rfm_stats_histogram
+WHERE session_id = (SELECT MAX(session_id) FROM {{sink_database}}.rfm_stats_histogram)
   AND rfm_segment = 'ALL'
 ORDER BY metric_name, bin_order ASC
 ```
@@ -126,12 +123,12 @@ ORDER BY metric_name, bin_order ASC
 SELECT source,
        COUNT(DISTINCT <customer_id_col>) AS profile_count,
        ROUND(AVG(total_touchpoints), 2) AS avg_touchpoints
-FROM <sink_database>.rfm_combined_user_events
+FROM {{sink_database}}.rfm_combined_user_events
 GROUP BY source
 ORDER BY profile_count DESC
 ```
 
-Use the configured `unique_user_id` from the workflow or run `DESCRIBE <sink_database>.rfm_combined_user_events` first. Do not assume `customer_id` or `canonical_id`; substitute the actual `<customer_id_col>` (for example, `td_consumer_id`).
+Use the configured `globals.canonical_id` from the workflow or run `DESCRIBE {{sink_database}}.rfm_combined_user_events` first. Do not assume `customer_id` or `canonical_id`; substitute the actual `<customer_id_col>` (for example, `td_consumer_id`).
 
 ---
 
@@ -140,7 +137,7 @@ Use the configured `unique_user_id` from the workflow or run `DESCRIBE <sink_dat
 ### Tab 1 — Model Overview
 - **5 KPI Cards**: Total Profiles Scored (with % delta vs previous session), Average RFM Score (quartile scale 1–4), Average Recency (days), Average Frequency (touchpoints), Average Monetary Value ($ spend).
 - **Historic Segment Trend (Plotly Line Chart)**: Tracks population growth or shrinkage across each customer segment over all recorded sessions.
-- **Run Configuration Table**: Key/value summary of Session ID, Profiles Scored, Scoring Model (`custom`/`automl`), Run Time (UTC), Time Filter, Source Table Count, and Sink Database.
+- **Run Configuration Table**: Key/value summary of Session ID, Profiles Scored, Scoring Model (`ai_signals`/`custom`), Run Time (UTC), Time Filter, Source Table Count, and Sink Database.
 - **Executive Summary (Dynamic Bullets)**: 5 automated strategic insights highlighting high-value core segments, churn prevention priorities (e.g. 'Cannot lose them'), growth opportunities (e.g. 'Potential Loyalists'), and dormancy.
 
 ### Tab 2 — Segment Analysis

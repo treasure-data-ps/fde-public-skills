@@ -6,7 +6,7 @@ description: |
 
 # RFM Customer Segmentation — Parent Segment Update Spec
 
-This file is the solution-specific "what" for Phase 5 Step 1. The process (approval gates, push mechanics, section placement rules) is in `../../../shared/parent_segment_update.md`. Read both files together before making any changes.
+This file is the solution-specific "what" for Phase 5 Step 1. The process (approval gates, push mechanics, section placement rules) is in `../../shared/parent_segment_update.md`. Read both files together before making any changes.
 
 ---
 
@@ -40,7 +40,7 @@ This file is the solution-specific "what" for Phase 5 Step 1. The process (appro
 
 **Folder name:** `RFM Examples`
 
-Confirm this name with the user before creating any segments (per `shared/parent_segment_update.md` Step 3a).
+Confirm this name with the user before creating any segments (per `../../shared/parent_segment_update.md` Step 3a).
 
 ---
 

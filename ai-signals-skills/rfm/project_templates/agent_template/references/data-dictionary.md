@@ -2,6 +2,8 @@
 
 ## Read description of available tables/columns before doing any analysis
 
+All tables are in `{{sink_database}}`.
+
 ---
 
 ## Table 1: rfm_output_table
@@ -27,14 +29,14 @@
 - `recency`, `frequency`, `monetary_value` — raw values for detailed analysis
 - `<customer_id_col>` — unique customer identifier; use `COUNT(DISTINCT <customer_id_col>)` for customer counts after resolving the actual column with `DESCRIBE`
 
-**Scoring logic (model_type: 'custom'):**
+**Scoring logic (`custom` SQL scoring; `ai_signals` returns the same columns):**
 - Recency: lower recency_days → higher r_quartile (reverse scale)
 - Frequency: higher touchpoints → higher f_quartile
 - Monetary: higher spend → higher m_quartile (percentiles computed only for monetary_value > 0.05)
 
 **Usage:** Primary table for all segmentation analysis. Join with other customer tables using the resolved `<customer_id_col>` column.
 
-> **Identifier portability:** The placeholder is intentional. Customer workflows may emit `td_consumer_id`, `td_canonical_id`, `canonical_id`, `customer_id`, or another configured join key. Run `DESCRIBE <sink_database>.rfm_output_table` (or `rfm_combined_user_events`) before writing profile-level SQL; never copy `canonical_id` blindly from this reference.
+> **Identifier portability:** The placeholder is intentional. Customer workflows may emit `td_consumer_id`, `td_canonical_id`, `canonical_id`, `customer_id`, or another configured join key. Run `DESCRIBE {{sink_database}}.rfm_output_table` (or `rfm_combined_user_events`) before writing profile-level SQL; never copy `canonical_id` blindly from this reference.
 
 ---
 
@@ -101,7 +103,7 @@
 |------------|-----------|-------------|
 | `run_time` | varchar | Timestamp of workflow execution |
 | `session_id` | bigint | Workflow run session identifier |
-| `model_type` | varchar | Model type used (`custom` or `automl`) |
+| `model_type` | varchar | Scoring model used (`ai_signals` or `custom`) |
 | `source_table` | varchar | Source table name from `aggregate_metrics_tables` |
 | `time_filter` | varchar | Whether time filter was applied (`yes` / `no`) |
 | `lookback_days` | varchar | Effective lookback period |
@@ -128,6 +130,7 @@
 | `total_touchpoints` | bigint | Total event count for this profile in this source |
 | `total_spend` | double | Total order amount for this profile in this source |
 | `recency_days` | bigint | Days since most recent event in this source |
+| `events_list` | varchar | JSON-style map of the 10 most frequent `context_col` values for this profile in this source |
 
 **Usage:** Use for validating source data, checking event distributions, and verifying the union logic.
 
@@ -160,7 +163,7 @@ ORDER BY total_events DESC
 ---
 
 ## Table 7: rfm_stats_daily_agg
-**Purpose:** Historical score aggregation with segment definitions (populated when `store_historic_scores: yes`).
+**Purpose:** Historical score aggregation with segment definitions (appended on every run).
 
 Contains the full rfm_stats output joined with human-readable segment definitions for each row. Used for tracking segment migration trends across workflow runs.
 

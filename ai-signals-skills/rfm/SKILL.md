@@ -1,26 +1,26 @@
 ---
 name: fde-rfm
 description: |
-  RFM (Recency, Frequency, Monetary) Customer Segmentation for Treasure Data. Configures workflows that union customer behavioral data from multiple sources (pageviews, orders, email, sales), compute per-profile Recency, Frequency, and Monetary scores, and segment customers into actionable groups. Trigger on: RFM, recency frequency monetary, customer segmentation, RFM workflow setup, RFM configuration, RFM runbook, RFM output tables.
+  RFM (Recency, Frequency, Monetary) Customer Segmentation for Treasure Data. Sets up a workflow that unions customer activity from multiple sources (pageviews, orders, email, sales), scores every profile on Recency, Frequency and Monetary value (AI Signals or SQL quartile scoring), assigns one of ten customer segments for use as Parent Segment attributes, then builds a customer-specific RFM insights agent and dashboard. Trigger on: RFM, recency frequency monetary, customer segmentation, RFM segments, champions, at-risk customers, RFM workflow setup, RFM configuration, RFM runbook, RFM output tables.
 ---
 
 # RFM Customer Segmentation
 
-RFM workflow that unions customer behavioral data from multiple sources, computes per-profile Recency, Frequency, and Monetary scores using quartile-based binning, and segments customers into actionable groups for targeted marketing.
+Unions a customer's activity data (web, email, CRM, orders, …), scores every profile on **how recently**, **how often** and **how much** they engage and buy, and writes one table with R/F/M scores and a segment per profile, which is added to a Parent Segment for Audience Studio segmentation.
 
 ## How to Start
 
-Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, and when to read each shared pattern file. Follow that flow. This file provides the RFM-specific context you need at each phase.
+Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, the name gates and when to read each shared pattern. Follow that flow. This file provides the RFM-specific context for each phase.
 
 ## Phase Summary
 
 | Phase | What happens |
 |---|---|
-| Phase 1 | Data exploration — discover tables, classify by RFM source type, confirm schema |
-| Phase 2 | Bootstrap `agent_outputs/`, create `project_state.md` + `requirements.md` |
-| Phase 3 | Copy workflow template, push minimal workflow, validate output tables |
-| Phase 4 | Re-configure workflow from filled requirements, re-validate |
-| Phase 5 | Parent Segment update + example audiences, then documentation set in `docs/` |
+| Phase 1 | Data exploration — list and classify tables, confirm the activity sources and which feed Monetary, run discovery queries |
+| Phase 2 | `agent_outputs/` + `project_state.md` + `requirements.md` — then continue without waiting |
+| Phase 3 | Copy the workflow template, configure from Phase 1, push, run, validate; build the customer agent draft |
+| Phase 4 | Apply the customer's requirements to the config, re-push, re-run, re-validate, rebuild the agent if needed |
+| Phase 5 | Parent Segment attributes + example audiences, documentation set, finalize the customer agent |
 
 ---
 
@@ -28,132 +28,85 @@ Read `../shared/playbook.md` — it defines the entry point (new vs. resume), th
 
 ### Phase 1: Data Exploration
 
-Use `tdx-skills:tdx-basic` to explore the customer's TD databases. **Do not search by table name patterns.** Instead follow these steps:
+Use `tdx-skills:tdx-basic`. Do not search by table-name patterns.
 
-**Step 1 — List every table in the customer database.**
-Run `tdx tables "<database>.*"` to get the full table list.
+1. **List every table** in the customer's source database: `tdx tables "<database>.*"`.
+2. **Classify each table** with `tdx describe`:
 
-**Step 2 — Classify each table.**
-For every table, run `tdx describe` to inspect its schema. Classify it into one of three buckets:
+   | Bucket | Criteria |
+   |---|---|
+   | Activity | Profile ID + timestamp; one row per event or interaction. RFM source candidate — any meaningful customer touchpoint adds to Recency and Frequency; when in doubt, include it and let the customer decide |
+   | Profile / dimension | One row per customer (master, attributes, tiers). Not a source |
+   | System / output | Workflow outputs, logs, ML results, aggregates. Not a source |
 
-| Bucket | Criteria |
-|---|---|
-| **Activity / behavior table** | Has a user ID column + a Unix timestamp column + rows represent a one-to-many customer activity (one row = one event or interaction per customer). **Any such table is a candidate for RFM** — if it captures a meaningful customer touchpoint it contributes at minimum to Recency and Frequency. When in doubt, include it and let the customer decide. |
-| **Profile / dimension table** | Has a user ID column but rows represent one record per customer (master tables, attributes, membership tiers). Not a source table. |
-| **System / output table** | Workflow output, audit logs, ML result tables. Not a source table. |
+3. **Keep only customer-initiated activity**, and mark each kept table with the dimensions it feeds (R, F; plus M if it carries a purchase value):
 
-**Step 3 — Within activity tables, classify by RFM source type.**
-For each candidate table, determine which RFM type it maps to:
+   | Include | Exclude |
+   |---|---|
+   | Pageviews, clicks, searches | Bot or internal system events |
+   | Email opens, clicks, replies, form fills | Email sends, deliveries, bounces |
+   | Orders, purchases, services with a value (adds M) | Refunds, cancellations, returns |
+   | Sales / CRM interactions, support tickets, store visits, app sessions, reviews | ETL audit rows, pre-aggregated tables |
 
-| RFM Source Type | What to look for |
-|---|---|
-| **Pageviews / web activity** | URL column (`td_url`, `page_url`), referrer column — web events from JS SDK. Contributes to R and F. |
-| **Email events** | `event_type` column with values like open/click/send, `campaign_name` — engagement events from ESP. Contributes to R and F (exclude `sent` events). |
-| **Sales / CRM interactions** | `source`, `topic`, `rep_name`, appointment or test-drive columns — offline or in-person customer touchpoints. Contributes to R and F. |
-| **Orders / purchases / services** | `order_status`, `unit_price`, revenue, or `cost` column — conversion or revenue events. Contributes to R, F, and **M**. |
-| **Customer touchpoint** | Any other one-to-many activity table with a timestamp (reviews, support tickets, loyalty check-ins, etc.) that doesn't fit the above. Contributes to R and F. |
+4. **Confirm the list with `AskUserQuestion`** — first show a markdown table of every activity table with include/exclude, R/F/M contribution and a one-line reason, then ask one short question ("Confirm as listed" / "Change the list"). Do not put the table inside the question. Do not skip this.
+5. **Run the discovery queries** in `references/workflow-setup.md` §1 for each confirmed table (profile-ID coverage, event types/statuses, order value column, data date range).
+6. **Record** in `project_state.md`: table, profile ID column, real event-time column, order value column (monetary sources), context column, filters needed, R/F/M contribution, first/last event date.
 
-**Step 4 — Present the recommended list to the user before proceeding.**
-First output a markdown table directly to the user showing ALL activity tables found with: table name, RFM source type, R/F/M contributions, and a one-line reason (include or exclude). Then immediately follow with an `AskUserQuestion` call to get confirmation. The question text must be short (one sentence asking for confirmation) — do NOT embed the table inside the question string. Put the choices in the options array only (e.g. "Confirm as listed", "Exclude one or more tables"). Do not skip this step.
-
-**Step 5 — For each confirmed source table, note down:**
-- Full table name
-- User ID column name (`canonical_id`, `cdp_profile_id`, `user_id`)
-- Timestamp column name
-- Order amount column (order tables only — `unit_price`, `total_amount`, `revenue`)
-- Filter needed (order status exclusion, email send exclusion, etc.)
-- Which R/F/M dimensions it contributes to
-
-These become `input_params.yml` values.
-
-**Solution slug:** `rfm` — all engagement files go to `agent_outputs/<customer_slug>/rfm/` (see `../shared/local_outputs.md`).
+**Solution slug:** `rfm` — all engagement files live in `agent_outputs/<customer_slug>/rfm/`.
 
 ### Phase 2: Requirements Doc
 
-Doc title: `RFM Requirements - <Customer>`
+- Title: `RFM Requirements - <Customer>`
+- File: `agent_outputs/<customer_slug>/rfm/requirements.md`
+- Body: `references/requirements_doc.md` (pre-fill from Phase 1)
 
-File: `agent_outputs/<customer_slug>/rfm/requirements.md`
+Hand the path to the user and continue to Phase 3.
 
-Body template: `workflow-setup/references/requirements_doc.md`
+### Phase 3: Minimal Workflow + Agent Draft
 
-Key questions the requirements doc must answer: unique user ID column (`canonical_id`), ID Unification status, monetary metric column (or none for non-commerce), time filter / lookback period, scoring bins (`num_bins`), business rules (order status filters, email event type filters), sink database name, archive and historical score settings.
+1. Read `../shared/push_pattern_td_workflows.md` and `references/workflow-setup.md`.
+2. Copy `project_templates/workflow_template/` to `agent_outputs/<customer_slug>/rfm/workflow/` and read its `README.md`.
+3. **Sink-database gate** (default `td_agents`; first check it holds no `rfm_*` tables from another engagement). The first run creates the database if missing (`references/workflow-setup.md` §3).
+4. Edit `workflow/config/input_params.yml` in place from Phase 1 findings, following `references/workflow-setup.md` §1–2 (minimal-push rule for anything not yet answered). Leave the schedule and failure email in `workflow/rfm_launch.dig` commented unless the user asks for them.
+5. **Project-name gate** (default `rfm_ais`; first check it isn't already taken), push. With `globals.model_type: ai_signals`, ask the user to set the `td.apikey` secret themselves before the run (`references/workflow-setup.md` §3). Ask before running, run, monitor.
+6. Validate with `references/workflow-setup.md` §4. If check 2 or 4 shows a missing monetary source or a source with no rows, fix the config and re-run before continuing.
+7. **Agent-name gate** (default `<customer_slug>-rfm-agent`), then build and install the draft: `../shared/customer_agent_pattern.md` + `references/agent-setup.md`. Run the draft checks there.
+8. Update `project_state.md` (names, scoring model, assumed defaults, validation results, agent status).
 
-### Phase 3: Push Minimal Workflow
+### Phase 4: Update from Customer Requirements
 
-**Workflow template:** `project_templates/rfm_agent/` (read-only — never edit)
-**Working copy:** `agent_outputs/<customer_slug>/rfm/workflow/rfm_agent/`
-**Workflow project name:** `rfm_agent`
-**Entry point:** `rfm_launch.dig`
-**Config file:** `config/input_params.yml` (inside the working copy)
+1. Read `project_state.md`, then the filled `requirements.md`.
+2. Map the answers with the table at the end of `references/requirements_doc.md`; choose values with `references/workflow-setup.md` §2.
+3. Present the planned changes; wait for approval.
+4. Edit the config (and `rfm_launch.dig` for schedule/alert email) in `workflow/`, re-push, re-run, re-validate (§4).
+5. Rebuild the agent draft if the sink database, sources or business rules changed.
 
-For the minimal push, populate `input_params.yml` with what you know from Phase 1 (tables, user ID column, timestamp column, order amount column). Use Phase 2 answers if already available; otherwise use safe defaults.
+### Phase 5: Parent Segment, Documentation, Final Agent
 
-Read `workflow-setup/references/workflow_setup_guide.md` for full parameter generation instructions.
-Read `workflow-setup/references/yaml_structure.md` for the parameter reference.
-Read `workflow-setup/references/table_configuration.md` for per-source-type config.
-Use `workflow-setup/references/input_params_template.yml` as the starting point.
-
-**Before any push command:** Read `../shared/push_pattern_td_workflows.md` for the template copy step, the mandatory project name confirmation gate, and push mechanics. RFM-specific deploy details (directory tree, run, monitor, re-deploy) are in `workflow-setup/references/deploy_instructions.md`. Do not run `tdx wf push` or `tdx wf upload` until the project name has been confirmed with the user via `AskUserQuestion`.
-
-After the workflow run finishes, validate output tables following instructions in `workflow-setup/references/eval.md`.
-
-
-### Phase 4: Update Workflow with Customer Requirements
-
-After reading the filled requirements doc, present a summary of the parameter changes you plan to make before touching any files. Key areas that typically change between Phase 3 and Phase 4:
-
-- Scoring bins (`num_bins`) — customer may prefer 5-bin quintile instead of 10-bin default
-- Time filter / lookback period
-- Adding or removing source table types
-- Order status filter refinement (customer may have non-standard status values)
-- Email event type filter (confirm which event types count as engagement)
-- `auto_build_segments` toggle if customer wants named segment labels
-
-Read `workflow-setup/references/workflow_setup_guide.md` for update mechanics. Edit the config in the working copy only.
-Re-run the workflow and re-validate output tables (same checks as Phase 3).
-
-### Phase 5: Parent Segment + Customer Documentation
-
-**Step 1 — Parent Segment attributes + example audiences.**
-Read `../shared/parent_segment_update.md` for the process.
-Read `prod-docs/references/parent_segment.md` for the RFM-specific attribute columns and example segment definitions. Do not read this file until the user has approved the plan.
-
-**Step 2+ — Documentation files.**
-Read `../shared/customer_docs_pattern.md` for the doc set. Write them to `agent_outputs/<customer_slug>/rfm/docs/`.
-
-RFM-specific content for each doc is in `prod-docs/references/`:
-
-| Doc | Reference file |
-|---|---|
-| `docs/architecture.md` | `prod-docs/references/runbook.md` (architecture section) |
-| `docs/runbook.md` | `prod-docs/references/runbook.md` |
-| `docs/behavior.md` | `prod-docs/references/customer_docs.md` |
-| `docs/eval_results.md` | `workflow-setup/references/eval.md` results from the final run |
-| `docs/access_ownership.md` | `prod-docs/references/technical_handoff.md` |
+1. **Parent Segment** — `../shared/parent_segment_update.md` for the process; `references/parent_segment.md` for the attributes and example audiences — read it only after the user approves the plan.
+2. **Documentation** — `../shared/customer_docs_pattern.md` + `references/docs-setup.md` → `docs/`.
+3. **Finalize the agent** — `../shared/customer_agent_pattern.md` (Finalize) + `references/agent-setup.md` (Finalize). This includes filling the two skeletons `workflow-guide.template.md` (as-built workflow) and `model-setup-walkthrough.template.md` (setup decisions, validation baseline, artifacts) from the engagement files.
+4. Update `project_state.md` → "complete — engagement live".
 
 ---
 
-## Quick Reference
-
-- **Workflow template:** `project_templates/rfm_agent/`
-- **Working copy:** `agent_outputs/<customer_slug>/rfm/workflow/rfm_agent/`
-- **Workflow project name:** `rfm_agent`
-- **Entry point:** `rfm_launch.dig`
-- **Config file:** `config/input_params.yml`
-- **Key outputs**: `rfm_output_table` (per-profile R/F/M quartiles + segment), `rfm_stats` (per-segment distribution stats), `rfm_combined_user_events` (union activity), `rfm_stats_histogram`, `rfm_stats_model_params` (dashboard tables) in the sink database
-- **Scoring**: Quartile-based (1-4 scale) using 25th/50th/75th percentile boundaries
-- **Solution slug**: `rfm`
-
-## Companion skill (separate entry point)
-
-This is registered as its own skill — it triggers directly from user prompts, no need to route through this file:
-
-- **`fde-rfm-analysis-agent`** — query RFM output tables for segmentation, customer value, and engagement insights, or generate the standalone RFM Summary Dashboard. Follow this companion skill whenever the user asks for dashboards or analytical deep dives after workflow setup.
-
 ## How It Works
 
-1. **Union**: Combine pageviews, email events, sales interactions, orders into `rfm_combined_user_events` (per-profile aggregation per source)
-2. **Compute metrics**: For each profile — min recency_days across sources (Recency), sum of total_touchpoints (Frequency), sum of total_spend (Monetary)
-3. **Score**: Assign quartile scores (1-4) using 25th/50th/75th percentile boundaries, combine into `rfm_quartile` label (e.g., `R4F3M2`)
-4. **Segment**: Assign customer segments based on R/F/M quartile combinations (Champions, Loyal Customers, Cannot lose them, Lost customers, etc.)
-5. **Dashboard stats**: Generate per-segment statistics, histograms, and model parameters for the TI dashboard
+1. **Union** — every source in `aggregate_metrics_tables` is filtered and aggregated to one row per profile per source: last event, number of touchpoints, total spend, days since the last event.
+2. **Compute R/F/M** — per profile: Recency = the lowest days-since-last-event across sources; Frequency = the sum of touchpoints; Monetary = the sum of spend (never below 0).
+3. **Score** — `ai_signals` (default) sends the input table to the AI Signals batch API; `custom` assigns 1–4 quartile scores in SQL from the 25th/50th/75th percentiles. Both write `r_quartile`, `f_quartile`, `m_quartile`, `rfm_quartile` (e.g. `R4F3M2`), `rfm_score`.
+4. **Segment** — each profile gets one of ten segments (Champions, Loyal Customers, Potential Loyalists, Promising, New Customers, Cannot lose them, Need attention, Hibernating, High Value Sleeping, Lost customers).
+5. **Dashboard stats** — per-segment stats and histograms for the latest run, plus run config and segment stats appended every run, which the customer agent reads.
+
+## Quick Reference
+
+- **Solution slug:** `rfm`
+- **Workflow template:** `project_templates/workflow_template/` → working copy `agent_outputs/<customer_slug>/rfm/workflow/`
+- **Agent template:** `project_templates/agent_template/` → `.claude/skills/<agent-name>/`
+- **Default workflow project name:** `rfm_ais`
+- **Entry point:** `rfm_launch.dig`
+- **Config file:** `config/input_params.yml`
+- **Scoring model:** `globals.model_type` — `ai_signals` (default, `rfm_ai_signals.dig`) or `custom` (`rfm_custom.dig`)
+- **Key outputs:** `rfm_output_table` (Parent Segment attributes); `rfm_stats`, `rfm_stats_histogram`, `rfm_stats_model_params`, `rfm_stats_daily_agg`
+- **Default agent name:** `<customer_slug>-rfm-agent`
+- **Secrets:** `td.apikey` (only for `ai_signals`)

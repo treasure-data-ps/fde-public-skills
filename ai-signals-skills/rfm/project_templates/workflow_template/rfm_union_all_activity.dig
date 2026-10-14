@@ -23,7 +23,7 @@ _export:
       _do:
 
         +insert_src_table:
-          td>: queries/union_src_tables/insert_src_rable.sql
+          td>: queries/union_src_tables/insert_src_table.sql
           insert_into: ${union_activity_table}
 
       _else_do:

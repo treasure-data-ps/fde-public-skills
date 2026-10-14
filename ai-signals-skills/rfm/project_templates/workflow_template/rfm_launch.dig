@@ -14,6 +14,8 @@
 _export:
   !include : 'config/input_params.yml'
   database: ${globals.sink_database}
+  td:
+    database: ${globals.sink_database}
 
 ############## CREATE SINK DATABASE IF NOT EXIST ############################
 +create_sink_database:
@@ -28,6 +30,7 @@ _export:
       call>: rfm_union_all_activity.dig
 
 ############## RUN RFM ALGORITHM ############################################
+# Calls rfm_<model_type>.dig: model_type 'ai_signals' -> rfm_ai_signals.dig (default), 'custom' -> rfm_custom.dig
 +train_rfm_model:
   call>: rfm_${globals.model_type}.dig
 

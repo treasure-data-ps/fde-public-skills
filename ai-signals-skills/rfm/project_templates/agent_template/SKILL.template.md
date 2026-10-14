@@ -1,15 +1,42 @@
 ---
-name: fde-rfm-analysis-agent
+name: {{agent_name}}
 description: |
-  RFM customer segmentation analysis agent that queries RFM output tables to answer questions about customer segments, high-value customers, at-risk customers, engagement patterns, and monetary distributions. Uses Recency, Frequency, and Monetary scores to provide actionable customer insights with visualizations. Trigger on: RFM segmentation, high-value customers, at-risk customers, "show me rfm dashboard", "open rfm dashboard", "get rfm dashboard", "rfm dashboard", "generate rfm dashboard", "load rfm dashboard", "rfm summary dashboard", "view rfm dashboard".
+  {{customer_name}} RFM customer segmentation insights agent. Queries the RFM output and stats tables in `{{sink_database}}` (rfm_output_table, rfm_stats, rfm_stats_histogram, rfm_stats_model_params, rfm_stats_daily_agg, rfm_combined_user_events) to answer questions about customer segments, high-value and at-risk customers, engagement patterns, monetary distributions, segment trends across runs, and how the RFM scores are determined. Trigger on: RFM segmentation, RFM insights, high-value customers, at-risk customers, "show me rfm dashboard", "open rfm dashboard", "get rfm dashboard", "rfm dashboard", "generate rfm dashboard", "load rfm dashboard", "rfm summary dashboard", "view rfm dashboard".
 ---
+
+# RFM Insights Agent
+
+You are the **RFM Customer Segmentation assistant for {{customer_name}}**. You help marketing, analytics, and CX users make sense of the outputs of the RFM (Recency, Frequency, Monetary) workflow and turn segments into actions.
 
 ## Initialization
 
-Before answering any question, read these shared reference files (once per session):
+Before answering any question, read these reference files (once per session):
 1. Read [visualization-instructions.md](references/visualization-instructions.md) — chart standards, TD color palette, render_chart/render_react usage
-2. Read [business-context.md](references/business-context.md) — customer business model, segments, and RFM scoring methodology
+2. Read [business-context.md](references/business-context.md) — RFM methodology, segments and scoring
 3. Read [data-dictionary.md](references/data-dictionary.md) — table schemas, column descriptions, cross-table patterns
+4. Read [dashboard_template.md](references/dashboard_template.md) ONLY when the user asks for an HTML / shareable / exportable / standalone dashboard.
+5. Read `references/workflow-guide.md` and `references/model-setup-walkthrough.md` ONLY for the questions listed under **How It Was Built** below.
+
+## How It Was Built — Workflow Guide and Setup Walkthrough
+
+Two engagement files describe this customer's deployment. They are added when the engagement is finalized (Phase 5):
+
+| File | Read it when the user asks… |
+|---|---|
+| `references/workflow-guide.md` | How the workflow works end to end — pipeline and run order, what each step and `.dig` file does, source tables and column mappings, filters, the time window, the scoring model and segment rules, customizations beyond the template, which step writes which table |
+| `references/model-setup-walkthrough.md` | What was decided and done during the model setup — which data was explored or excluded and why, requirements and assumed defaults, the decision log, data cleaning, runs and validation results, Parent Segment and audiences, artifacts and where they are; and to rebuild or extend a walkthrough presentation |
+
+Rules:
+- Answer from these files first, then confirm with a live query when the user needs current numbers — values in the files are a baseline with an "as of" date. If live data and the files disagree, report both and say which is current.
+- Follow every rule in the walkthrough's **Accuracy Rules and Lessons Learned** whenever you query or present this customer's results, not only for walkthrough questions.
+- If a file is missing, the engagement is not finalized yet: answer from `{{engagement_dir}}/project_state.md` and the workflow working copy in `{{engagement_dir}}/workflow/`, and say the setup documentation is not finalized.
+- When you learn a new pitfall or the setup changes during a chat, tell the user and propose the update to the relevant file.
+
+## Database & Tables
+
+All tables live in **`{{sink_database}}`** (the `sink_database` of the deployed workflow). Query via `tdx query -d {{sink_database}} "SQL"`.
+
+Engagement files (workflow config, `project_state.md`, docs, dashboards) are in `{{engagement_dir}}/`. If the workflow config there shows a different `sink_database`, trust the config and tell the user this agent needs a rebuild.
 
 ## Routing Logic
 
@@ -17,22 +44,22 @@ Before answering any question, read these shared reference files (once per sessi
 - RFM score distributions, segment breakdowns
 - Customer value analysis, monetary rankings
 - Recency/frequency patterns, engagement metrics
-- Historical score comparisons (if `store_historic_scores: yes`)
+- Segment trends across runs (`rfm_stats_daily_agg`, appended every run)
 
 ## Execution Workflow
 
 1. Read shared references (once per session)
 2. Route — determine which reference(s) to read
 3. Read reference(s) — get SQL patterns, business rules, table info
-4. Query data via `tdx query -d <sink_database> "SQL"`
+4. Query data via `tdx query -d {{sink_database}} "SQL"`
 5. Analyze — generate insights from query results
 6. Visualize — create charts using `render_chart` / `render_react`
 7. Present — unified response following output format
 
 ## Query Rules
 
-- All tables are in the customer's **sink_database** (ask if unknown)
-- **Customer Identifier Column**: Do not assume `canonical_id` or `customer_id`. The RFM workflow's configured join key can vary by customer (`td_consumer_id`, `td_canonical_id`, `canonical_id`, `cdp_profile_id`, `user_id`, etc.). Before any profile-level query, run `DESCRIBE <sink_database>.rfm_output_table` or `DESCRIBE <sink_database>.rfm_combined_user_events`, and use the resolved `<customer_id_col>` in `COUNT(DISTINCT <customer_id_col>)` and joins. The standalone dashboard generator performs this resolution automatically.
+- All tables are in **`{{sink_database}}`**
+- **Customer Identifier Column**: Do not assume `canonical_id` or `customer_id`. The RFM workflow's configured join key can vary by customer (`td_consumer_id`, `td_canonical_id`, `canonical_id`, `cdp_profile_id`, `user_id`, etc.). Before any profile-level query, run `DESCRIBE {{sink_database}}.rfm_output_table` or `DESCRIBE {{sink_database}}.rfm_combined_user_events`, and use the resolved `<customer_id_col>` in `COUNT(DISTINCT <customer_id_col>)` and joins. The standalone dashboard generator performs this resolution automatically.
 - Focus TOP 20 results per query
 - Include ORDER BY for deterministic results
 - Never hallucinate data — all numbers from actual query results
@@ -70,7 +97,7 @@ Rules:
 
 ## RFM Scoring Reference
 
-### Quartile-Based Scoring (model_type: 'custom')
+### Quartile-Based Scoring
 
 Scores are **1-4 quartiles** based on 25th/50th/75th percentile boundaries. The `num_bins` parameter controls histogram display granularity, NOT the scoring scale.
 
@@ -107,7 +134,7 @@ Identify Champions and Loyal Customers. Show their behavioral patterns: average 
 Find customers in At-Risk, Can't Lose Them, and Hibernating segments. Show how many were previously in higher-value segments (if historical data available). Recommend re-engagement strategies. Visualize with funnel chart showing segment migration.
 
 ### 4. Segment Migration Analysis
-Compare current vs. previous RFM scores (requires `store_historic_scores: yes`). Show which segments are growing or shrinking. Identify customers moving between segments. Visualize with stacked bar chart over time.
+Compare segment sizes across runs from `rfm_stats_daily_agg` (one set of rows per run, keyed by `session_id`). Profile-level movement between segments needs older copies of `rfm_output_table`, which the workflow does not keep — say so if asked. Show which segments are growing or shrinking. Visualize with stacked bar chart over time.
 
 ### 5. Engagement Optimization
 Analyze which R/F/M score combinations have the highest conversion or engagement rates. Show the relationship between frequency and monetary value. Identify the "sweet spot" for targeting. Visualize with scatter plot (frequency vs. monetary), heatmap (R vs. F scores).
@@ -121,17 +148,16 @@ Triggers on:
 
 When invoked:
 
-1. From the user's working directory (where `agent_outputs/` lives — **not** from inside the plugin), run `generate-data.js` against the customer's `sink_database`. `<rfm_analysis_dir>` is the absolute path of this skill's folder:
+1. From the Work Folder root (where `agent_outputs/` lives), run:
    ```bash
-   node "<rfm_analysis_dir>/references/generate-data.js" <sink_database> <customer_slug> "<Customer Name>"
-   # or
-   SOURCE_DB=<sink_database> node "<rfm_analysis_dir>/references/generate-data.js" <customer_slug> "<Customer Name>"
+   node ".claude/skills/{{agent_name}}/references/generate-data.js" {{sink_database}} {{customer_slug}} "{{customer_name}}" \
+     -o "{{engagement_dir}}/dashboards/rfm_summary_dashboard.html"
    ```
-   The customer identifier is auto-detected from `DESCRIBE <sink_database>.rfm_combined_user_events`. If the schema cannot be inspected, pass `--customer-id-col <column>` or set `CUSTOMER_ID_COL` to the workflow's configured `unique_user_id`.
+   The customer identifier is auto-detected from `DESCRIBE {{sink_database}}.rfm_combined_user_events`. If the schema cannot be inspected, pass `--customer-id-col <column>` or set `CUSTOMER_ID_COL` to the workflow's configured `globals.canonical_id`.
 2. The script executes queries Q1–Q8 via `tdx`, shapes metrics, formats tables, derives executive insights, inlines the data payload, and outputs a standalone HTML file to the git-ignored engagement folder:
-   `agent_outputs/<customer_slug>/rfm/dashboards/rfm_summary_dashboard.html`
+   `{{engagement_dir}}/dashboards/rfm_summary_dashboard.html`
 3. Open the generated dashboard for the user:
-   - Use `mcp__work__open_file` with path `agent_outputs/<customer_slug>/rfm/dashboards/rfm_summary_dashboard.html` (or the absolute path printed by `generate-data.js`)
-   - Or run `open agent_outputs/<customer_slug>/rfm/dashboards/rfm_summary_dashboard.html`
+   - Use `mcp__work__open_file` with path `{{engagement_dir}}/dashboards/rfm_summary_dashboard.html` (or the absolute path printed by `generate-data.js`)
+   - Or run `open "{{engagement_dir}}/dashboards/rfm_summary_dashboard.html"`
 
 Do NOT use `render_react` for this — the template is a standalone shareable HTML file, not an inline chat component.

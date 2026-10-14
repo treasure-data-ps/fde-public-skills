@@ -24,7 +24,7 @@ RFM segments customers on three behavioral dimensions:
 - **Business meaning**: High-spending customers represent the most revenue potential
 - **Note**: If no order data exists, all M quartiles will reflect zero-spend distributions. Monetary percentiles are computed only for values > 0.05 to avoid skew.
 
-## Scoring Methodology (model_type: 'custom')
+## Scoring Methodology
 
 - Each dimension is independently scored using **quartile-based binning** (1-4 scale)
 - Quartile boundaries use the 25th, 50th, and 75th percentiles
