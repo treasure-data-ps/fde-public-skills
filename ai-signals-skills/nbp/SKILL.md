@@ -70,7 +70,7 @@ Do not ask workflow configuration questions (engine, top-K, exclusions, sink dat
 
 1. Read `../shared/local_outputs.md` — bootstrap the git-ignored `agent_outputs/` folder and derive `<customer_slug>`.
 2. Read `../shared/project_state.md` — create `agent_outputs/<customer_slug>/nbp/project_state.md` now.
-3. Read `../shared/requirements_doc_pattern.md` — write `agent_outputs/<customer_slug>/nbp/requirements.md`, give the user its path to share with the customer, then continue to Phase 3 — the minimal push uses safe defaults while the customer fills it in.
+3. Read `../shared/playbook.md` (Phase 2) — write `agent_outputs/<customer_slug>/nbp/requirements.md`, give the user its path to share with the customer, then continue to Phase 3 — the minimal push uses safe defaults while the customer fills it in.
 
 Doc title: `NBP Requirements - <Customer>`
 

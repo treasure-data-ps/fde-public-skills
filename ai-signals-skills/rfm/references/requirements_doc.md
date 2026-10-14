@@ -1,6 +1,6 @@
 # RFM Customer Segmentation — Requirements Doc Body
 
-Phase 2 body for `agent_outputs/<customer_slug>/rfm/requirements.md` (title `RFM Requirements - <Customer>`). Mechanics — writing, hand-off, reading it back — are in `../../shared/requirements_doc_pattern.md`.
+Phase 2 body for `agent_outputs/<customer_slug>/rfm/requirements.md` (title `RFM Requirements - <Customer>`). Mechanics — writing, hand-off, reading it back — are in `../../shared/playbook.md` (Phase 2 and Phase 4).
 
 Write the doc for the customer to fill in: one `> _Your answer:_` line under each question, Phase 1 findings pre-filled and marked `[INFERRED — please confirm]`, open questions marked `[NEEDS YOUR INPUT]`. Do not include config parameter names in the customer-facing doc — the mapping table at the end of this file is for you.
 

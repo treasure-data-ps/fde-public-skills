@@ -249,7 +249,7 @@ Once confirmed, this concludes the live interview (Part A). Proceed to the workf
 
 ## Step 7: Write the Customer-Shareable Doc (Part B)
 
-After Phase 3's minimal push succeeds (or in parallel, if the user prefers), write the customer-facing doc to `agent_outputs/<customer_slug>/classifier/requirements.md` per `../../../shared/requirements_doc_pattern.md`. Use this section structure:
+After Phase 3's minimal push succeeds (or in parallel, if the user prefers), write the customer-facing doc to `agent_outputs/<customer_slug>/classifier/requirements.md` per `../../../shared/playbook.md` (Phase 2). Use this section structure:
 
 1. **Initial Questions** — use case, target variable definition (1 = event, 0 = non-event), whether the label exists or is derived, user ID / join keys, Parent Segment
 2. **Model Configuration** — model type, precision/recall preference (`fbeta_beta`, `threshold_strategy`), output database + table prefix

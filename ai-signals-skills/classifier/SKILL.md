@@ -147,7 +147,7 @@ Key questions the live interview must answer: use case description, target varia
 Doc title: `Classification Requirements Gathering - <Customer>`
 File: `agent_outputs/<customer_slug>/classifier/requirements.md`
 
-Write this doc per `../shared/requirements_doc_pattern.md`, using the canonical template structure in `workflow-setup/references/requirements_doc.md` Step 7 as the section-to-answer mapping. Unlike a blank customer-fillable form, **pre-fill every section with what was learned in Part A and Phase 1** — this saves the customer from re-answering things already discovered, and focuses their attention on judgment calls only they can make (business context, feature relevance, edge cases). Give the user the file path to share with the customer and update `project_state.md`. This is the doc Phase 4 reads back.
+Write this doc per `../shared/playbook.md` (Phase 2), using the canonical template structure in `workflow-setup/references/requirements_doc.md` Step 7 as the section-to-answer mapping. Unlike a blank customer-fillable form, **pre-fill every section with what was learned in Part A and Phase 1** — this saves the customer from re-answering things already discovered, and focuses their attention on judgment calls only they can make (business context, feature relevance, edge cases). Give the user the file path to share with the customer and update `project_state.md`. This is the doc Phase 4 reads back.
 
 ### Phase 3: Push Minimal Workflow
 

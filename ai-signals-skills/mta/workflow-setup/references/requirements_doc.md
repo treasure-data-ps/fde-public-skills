@@ -10,7 +10,7 @@ Read `../../../shared/local_outputs.md` and bootstrap `agent_outputs/` before wr
 - **Requirements file:** `agent_outputs/<customer_slug>/mta/requirements.md`
 - **Doc title:** `# MTA Requirements - <Customer Name>`
 
-Follow `../../../shared/requirements_doc_pattern.md` for writing the customer-fillable doc and handing its path to the user.
+Follow `../../../shared/playbook.md` (Phase 2) for writing the customer-fillable doc and handing its path to the user.
 
 > 🚫 Do NOT include auto-generation disclaimers in the requirements doc. It must read as a clean, customer-ready questionnaire.
 
