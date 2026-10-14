@@ -97,7 +97,7 @@ The hands-on kit lets non-technical users and the customer test the model and se
 **Part A — Hands-on kit** (right after Phase 3, or whenever the user asks for it):
 
 1. `customer_agent_pattern.md` Steps 1–3 + the solution's `references/agent-setup.md` — confirm the agent name, build and install the customer agent.
-2. Generate the dashboard once with the agent's dashboard command (`references/agent-setup.md` build checks).
+2. Generate the dashboard once with the agent's dashboard command (`references/agent-setup.md` build checks). The bundled dashboard is pre-validated — check only that the file was written; no screenshots, QA scripts or edits.
 3. If the guides were chosen: `customer_agent_pattern.md` Step 4 (**interim** guides) — fill `workflow-guide.md` and `model-setup-walkthrough.md` from the engagement files so far, marked interim, and reinstall the agent.
 4. Tell the user what was built and how to use it (the agent is available in new chats in this folder), then update `project_state.md`.
 

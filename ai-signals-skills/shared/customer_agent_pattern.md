@@ -99,5 +99,6 @@ Add the customer files listed in `references/agent-setup.md` (Finalize) to the s
 - Frontmatter `name:` equals the folder name; `description` names the customer and the solution's trigger phrases.
 - No `{{` placeholders in `.md` files; no `*.template.md` file and no `<!-- fill` block in `references/`; every file the `SKILL.md` references exists (except the guides and finalize-time files not built yet, which `SKILL.md` handles as missing); no file > 1 MB.
 - `git check-ignore -q .claude/skills/<agent-name>/SKILL.md` succeeds when the working directory is a git repo.
+- The solution's build checks in `references/agent-setup.md`. Run no checks beyond these — no screenshots, browser tests or extra QA scripts.
 
 Tell the user the agent name and path, that it is available in new chats in this folder, and (Studio) that it can be shared to the account via Skills → Develop. Update `project_state.md`.

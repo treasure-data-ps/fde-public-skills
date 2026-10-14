@@ -27,7 +27,7 @@ Only the standard placeholders are used, all in `.md` files:
 After installing, from the Work Folder root:
 
 1. `tdx query -d <sink_database> "SELECT MAX(session_id) FROM nba_dash_model_metrics"` returns the validated run.
-2. Generate the dashboard with the command in the installed `SKILL.md` and confirm it prints the output path `agent_outputs/<customer_slug>/nba-scores/dashboards/nba_summary_dashboard.html` and the file opens. Requires `node`; if it is missing, tell the user the chat analysis still works and the HTML dashboard needs Node.js.
+2. Generate the dashboard once with the command in the installed `SKILL.md`. Pass = the command exits without an error and `ls -l agent_outputs/<customer_slug>/nba-scores/dashboards/nba_summary_dashboard.html` shows the file. Nothing else — the dashboard template and `generate-data.js` are pre-validated: run the command once and use the result as it is. Do not take screenshots, run browser, QA or validation scripts, re-check the data, or edit the generated HTML, and do not apply other visualization or design skills to it. If something looks wrong, tell the user instead of fixing it. Requires `node`; if it is missing, tell the user the chat analysis still works and the HTML dashboard needs Node.js.
 
 ## Guides (Phase 4 interim, Phase 5 final)
 

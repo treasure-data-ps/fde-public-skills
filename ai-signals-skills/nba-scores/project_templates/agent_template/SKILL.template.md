@@ -294,6 +294,7 @@ The dashboard produces a single self-contained HTML file organized into **three 
 
 **STRICT RULES:**
 - **DO NOT** use `render_react` or manual in-context token replacement for this dashboard.
+- **Use the result as it is.** The dashboard template and `generate-data.js` are pre-validated: run the command once and use the result as it is. Do not take screenshots, run browser, QA or validation scripts, re-check the data, or edit the generated HTML, and do not apply other visualization or design skills to it. If something looks wrong, tell the user instead of fixing it.
 - **DO NOT** execute queries sequentially or manually substitute the HTML template's tokens — `generate-data.js` executes all 7 queries concurrently and bakes the data into the HTML in seconds.
 
 ## Critical Rules

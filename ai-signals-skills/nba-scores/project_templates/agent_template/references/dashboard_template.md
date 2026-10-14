@@ -4,6 +4,8 @@ The NBA Engagement Scores Model Summary Dashboard is an executive-ready, 3-tab H
 
 ---
 
+> **Use as-is.** The dashboard template and `generate-data.js` are pre-validated: run the command once and use the result as it is. Do not take screenshots, run browser, QA or validation scripts, re-check the data, or edit the generated HTML, and do not apply other visualization or design skills to it. If something looks wrong, tell the user instead of fixing it.
+
 ## 1. Fast Generation via `generate-data.js`
 
 Instead of manually executing queries and substituting tokens in context, use `generate-data.js` to automatically query the customer's `sink_database` via `tdx` in parallel, shape metrics, synthesize dynamic executive insights, and bake all data directly into the dashboard in seconds.

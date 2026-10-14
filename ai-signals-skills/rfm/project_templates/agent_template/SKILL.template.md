@@ -162,3 +162,5 @@ When invoked:
    - Or run `open "{{engagement_dir}}/dashboards/rfm_summary_dashboard.html"`
 
 Do NOT use `render_react` for this — the template is a standalone shareable HTML file, not an inline chat component.
+
+**Use the result as it is.** The dashboard template and `generate-data.js` are pre-validated: run the command once and use the result as it is. Do not take screenshots, run browser, QA or validation scripts, re-check the data, or edit the generated HTML, and do not apply other visualization or design skills to it. If something looks wrong, tell the user instead of fixing it.
