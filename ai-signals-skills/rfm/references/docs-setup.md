@@ -20,7 +20,7 @@ Plain English, no YAML. For this customer:
 - **Frequency** — number of activity rows across all sources, with the exclusions applied (e.g. no email sends, no cancelled orders); note row-level counting (every page view or order line counts once)
 - **Monetary** — which column on which source, and that other sources add nothing
 - **Scores** — each dimension is split into four equal groups (1–4, 4 = best); `rfm_score` is their average; `rfm_quartile` is the combined code
-- **Segments** — the ten segments with one line each (from `rfm_custom.sql` / the agent's business context), and their share in this run
+- **Segments** — the ten segments with one line each (rules from `ai-signals-guide.md` §5; priorities from `business-context.md`), and their share in this run
 - **Caveats** — e.g. no monetary data, stale data and large recency values, line-item counting
 - **Using the scores** — the Parent Segment and the example audiences created in Phase 5 Step 1
 

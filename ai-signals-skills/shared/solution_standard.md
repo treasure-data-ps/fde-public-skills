@@ -13,6 +13,7 @@ The plugin is an **orchestrator of templates**: each solution ships a workflow t
 ai-signals-skills/<solution_slug>/
 ├── SKILL.md                                  # solution orchestrator (section order in §2)
 ├── references/
+│   ├── ai-signals-guide.md                   # AI Signals model guide — required for solutions that call the AI Signals API
 │   ├── workflow-setup.md                     # how to choose config values from the data, deploy details, output validation
 │   ├── agent-setup.md                        # agent placeholders + finalize-time files
 │   ├── requirements_doc.md                   # Phase 2 body (questions + How-to-ask block)
@@ -25,7 +26,7 @@ ai-signals-skills/<solution_slug>/
     │   └── *.dig, queries/, sql/, python…    # workflow code
     └── agent_template/                       # customer agent blueprint
         ├── SKILL.template.md                 # never named SKILL.md inside the plugin
-        └── references/ (+ scripts)           # e.g. data dictionary, dashboard template, generate-data.js
+        └── references/ (+ scripts)           # business-context.template.md, data dictionary, dashboard template, generate-data.js, guide skeletons
 ```
 
 - `<solution_slug>` = folder name = `agent_outputs/<customer_slug>/<solution_slug>/` folder name.
@@ -59,7 +60,8 @@ ai-signals-skills/<solution_slug>/
 - `SKILL.template.md` is renamed to `SKILL.md` only when installed into `.claude/skills/<agent-name>/` (`shared/customer_agent_pattern.md`).
 - Placeholders use `{{name}}`. Always: `{{agent_name}}`, `{{customer_name}}`, `{{customer_slug}}`, `{{sink_database}}`, `{{engagement_dir}}`; solution extras are listed in `references/agent-setup.md`.
 - Build-time placeholders appear **only in `.md` files**. Scripts, HTML and data files are copied verbatim — they may use their own runtime tokens (e.g. the dashboard template's `{{session_id}}`, filled by `generate-data.js`) and take customer values as command-line arguments.
-- Its `references/` hold analysis knowledge that is not customer-specific (output-table dictionary, dashboard template, scripts). The guides are added in Phase 4 / Phase 5 and customer files at finalize time.
+- Its `references/` hold analysis knowledge that is not customer-specific (output-table dictionary incl. what each output means, dashboard template, scripts). The engagement's `business-context.md` and the solution's `ai-signals-guide.md` are copied in at every build, the guides in Phase 4 / Phase 5 and the runbook at finalize time. There is no `customer-context.md`.
+- It ships a **business context skeleton**, `references/business-context.template.md`: the customer's business knowledge only — never how the model works. Sections in this order, each with 3–5 "questions to consider" bullets: Business Overview, Customers and Identity, Key Terms and Definitions, Buying Cycle and Seasonality, Data Intricacies and Edge Cases, Goals and Use Cases, Rules and Exclusions, then one `<Solution> Definitions` section. Drafted in Phase 1 into `agent_outputs/<customer_slug>/<solution_slug>/business-context.md` (`shared/playbook.md`), open questions carried into the requirements doc, confirmed in Phase 5.
 - It ships two **guide skeletons** in `references/`: `workflow-guide.template.md` (as-built workflow: pipeline, config, mappings, customizations, output tables) and `model-setup-walkthrough.template.md` (discovery, decision log, cleaning, validation baseline, artifacts, presentation recipe, accuracy rules). Each is headings plus `<!-- fill … -->` blocks listing what to fetch and from where, tailored to the solution. They are removed from every build and filled only on request — as **interim** guides in Phase 4 (hands-on kit) and **final** guides in Phase 5 (`shared/customer_agent_pattern.md` Step 4).
 - `SKILL.template.md` has a **How It Was Built** section that routes end-to-end workflow questions to `workflow-guide.md` and setup / decision questions to `model-setup-walkthrough.md`, with a fallback to `project_state.md` when they are not built yet.
 
@@ -71,11 +73,11 @@ ai-signals-skills/<solution_slug>/
 
 | Phase | Must | Must not |
 |---|---|---|
-| **1 — Data exploration** | List every table (`tdx tables`), classify each (activity / profile / system), apply solution-specific classification, run discovery queries, confirm candidate tables via `AskUserQuestion`, record key columns | Ask business/config questions — see exceptions |
-| **2 — Requirements doc** | Bootstrap `agent_outputs/`, create `project_state.md`, write `requirements.md` pre-filled from Phase 1, give the user its path, **then continue to Phase 3** | Block on the customer's answers |
+| **1 — Data exploration** | List every table (`tdx tables`), classify each (activity / profile / system), apply solution-specific classification, run discovery queries, confirm candidate tables via `AskUserQuestion`, record key columns; **draft `business-context.md`** and review it with the user in one `AskUserQuestion` | Ask config questions — see exceptions; run extra queries for the business context |
+| **2 — Requirements doc** | Write `requirements.md` pre-filled from Phase 1, ending with the open business-context questions, give the user its path, **then continue to Phase 3** | Block on the customer's answers |
 | **3 — Minimal workflow** | Copy `workflow_template/`, read its README, **sink-database gate**, edit the config (safe defaults where answers are missing), **project-name gate**, push, ask before running, validate; update `project_state.md`; **ask which hands-on kit to build** (agent + dashboard + guides / agent + dashboard / not now) | Edit `project_templates/`; push without the gates |
-| **4 — Hands-on testing + requirements** | Part A (per the Phase 3 answer): **agent-name gate**, build + install the agent, generate the dashboard, interim guides if chosen. Part B: read `project_state.md` + filled `requirements.md`, present planned changes for approval, edit the workflow copy, re-push, re-run, re-validate, refresh the kit | Change files before approval; install an agent with unfilled placeholders |
-| **5 — Parent Segment, docs, final agent** | PS step via `../shared/parent_segment_update.md` + `references/parent_segment.md` (if applicable); docs via `../shared/customer_docs_pattern.md` + `references/docs-setup.md`; finalize the agent; **ask whether to update the guides** with the final setup | Read `parent_segment.md` before the plan is approved |
+| **4 — Hands-on testing + requirements** | Part A (per the Phase 3 answer): **agent-name gate**, build + install the agent, generate the dashboard, interim guides if chosen. Part B: read `project_state.md` + filled `requirements.md`, present planned changes for approval, edit the workflow copy, re-push, re-run, re-validate, merge business answers into `business-context.md`, refresh the kit | Change files before approval; install an agent with unfilled placeholders |
+| **5 — Parent Segment, docs, final agent** | PS step via `../shared/parent_segment_update.md` + `references/parent_segment.md` (if applicable); docs via `../shared/customer_docs_pattern.md` + `references/docs-setup.md`; confirm `business-context.md`; finalize the agent; **ask whether to update the guides** with the final setup | Read `parent_segment.md` before the plan is approved |
 
 Cross-cutting rules:
 - **Questions:** always `AskUserQuestion`, never plain-text lists. Put the standard *How to ask* block (batches ≤ 4, 2–4 options, `(Recommended)` default, implicit Other) at the top of each question step.
@@ -101,6 +103,8 @@ Every deviation from §4 must be listed here and stated in the solution's `SKILL
 - [ ] `workflow-setup.md` names only parameters that exist in the config; restates no syntax or defaults
 - [ ] `agent_template/` has `SKILL.template.md`; every placeholder is listed in `agent-setup.md`
 - [ ] `agent_template/references/` has `workflow-guide.template.md` and `model-setup-walkthrough.template.md`; `SKILL.template.md` has the **How It Was Built** section
-- [ ] Phase 1 starts with `tdx tables`; Phase 2 does not wait; Phase 3 runs the sink-database and project-name gates and ends with the hands-on kit question; Phase 4 runs the agent-name gate; Phase 5 ends with the final-guides question
+- [ ] `agent_template/references/` has `business-context.template.md` with the §3 sections and no model mechanics; no plain `business-context.md` and no `customer-context.md` anywhere in the solution
+- [ ] AI Signals solutions have `references/ai-signals-guide.md`, and `SKILL.md` + `SKILL.template.md` route model questions to it
+- [ ] Phase 1 starts with `tdx tables` and ends with the business context draft; Phase 2 does not wait; Phase 3 runs the sink-database and project-name gates and ends with the hands-on kit question; Phase 4 runs the agent-name gate; Phase 5 ends with the final-guides question
 - [ ] Secret names match `${secret:…}` in the template
 - [ ] Every referenced path exists; manifest entries point to folders with a `SKILL.md`

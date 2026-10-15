@@ -20,6 +20,8 @@ Only the standard placeholders are used, all in `.md` files:
 
 `references/generate-data.js` and `references/dashboard_template.html` are copied unchanged — their `{{…}}` tokens are filled by the script at run time.
 
+Two files are copied in at every build (`../../shared/customer_agent_pattern.md` Step 2): the engagement's `business-context.md` (drafted from `references/business-context.template.md` in Phase 1 — the skeleton itself is never installed) and `<solution_dir>/references/ai-signals-guide.md`, unchanged.
+
 `references/workflow-guide.template.md` and `references/model-setup-walkthrough.template.md` are **guide skeletons**: removed from every build and filled only when the user chose the guides — interim in Phase 4, final in Phase 5 (Guides, below).
 
 ## Build checks (Phase 4 Part A)
@@ -42,11 +44,10 @@ Interim guides describe the setup deployed so far — assumed defaults marked "t
 
 ## Finalize (Phase 5)
 
-Add to the staging folder's `references/` (keep the template's `business-context.md` — it explains RFM generically):
+Rebuild with the confirmed `business-context.md` (playbook Phase 5 step 3; Step 2 copies it), then add to the staging folder's `references/`:
 
 | File | Content |
 |---|---|
-| `customer-context.md` | This customer's use cases, Parent Segment, what the deployed sources, filters and window mean for their marketing (exact values live in `workflow-guide.md`), priority segments and example audiences, caveats — from `docs/behavior.md` |
 | `runbook.md` | Copy of `docs/runbook.md` |
 
-Then add `customer-context.md` to the **Initialization** list in the staging `SKILL.md` (right after `business-context.md`) and `runbook.md` as "read only for operations questions"; then ask about the final guides (Guides, above). Add one line under **Query Rules**: "When `customer-context.md` or `workflow-guide.md` and the run config in `rfm_stats_model_params` disagree, report the difference — the table reflects what actually ran." Run the placeholder check in `../../shared/customer_agent_pattern.md` Step 2 before installing.
+Add `runbook.md` to the **Initialization** list in the staging `SKILL.md` as "read only for operations questions"; then ask about the final guides (Guides, above). Add one line under **Query Rules**: "When `workflow-guide.md` and the run config in `rfm_stats_model_params` disagree, report the difference — the table reflects what actually ran." Run the placeholder check in `../../shared/customer_agent_pattern.md` Step 2 before installing.

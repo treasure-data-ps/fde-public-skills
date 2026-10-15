@@ -46,6 +46,10 @@ Title, one-line purpose ("These answers let us configure RFM (Recency, Frequency
 10. **Run schedule** — how often should scores refresh? (Recommended: monthly; weekly for fast-moving businesses.)
 11. Which email address should receive workflow failure alerts?
 
+### 8. Business context
+
+The questions still marked `[NEEDS YOUR INPUT]` in `business-context.md` that sections 1–7 don't already ask, grouped under that file's headings (playbook Phase 2 step 4). Omit the section if none are left.
+
 Close with: "When done, save this file and send it back to the person who shared it with you."
 
 ---
@@ -66,6 +70,6 @@ Parameter meanings are in the template `README.md` (Configuration); choosing rul
 | 10 | `schedule` in `rfm_launch.dig` |
 | 11 | `_error` → `to:` in `rfm_launch.dig` |
 
-Questions 1–2 feed the documentation set and the customer agent's business context (Phase 5).
+Questions 1–2, 7 (gross / net), 9 (segment priorities) and every section 8 answer also go into `business-context.md` (playbook Phase 4 Part B step 4); questions 1–2 feed the documentation set.
 
 Before editing the config in Phase 4, show the user a summary of planned changes (customer, sources and what each adds to R/F/M, filters, monetary column, history window, scoring model, segment changes, schedule, alert email) and wait for approval.

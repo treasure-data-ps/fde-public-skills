@@ -12,12 +12,14 @@ Unions a customer's activity data (web, email, CRM, orders, …), scores every p
 
 Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, the name gates and when to read each shared pattern. Follow that flow. This file provides the RFM-specific context for each phase.
 
+**AI Signals model questions:** whenever a task concerns the RFM model itself — how it scores, its API parameters, testing other parameter values, changing the input or output table — read `references/ai-signals-guide.md` first, in any phase.
+
 ## Phase Summary
 
 | Phase | What happens |
 |---|---|
-| Phase 1 | Data exploration — list and classify tables, confirm the activity sources and which feed Monetary, run discovery queries |
-| Phase 2 | `agent_outputs/` + `project_state.md` + `requirements.md` — then continue without waiting |
+| Phase 1 | Data exploration — list and classify tables, confirm the activity sources and which feed Monetary, run discovery queries; draft `business-context.md` and review it with the user |
+| Phase 2 | `requirements.md`, ending with the open business-context questions — then continue without waiting |
 | Phase 3 | Copy the workflow template, configure from Phase 1, push, run, validate; ask which hands-on kit to build |
 | Phase 4 | Hands-on kit (customer agent, dashboard, interim workflow guide + setup walkthrough); apply the customer's requirements, re-push, re-run, re-validate, refresh the kit |
 | Phase 5 | Parent Segment attributes + example audiences, documentation set, finalize the customer agent, offer the final guides |
@@ -51,6 +53,7 @@ Use `tdx-skills:tdx-basic`. Do not search by table-name patterns.
 4. **Confirm the list with `AskUserQuestion`** — first show a markdown table of every activity table with include/exclude, R/F/M contribution and a one-line reason, then ask one short question ("Confirm as listed" / "Change the list"). Do not put the table inside the question. Do not skip this.
 5. **Run the discovery queries** in `references/workflow-setup.md` §1 yourself (no subagents): one `UNION ALL` profile query across all confirmed tables, then status / event-type breakdowns as parallel calls. Do not investigate caveats further — record them (step 6).
 6. **Record** in `project_state.md`: table, profile ID column, real event-time column, order value column (monetary sources), context column, filters needed, R/F/M contribution, first/last event date.
+7. **Business context** — playbook Phase 1 "Business context draft and review": copy `project_templates/agent_template/references/business-context.template.md`, answer what steps 1–6 showed (e.g. sales channels from the sources, what counts as a purchase from the order statuses, amount column and currency, test or internal records seen in the filters), review it with the user, continue to Phase 2.
 
 **Solution slug:** `rfm` — all engagement files live in `agent_outputs/<customer_slug>/rfm/`.
 
@@ -88,15 +91,17 @@ Hand the path to the user and continue to Phase 3.
 2. Map the answers with the table at the end of `references/requirements_doc.md`; choose values with `references/workflow-setup.md` §2.
 3. Present the planned changes; wait for approval.
 4. Edit the config (and `rfm_launch.dig` for schedule/alert email) in `workflow/`, re-push, re-run, re-validate (§4).
-5. Refresh the kit if it exists: rebuild the agent if the sink database, sources or business rules changed; regenerate the dashboard; refresh the interim guides. Then ask whether to continue to Phase 5.
+5. Merge the business answers into `business-context.md` (playbook Phase 4 Part B step 4).
+6. Refresh the kit if it exists: rebuild the agent if the sink database, sources or business rules changed; regenerate the dashboard; refresh the interim guides. Then ask whether to continue to Phase 5.
 
 ### Phase 5: Parent Segment, Documentation, Final Agent
 
 1. **Parent Segment** — `../shared/parent_segment_update.md` for the process; `references/parent_segment.md` for the attributes and example audiences — read it only after the user approves the plan.
 2. **Documentation** — `../shared/customer_docs_pattern.md` + `references/docs-setup.md` → `docs/`.
-3. **Finalize the agent** — `../shared/customer_agent_pattern.md` Step 5 + `references/agent-setup.md` (Finalize). If Phase 4 Part A was skipped, build the agent first (Steps 1–3, agent-name gate).
-4. **Final guides question** — ask whether to update `workflow-guide.md` and `model-setup-walkthrough.md` with the final production setup (Recommended), or create them if they were never built; on yes, `../shared/customer_agent_pattern.md` Step 4 (final) and reinstall.
-5. Update `project_state.md` → "complete — engagement live".
+3. **Confirm the business context** — playbook Phase 5 step 3.
+4. **Finalize the agent** — `../shared/customer_agent_pattern.md` Step 5 + `references/agent-setup.md` (Finalize). If Phase 4 Part A was skipped, build the agent first (Steps 1–3, agent-name gate).
+5. **Final guides question** — ask whether to update `workflow-guide.md` and `model-setup-walkthrough.md` with the final production setup (Recommended), or create them if they were never built; on yes, `../shared/customer_agent_pattern.md` Step 4 (final) and reinstall.
+6. Update `project_state.md` → "complete — engagement live".
 
 ---
 
@@ -104,7 +109,7 @@ Hand the path to the user and continue to Phase 3.
 
 1. **Union** — every source in `aggregate_metrics_tables` is filtered and aggregated to one row per profile per source: last event, number of touchpoints, total spend, days since the last event.
 2. **Compute R/F/M** — per profile: Recency = the lowest days-since-last-event across sources; Frequency = the sum of touchpoints; Monetary = the sum of spend (never below 0).
-3. **Score** — `ai_signals` (default) sends the input table to the AI Signals batch API; `custom` assigns 1–4 quartile scores in SQL from the 25th/50th/75th percentiles. Both write `r_quartile`, `f_quartile`, `m_quartile`, `rfm_quartile` (e.g. `R4F3M2`), `rfm_score`.
+3. **Score** — `ai_signals` (default) sends the input table to the AI Signals batch API; `custom` assigns 1–4 quartile scores in SQL from the 25th/50th/75th percentiles. Both write `r_quartile`, `f_quartile`, `m_quartile`, `rfm_quartile` (e.g. `R4F3M2`), `rfm_score`. API parameters, scoring and segment rules: `references/ai-signals-guide.md`.
 4. **Segment** — each profile gets one of ten segments (Champions, Loyal Customers, Potential Loyalists, Promising, New Customers, Cannot lose them, Need attention, Hibernating, High Value Sleeping, Lost customers).
 5. **Dashboard stats** — per-segment stats and histograms for the latest run, plus run config and segment stats appended every run, which the customer agent reads.
 

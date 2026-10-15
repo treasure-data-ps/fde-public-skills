@@ -52,6 +52,7 @@ agent_outputs/
 └── <customer_slug>/
     └── <solution_slug>/
         ├── project_state.md           # cross-session context store — see project_state.md
+        ├── business-context.md        # customer business knowledge for the agent — drafted Phase 1, confirmed Phase 5 (playbook.md)
         ├── requirements.md            # customer-fillable requirements doc — see playbook.md Phase 2
         ├── workflow/                  # working copy of project_templates/workflow_template/ — config edited, `tdx wf push` runs here
         ├── segments/                  # `tdx sg pull` working directory — see parent_segment_update.md

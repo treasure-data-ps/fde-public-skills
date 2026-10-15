@@ -10,7 +10,7 @@ Engagements span multiple sessions. `agent_outputs/<customer_slug>/<solution_slu
 
 ## Rules
 
-1. **Create early.** `project_state.md` is the first file created for an engagement (Phase 2), before the requirements doc.
+1. **Create early.** `project_state.md` is the first file created for an engagement (end of Phase 1, with the business context draft).
 2. **Update at the end of every phase.** Phase completion, date, key paths, key decisions, next action.
 3. **Read first on resume.** When starting a new session, list existing engagements and read the matching file:
    ```bash
@@ -41,6 +41,7 @@ Living context store. Update at the end of every phase. New sessions read this f
 - **Parent Segment:** <name + ID | pending>
 
 ## Artifacts (paths relative to the working directory)
+- Business context: agent_outputs/<customer_slug>/<solution_slug>/business-context.md (<drafted <date> | reviewed <date> | confirmed <date>>)
 - Requirements doc: agent_outputs/<customer_slug>/<solution_slug>/requirements.md (<pending | sent <date> | returned <date>>)
 - Workflow working copy: agent_outputs/<customer_slug>/<solution_slug>/workflow/
 - Hands-on kit (Phase 3 end answer): <agent + dashboard + guides | agent + dashboard | not now>
@@ -60,9 +61,9 @@ Living context store. Update at the end of every phase. New sessions read this f
 
 | Phase complete | Update fields |
 |---|---|
-| Phase 1 data exploration | Key Decisions: confirmed source tables + key columns |
+| Phase 1 data exploration | Key Decisions: confirmed source tables + key columns; business context "drafted / reviewed <date>" |
 | Phase 2 requirements doc written | Current phase → 3, requirements doc status "sent <date>" |
 | Phase 3 minimal workflow pushed + validated | Current phase → 4, TD workflow project + push date, sink database, validation summary, hands-on kit answer |
 | Phase 4 Part A hands-on kit built | Customer agent "hands-on <date>", dashboard path, guides "interim <date>" (if chosen) |
-| Phase 4 Part B workflow updated from requirements | Current phase → 5, requirements doc status "returned <date>", parameter changes in Key Decisions, Round 2 validation summary, kit refreshed |
-| Phase 5 Parent Segment + docs + agent finalized | Current phase → "complete — engagement live", Parent Segment, all doc paths, customer agent final, guides final (if updated) |
+| Phase 4 Part B workflow updated from requirements | Current phase → 5, requirements doc status "returned <date>", business answers merged into business-context.md, parameter changes in Key Decisions, Round 2 validation summary, kit refreshed |
+| Phase 5 Parent Segment + docs + agent finalized | Current phase → "complete — engagement live", Parent Segment, business context "confirmed <date>" (unanswered questions in Key Decisions), all doc paths, customer agent final, guides final (if updated) |

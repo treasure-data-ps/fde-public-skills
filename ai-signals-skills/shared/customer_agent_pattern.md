@@ -12,7 +12,7 @@ Each solution ships a **blueprint** of its analysis agent in `<solution_dir>/pro
 <working directory>/.claude/skills/<agent-name>/
 ├── SKILL.md          # from agent_template/SKILL.template.md, placeholders filled
 ├── .gitignore        # "*" — the agent holds customer context; never committable
-└── references/       # template references + guides (Phase 4/5) + customer files added at finalize time
+└── references/       # template references + business-context.md + ai-signals-guide.md + guides (Phase 4/5) + finalize-time files
 ```
 
 A skill in the Work Folder's `.claude/skills/` is loaded in every chat in that folder (Treasure AI Studio lists it under the folder's Actions and Skills; in Claude Code it is a project skill). It can later be shared to the account with Studio's Develop → Share — keep every file ≤ 1 MB.
@@ -24,7 +24,7 @@ The solution's `references/agent-setup.md` lists the placeholders, the extra fil
 | Stage | When | Steps | Result |
 |---|---|---|---|
 | **Hands-on build** | Phase 4 Part A — after the first validated run, if the user chose the hands-on kit | 1–3, then 4 (interim) if the guides were chosen | Agent queries the real output tables and builds dashboards; the interim guides explain the setup so far to testers |
-| **Finalize** | Phase 5, after the documentation set is written | 5, then 4 (final) if the user agrees | Agent carries the confirmed business context and runbook; the guides describe the production setup |
+| **Finalize** | Phase 5, after the documentation set is written and the business context is confirmed | 2–3 (refreshed business context), 5, then 4 (final) if the user agrees | Agent carries the confirmed business context and runbook; the guides describe the production setup |
 
 Re-run Steps 2–3 (and refresh the guides with Step 4) whenever the workflow config, business context or docs change materially.
 
@@ -41,8 +41,12 @@ stage="agent_outputs/<customer_slug>/<solution_slug>/agent_build/<agent-name>"
 mkdir -p "$stage"
 cp -R "<solution_dir>/project_templates/agent_template/." "$stage/"
 mv "$stage/SKILL.template.md" "$stage/SKILL.md"
-rm -f "$stage"/references/*.template.md   # guide skeletons — filled in Step 4, never installed unfilled
+rm -f "$stage"/references/*.template.md   # skeletons — guides filled in Step 4, business context below; never installed unfilled
+cp "agent_outputs/<customer_slug>/<solution_slug>/business-context.md" "$stage/references/business-context.md"
+[ -f "<solution_dir>/references/ai-signals-guide.md" ] && cp "<solution_dir>/references/ai-signals-guide.md" "$stage/references/"
 ```
+
+`business-context.md` is the engagement copy drafted in Phase 1 (playbook) — copy it as it is, markers included: they tell the agent which definitions are still unconfirmed. If it does not exist yet, draft it first (playbook, Phase 1 business context steps 2–3). `ai-signals-guide.md` is copied unchanged.
 
 Fill every `{{placeholder}}` in the **`.md` files** of `$stage` (Edit/Write tools) from `project_state.md`. Never edit scripts or HTML (`*.js`, `*.html`, …): they are copied verbatim and their `{{…}}` tokens are runtime tokens filled by the script itself. At minimum:
 
@@ -92,12 +96,12 @@ Refresh `workflow-guide.md` whenever the workflow config or `.dig` files change,
 
 ## Step 5: Finalize (Phase 5)
 
-Add the customer files listed in `references/agent-setup.md` (Finalize) to the staging folder, update `SKILL.md`'s file list, then repeat Steps 2 (placeholder check) and 3. Every solution adds at least `references/customer-context.md` and `references/runbook.md` (from `docs/`). Then ask about the final guides (Step 4).
+Add the customer files listed in `references/agent-setup.md` (Finalize) to the staging folder, update `SKILL.md`'s file list, then repeat Steps 2 (placeholder check) and 3. Every solution adds at least `references/runbook.md` (from `docs/`); the confirmed `business-context.md` comes in through Step 2. Then ask about the final guides (Step 4).
 
 ## Step 6: Verify and report
 
 - Frontmatter `name:` equals the folder name; `description` names the customer and the solution's trigger phrases.
-- No `{{` placeholders in `.md` files; no `*.template.md` file and no `<!-- fill` block in `references/`; every file the `SKILL.md` references exists (except the guides and finalize-time files not built yet, which `SKILL.md` handles as missing); no file > 1 MB.
+- No `{{` placeholders in `.md` files; after finalize, no `[NEEDS YOUR INPUT]` in `references/business-context.md`; no `*.template.md` file and no `<!-- fill` block in `references/`; every file the `SKILL.md` references exists (except the guides and finalize-time files not built yet, which `SKILL.md` handles as missing); no file > 1 MB.
 - `git check-ignore -q .claude/skills/<agent-name>/SKILL.md` succeeds when the working directory is a git repo.
 - The solution's build checks in `references/agent-setup.md`. Run no checks beyond these — no screenshots, browser tests or extra QA scripts.
 
