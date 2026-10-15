@@ -53,12 +53,12 @@ Use `tdx-skills:tdx-basic`. Do not search by table-name patterns.
 6. **Record** in `project_state.md`: table, profile ID column, real event-time column, URL/referrer/path columns, UTM coverage, conversion signal, add-to-cart signal, filters needed, first/last event date.
 7. **Business context** — playbook Phase 1 "Business context draft and review": copy `project_templates/agent_template/references/business-context.template.md`, answer what steps 1–6 showed (e.g. channels from UTM values and sources, what counts as a conversion and an add-to-cart, test or internal records seen in the filters, time zone of the event timestamps), review it with the user, continue to Phase 2.
 
-**Solution slug:** `nba-scores` — all engagement files live in `agent_outputs/<customer_slug>/nba-scores/`.
+**Solution slug:** `nba-scores` — all engagement files live in `agent_outputs/<project_slug>/` (`nba-scores` by default, `<prefix>-nba-scores` with a project prefix — `../shared/local_outputs.md` Step 2).
 
 ### Phase 2: Requirements Doc
 
-- Title: `NBA Engagement Scores Requirements - <Customer>`
-- File: `agent_outputs/<customer_slug>/nba-scores/requirements.md`
+- Title: `<Project Name> Requirements`
+- File: `agent_outputs/<project_slug>/requirements.md`
 - Body: `references/requirements_doc.md` (pre-fill from Phase 1)
 
 Hand the path to the user and continue to Phase 3.
@@ -66,7 +66,7 @@ Hand the path to the user and continue to Phase 3.
 ### Phase 3: Minimal Workflow
 
 1. Read `../shared/push_pattern_td_workflows.md` and `references/workflow-setup.md`.
-2. Copy `project_templates/workflow_template/` to `agent_outputs/<customer_slug>/nba-scores/workflow/` and read its `README.md`.
+2. Copy `project_templates/workflow_template/` to `agent_outputs/<project_slug>/workflow/` and read its `README.md`.
 3. **Sink-database gate** (default `td_agents`; first check it holds no `nba_*` tables from another engagement). The first run creates the database if missing (`references/workflow-setup.md` §3).
 4. Edit `workflow/config/input_params.yml` in place from Phase 1 findings, following `references/workflow-setup.md` §1–2 (minimal-push rule for anything not yet answered). Set or remove the failure email and decide on the schedule in `workflow/nba_eng_launch.dig`.
 5. **Project-name gate** (default `nba_eng_prod`; first check it isn't already taken), push, ask before running, run, monitor.
@@ -78,7 +78,7 @@ Hand the path to the user and continue to Phase 3.
 
 **Part A — Hands-on kit** (per the Phase 3 answer, or whenever the user asks):
 
-1. **Agent-name gate** (default `<customer_slug>-nba-scores-agent`), then build and install the agent: `../shared/customer_agent_pattern.md` Steps 1–3 + `references/agent-setup.md`.
+1. **Agent** `<project_slug>-agent` (asked only if taken) — build and install it: `../shared/customer_agent_pattern.md` Steps 1–3 + `references/agent-setup.md`.
 2. Generate the dashboard and run the build checks in `references/agent-setup.md`.
 3. If the guides were chosen: fill `workflow-guide.md` and `model-setup-walkthrough.md` as **interim** guides (`../shared/customer_agent_pattern.md` Step 4) and reinstall the agent.
 4. Tell the user what was built and that testers can use the agent and dashboard in new chats in this folder; update `project_state.md`.
@@ -115,11 +115,12 @@ Hand the path to the user and continue to Phase 3.
 ## Quick Reference
 
 - **Solution slug:** `nba-scores`
-- **Workflow template:** `project_templates/workflow_template/` → working copy `agent_outputs/<customer_slug>/nba-scores/workflow/`
+- **Short name (project names):** `NBA Scores` — e.g. `Loyalty NBA Scores`
+- **Workflow template:** `project_templates/workflow_template/` → working copy `agent_outputs/<project_slug>/workflow/`
 - **Agent template:** `project_templates/agent_template/` → `.claude/skills/<agent-name>/`
 - **Default workflow project name:** `nba_eng_prod`
 - **Entry point:** `nba_eng_launch.dig`
 - **Config file:** `config/input_params.yml`
 - **Key outputs:** `nba_combined_metrics_final` (Parent Segment attributes); `nba_dash_stats_summary`, `nba_dash_model_metrics`, `nba_dash_source_tables`
-- **Default agent name:** `<customer_slug>-nba-scores-agent`
+- **Agent name:** `<project_slug>-agent` — `nba-scores-agent` by default
 - **Secrets:** none

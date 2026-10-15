@@ -8,7 +8,7 @@ Definitions) and the workflow guide.
 
 HOW TO USE
 Skeleton — never filled in place, never installed. Copied in Phase 1 to
-  agent_outputs/<customer_slug>/nba-scores/business-context.md
+  agent_outputs/<project_slug>/business-context.md
 (shared/playbook.md, Phase 1 business context). Open questions go to the customer through the
 requirements doc; answers are merged in Phase 4 Part B; the file is confirmed in Phase 5. Every
 agent build copies the engagement file into the agent's references/.
@@ -23,7 +23,7 @@ AUTHORING RULES (for the engagement copy)
 - Keep every section to a few bullets. Delete this comment and the line under the title in the copy.
 -->
 
-# {{customer_name}} — Business Context
+# {{project_name}} — Business Context
 
 *Questions to consider are listed under each heading; answer the ones that apply.*
 

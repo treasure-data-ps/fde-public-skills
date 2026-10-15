@@ -1,6 +1,6 @@
 # RFM Customer Segmentation — Documentation Set Content
 
-RFM content for the Phase 5 docs. File names, audience headers, create order and update rules are in `../../shared/customer_docs_pattern.md`. Docs go to `agent_outputs/<customer_slug>/rfm/docs/`. Doc titles: `# RFM Customer Segmentation <Doc Name> - <Customer>`.
+RFM content for the Phase 5 docs. File names, audience headers, create order and update rules are in `../../shared/customer_docs_pattern.md`. Docs go to `agent_outputs/<project_slug>/docs/`. Doc titles: `# <Project Name> <Doc Name>` (e.g. `# Loyalty RFM Runbook`).
 
 Sources for every value: `project_state.md`, `requirements.md`, the deployed config `workflow/config/input_params.yml`, `workflow/rfm_launch.dig` (schedule, alert email), and the latest validation results. Describe what is deployed, not template defaults. Parameter meanings come from `workflow/README.md` — reword them for the audience instead of copying config syntax.
 

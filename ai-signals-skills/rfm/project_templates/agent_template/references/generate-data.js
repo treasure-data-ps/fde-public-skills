@@ -6,14 +6,14 @@
  * bakes the results into the RFM Summary Dashboard template.
  *
  * Usage:
- *   node generate-data.js <sink_database> [customer_slug] [customer_name]
- *   SOURCE_DB=<sink_database> node generate-data.js [customer_slug] [customer_name]
+ *   node generate-data.js <sink_database> [project_slug] [project_name]
+ *   SOURCE_DB=<sink_database> node generate-data.js [project_slug] [project_name]
  *
  * Examples:
- *   node generate-data.js my_sink_db acme-corp "ACME Corp"
- *   SOURCE_DB=my_sink_db node generate-data.js acme-corp "ACME Corp"
+ *   node generate-data.js my_sink_db loyalty-rfm "Loyalty RFM"
+ *   SOURCE_DB=my_sink_db node generate-data.js loyalty-rfm "Loyalty RFM"
  *
- * Output (default): ./agent_outputs/<customer_slug>/rfm/dashboards/rfm_summary_dashboard.html
+ * Output (default): ./agent_outputs/<project_slug>/dashboards/rfm_summary_dashboard.html
  * relative to the current working directory (git-ignored engagement folder).
  */
 
@@ -38,18 +38,18 @@ function printHelp() {
 RFM Dashboard Data Generator (Parallel Query Engine)
 
 Usage:
-  node generate-data.js <sink_database> [customer_slug] [customer_name]
-  SOURCE_DB=<sink_database> node generate-data.js [customer_slug] [customer_name]
+  node generate-data.js <sink_database> [project_slug] [project_name]
+  SOURCE_DB=<sink_database> node generate-data.js [project_slug] [project_name]
 
 Arguments:
   sink_database    Treasure Data database where RFM output tables reside (required, or env SOURCE_DB)
-  customer_slug    Directory slug for customer output (default: derived from customer name or "customer")
-  customer_name    Display name for customer (default: Title-cased slug)
+  project_slug    Project slug, names the output folder (default: "rfm")
+  project_name    Project display name in the dashboard header (default: Title-cased slug)
 
 Options:
   -c, --customer-id-col  Customer identifier column in rfm_combined_user_events (default: auto-detected via DESCRIBE, e.g. td_consumer_id, canonical_id)
   -o, --output     Custom output file path
-                   (default: ./agent_outputs/<customer_slug>/rfm/dashboards/rfm_summary_dashboard.html)
+                   (default: ./agent_outputs/<project_slug>/dashboards/rfm_summary_dashboard.html)
   -t, --template   Path to dashboard_template.html (default: the copy next to this script)
   -v, --verbose    Show verbose query outputs and timings
   -h, --help       Show this help message
@@ -83,17 +83,17 @@ for (let i = 0; i < args.length; i++) {
 }
 
 let sinkDatabase = process.env.SOURCE_DB || '';
-let customerSlug = process.env.CUSTOMER_SLUG || '';
-let customerName = process.env.CUSTOMER_NAME || '';
+let projectSlug = process.env.PROJECT_SLUG || '';
+let projectName = process.env.PROJECT_NAME || '';
 
 if (posArgs.length > 0) {
   if (!sinkDatabase) {
     sinkDatabase = posArgs[0];
-    if (posArgs[1]) customerSlug = posArgs[1];
-    if (posArgs[2]) customerName = posArgs[2];
+    if (posArgs[1]) projectSlug = posArgs[1];
+    if (posArgs[2]) projectName = posArgs[2];
   } else {
-    customerSlug = posArgs[0];
-    if (posArgs[1]) customerName = posArgs[1];
+    projectSlug = posArgs[0];
+    if (posArgs[1]) projectName = posArgs[1];
   }
 }
 
@@ -103,12 +103,12 @@ if (!sinkDatabase) {
   printHelp();
 }
 
-if (!customerSlug) {
-  customerSlug = 'customer';
+if (!projectSlug) {
+  projectSlug = 'rfm';
 }
 
-if (!customerName) {
-  customerName = customerSlug
+if (!projectName) {
+  projectName = projectSlug
     .split(/[-_]/)
     .map(w => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
@@ -120,7 +120,7 @@ const templatePath = customTemplate
   ? path.resolve(process.cwd(), customTemplate)
   : path.resolve(scriptDir, 'dashboard_template.html');
 
-const defaultOutputDir = path.resolve(workRoot, 'agent_outputs', customerSlug, 'rfm', 'dashboards');
+const defaultOutputDir = path.resolve(workRoot, 'agent_outputs', projectSlug, 'dashboards');
 const outputPath = customOutput
   ? path.resolve(process.cwd(), customOutput)
   : path.join(defaultOutputDir, 'rfm_summary_dashboard.html');
@@ -133,7 +133,7 @@ if (!fs.existsSync(templatePath)) {
 console.log('='.repeat(65));
 console.log('  RFM Dashboard Data Generator (Parallel Mode)');
 console.log('='.repeat(65));
-console.log(`  Customer:       ${customerName} (${customerSlug})`);
+console.log(`  Project:        ${projectName} (${projectSlug})`);
 console.log(`  Database:       ${sinkDatabase}`);
 console.log(`  Template:       ${templatePath}`);
 console.log(`  Output:         ${outputPath}`);
@@ -693,7 +693,7 @@ async function main() {
   console.log('Baking dynamic data into dashboard template...');
 
   const tokenMap = {
-    '{{customer_name}}': escapeHtml(customerName),
+    '{{project_name}}': escapeHtml(projectName),
     '{{sink_database}}': escapeHtml(sinkDatabase),
     '{{customer_id_col}}': escapeHtml(customerIdCol || 'not available (aggregate fallback)'),
     '{{session_id}}': escapeHtml(sessionId),
@@ -749,7 +749,7 @@ async function main() {
 
   // Inline window.RAW for programmatic access
   const rawPayload = {
-    customer: { name: customerName, slug: customerSlug, database: sinkDatabase },
+    project: { name: projectName, slug: projectSlug, database: sinkDatabase },
     meta: {
       customerIdCol,
       sessionId,

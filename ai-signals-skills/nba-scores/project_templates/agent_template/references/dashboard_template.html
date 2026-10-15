@@ -15,7 +15,7 @@
     3. STRIPS this leading HTML comment (the one you're reading)
     4. Replaces every {{TOKEN}}
     5. Writes the result to:
-         agent_outputs/<customer_slug>/nba-scores/dashboards/nba_summary_dashboard.html
+         agent_outputs/<project_slug>/dashboards/nba_summary_dashboard.html
 
   All visual structure (TD palette, layout, tabs, chart shapes) is fixed.
   Only the data behind the tokens changes per customer / per run.
@@ -48,7 +48,7 @@
   ──────────────────────────────────────────────────────────────────────────
 
   ── Header / metadata tokens (strings) ─────────────────────────────────────
-  {{customer_name}}            — e.g. "ACME Corp"
+  {{project_name}}            — e.g. "Loyalty NBA Scores"
   {{sink_database}}            — e.g. "automotive_demo"
   {{session_id}}               — latest session_id (bigint)
   {{run_time_utc}}             — e.g. "2026-05-18 21:02 UTC"
@@ -226,7 +226,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>NBA Engagement Scores Model Summary — {{customer_name}}</title>
+<title>NBA Engagement Scores Model Summary — {{project_name}}</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <style>
   :root {
@@ -303,7 +303,7 @@
 
 <header>
   <h1>NBA Engagement Scores Model Summary</h1>
-  <p>{{customer_name}} · {{sink_database}} · Session {{session_id}}</p>
+  <p>{{project_name}} · {{sink_database}} · Session {{session_id}}</p>
   <div class="meta-row">
     <span><strong>Run time:</strong> {{run_time_utc}}</span>
     <span><strong>Profiles scored:</strong> {{profiles_scored}}</span>

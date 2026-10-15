@@ -29,7 +29,7 @@ ai-signals-skills/<solution_slug>/
         └── references/ (+ scripts)           # business-context.template.md, data dictionary, dashboard template, generate-data.js, guide skeletons
 ```
 
-- `<solution_slug>` = folder name = `agent_outputs/<customer_slug>/<solution_slug>/` folder name.
+- `<solution_slug>` = folder name = the default `<project_slug>` (`agent_outputs/<solution_slug>/`, agent `<solution_slug>-agent`) when the user adds no project prefix.
 - Register the solution in `.claude-plugin/marketplace.json`. Never register `shared/` (a plain reference folder with no `SKILL.md`) or anything under `project_templates/`, and no file named `SKILL.md` may exist in either.
 - Every file ≤ 1 MB (Treasure AI Studio drops larger files when skills are shared).
 
@@ -40,7 +40,7 @@ ai-signals-skills/<solution_slug>/
 3. `## How to Start` — "Read `../shared/playbook.md` … This file provides the <X>-specific context." Nothing between the title and this section.
 4. `## Phase Summary` — exactly 5 rows, Phase 1–5, matching §4.
 5. `## <X>-Specific Context by Phase` — one `### Phase N` per phase, in order, with explicit steps, the `references/` files to read **at that point**, and solution values.
-6. After the phase sections, in any order: optional solution reference sections; `## How It Works`; `## Quick Reference` (solution slug, both template paths, default workflow project name, entry point, config file, key outputs, default agent name).
+6. After the phase sections, in any order: optional solution reference sections; `## How It Works`; `## Quick Reference` (solution slug, short name for project names, both template paths, default workflow project name, entry point, config file, key outputs, default agent name).
 
 ## 3. Template rules
 
@@ -58,10 +58,10 @@ ai-signals-skills/<solution_slug>/
 
 ### `agent_template/`
 - `SKILL.template.md` is renamed to `SKILL.md` only when installed into `.claude/skills/<agent-name>/` (`shared/customer_agent_pattern.md`).
-- Placeholders use `{{name}}`. Always: `{{agent_name}}`, `{{customer_name}}`, `{{customer_slug}}`, `{{sink_database}}`, `{{engagement_dir}}`; solution extras are listed in `references/agent-setup.md`.
+- Placeholders use `{{name}}`. Always: `{{agent_name}}`, `{{project_name}}`, `{{project_slug}}`, `{{sink_database}}`, `{{engagement_dir}}`; solution extras are listed in `references/agent-setup.md`.
 - Build-time placeholders appear **only in `.md` files**. Scripts, HTML and data files are copied verbatim — they may use their own runtime tokens (e.g. the dashboard template's `{{session_id}}`, filled by `generate-data.js`) and take customer values as command-line arguments.
 - Its `references/` hold analysis knowledge that is not customer-specific (output-table dictionary incl. what each output means, dashboard template, scripts). The engagement's `business-context.md` and the solution's `ai-signals-guide.md` are copied in at every build, the guides in Phase 4 / Phase 5 and the runbook at finalize time. There is no `customer-context.md`.
-- It ships a **business context skeleton**, `references/business-context.template.md`: the customer's business knowledge only — never how the model works. Sections in this order, each with 3–5 "questions to consider" bullets: Business Overview, Customers and Identity, Key Terms and Definitions, Buying Cycle and Seasonality, Data Intricacies and Edge Cases, Goals and Use Cases, Rules and Exclusions, then one `<Solution> Definitions` section. Drafted in Phase 1 into `agent_outputs/<customer_slug>/<solution_slug>/business-context.md` (`shared/playbook.md`), open questions carried into the requirements doc, confirmed in Phase 5.
+- It ships a **business context skeleton**, `references/business-context.template.md`: the customer's business knowledge only — never how the model works. Sections in this order, each with 3–5 "questions to consider" bullets: Business Overview, Customers and Identity, Key Terms and Definitions, Buying Cycle and Seasonality, Data Intricacies and Edge Cases, Goals and Use Cases, Rules and Exclusions, then one `<Solution> Definitions` section. Drafted in Phase 1 into `agent_outputs/<project_slug>/business-context.md` (`shared/playbook.md`), open questions carried into the requirements doc, confirmed in Phase 5.
 - It ships two **guide skeletons** in `references/`: `workflow-guide.template.md` (as-built workflow: pipeline, config, mappings, customizations, output tables) and `model-setup-walkthrough.template.md` (discovery, decision log, cleaning, validation baseline, artifacts, presentation recipe, accuracy rules). Each is headings plus `<!-- fill … -->` blocks listing what to fetch and from where, tailored to the solution. They are removed from every build and filled only on request — as **interim** guides in Phase 4 (hands-on kit) and **final** guides in Phase 5 (`shared/customer_agent_pattern.md` Step 4).
 - `SKILL.template.md` has a **How It Was Built** section that routes end-to-end workflow questions to `workflow-guide.md` and setup / decision questions to `model-setup-walkthrough.md`, with a fallback to `project_state.md` when they are not built yet.
 
@@ -81,8 +81,8 @@ ai-signals-skills/<solution_slug>/
 
 Cross-cutting rules:
 - **Questions:** always `AskUserQuestion`, never plain-text lists. Put the standard *How to ask* block (batches ≤ 4, 2–4 options, `(Recommended)` default, implicit Other) at the top of each question step.
-- **Name gates:** sink database (default `td_agents`) and workflow project name (template default) in Phase 3, customer agent name (`<customer_slug>-<solution_slug>-agent`) in Phase 4 — default-then-confirm, recorded in `project_state.md`. Each default is checked for an existing engagement first; if taken, a customer-specific name is recommended.
-- **Outputs:** everything goes to `agent_outputs/<customer_slug>/<solution_slug>/`, except the installed agent in `.claude/skills/<agent-name>/` (with its own `.gitignore`). Run commands from the working directory; subshells for anything elsewhere.
+- **Name gates:** project name at the Entry Point (optional prefix; `<project_slug>` = `[<prefix>-]<solution_slug>`), sink database (default `td_agents`) and workflow project name (template default) in Phase 3 — default-then-confirm, recorded in `project_state.md`. The customer agent is `<project_slug>-agent`, asked only if taken. Each default is checked for an existing project first; if taken, a project-specific name is recommended.
+- **Outputs:** everything goes to `agent_outputs/<project_slug>/`, except the installed agent in `.claude/skills/<agent-name>/` (with its own `.gitignore`). Run commands from the working directory; subshells for anything elsewhere.
 - **Secrets:** use the exact secret name the template reads; the user sets it themselves (`! tdx wf secrets set <project> <name>=…`).
 - **No** Confluence, GitHub, internal names, real customer data, or hard-coded databases.
 

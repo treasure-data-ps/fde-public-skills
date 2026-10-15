@@ -10,7 +10,7 @@ Each solution bundles its TD Workflow template in `<solution_dir>/project_templa
 
 ## ALWAYS MUST
 
-- Never edit files under `project_templates/`. All customer edits happen in `agent_outputs/<customer_slug>/<solution_slug>/workflow/`.
+- Never edit files under `project_templates/`. All customer edits happen in `agent_outputs/<project_slug>/workflow/`.
 - Before writing the config, confirm the sink database (Step 3a); before any `tdx wf push` / `tdx wf upload`, confirm the TD workflow project name (Step 5). Both use the default-then-confirm gate in `SKILL.md`.
 - Before any `tdx wf run`, ask the user whether to run now.
 
@@ -25,14 +25,14 @@ The calling solution SKILL provides these values (see its "Quick Reference" sect
 | `<Workflow Entry point>` | `.dig` file that kicks off a run |
 | `<Workflow Config file>` | Params YAML inside the template (e.g. `config/input_params.yml`) |
 
-`<workdir>` below means `agent_outputs/<customer_slug>/<solution_slug>/workflow`.
+`<workdir>` below means `agent_outputs/<project_slug>/workflow`.
 
 ## Step 1: Copy the Template
 
 Bootstrap `agent_outputs/` first if not done (`local_outputs.md` Step 1). Then:
 
 ```bash
-dest="agent_outputs/<customer_slug>/<solution_slug>/workflow"
+dest="agent_outputs/<project_slug>/workflow"
 [ -d "$dest" ] || { mkdir -p "$dest" && cp -R "<solution_dir>/project_templates/workflow_template/." "$dest/"; }
 ```
 
@@ -50,7 +50,7 @@ You should NOT need to edit anything in `queries/`, `sql/`, `python/` or `python
 
 ### 3a: Sink database gate
 
-Default: `td_agents`. First check it doesn't already hold this solution's output tables from another engagement: `tdx tables "td_agents.<output_table_prefix>*"` (the prefix is in the template README's Outputs section, e.g. `nba_`). If it does, a run would overwrite them — recommend `<output_table_prefix><customer_slug>` (e.g. `nba_acme`) instead and say why. Ask with `AskUserQuestion`: "Use `<recommended>` (Recommended)" / "Use a different database" — explain that the workflow's output tables are written there and the customer agent will query it. Record the answer in `project_state.md`. If the database doesn't exist, the workflow's create-database step creates it on first run (check the template README).
+Default: `td_agents`. First check it doesn't already hold this solution's output tables from another engagement: `tdx tables "td_agents.<output_table_prefix>*"` (the prefix is in the template README's Outputs section, e.g. `nba_`). If it does, a run would overwrite them — recommend `<output_table_prefix><project_prefix>` with `-` → `_` (e.g. `nba_loyalty`) instead and say why — if the project has no prefix, ask the user for one. Ask with `AskUserQuestion`: "Use `<recommended>` (Recommended)" / "Use a different database" — explain that the workflow's output tables are written there and the customer agent will query it. Record the answer in `project_state.md`. If the database doesn't exist, the workflow's create-database step creates it on first run (check the template README).
 
 ### 3b: Edit the config
 
@@ -68,7 +68,7 @@ If the customer's region is non-default (EU01, AP02, etc.), confirm `tdx` is tar
 
 ## Step 5: Confirm the Project Name and Push
 
-First check the default isn't taken: `tdx wf projects <Workflow project name>`. If it exists, pushing would replace another engagement's project — recommend `<Workflow project name>_<customer_slug>` instead and say why. Use `AskUserQuestion`: push under the recommended name, or a custom name (used for multiple isolated pipelines per region or brand).
+First check the default isn't taken: `tdx wf projects <Workflow project name>`. If it exists, pushing would replace another project's workflow — recommend `<Workflow project name>_<project_prefix>` with `-` → `_` (e.g. `rfm_ais_loyalty`) instead and say why; if the project has no prefix, ask the user for one. Use `AskUserQuestion`: push under the recommended name, or a custom name (used for multiple isolated pipelines per region or brand).
 
 Make sure `<workdir>/tdx.json` exists and names the confirmed project — some templates ship without one. Create or update it with the Write tool:
 

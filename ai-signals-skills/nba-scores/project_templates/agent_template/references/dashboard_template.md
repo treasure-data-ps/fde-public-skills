@@ -14,7 +14,7 @@ Instead of manually executing queries and substituting tokens in context, use `g
 
 ```bash
 # Run from the Work Folder root (the folder that contains .claude/ and agent_outputs/)
-node ".claude/skills/{{agent_name}}/references/generate-data.js" {{sink_database}} {{customer_slug}} "{{customer_name}}" \
+node ".claude/skills/{{agent_name}}/references/generate-data.js" {{sink_database}} {{project_slug}} "{{project_name}}" \
   -o "{{engagement_dir}}/dashboards/nba_summary_dashboard.html"
 ```
 
@@ -23,8 +23,8 @@ node ".claude/skills/{{agent_name}}/references/generate-data.js" {{sink_database
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `SOURCE_DB` | Env / Arg 1 | Required | Customer's sink database where NBA output tables reside (e.g., `nba_output`) |
-| `CUSTOMER_SLUG` | Env / Arg 2 | `customer` | Target directory slug for customer output |
-| `CUSTOMER_NAME` | Env / Arg 3 | Title-cased slug | Display name in dashboard header |
+| `PROJECT_SLUG` | Env / Arg 2 | `nba-scores` | Project slug — default output folder `agent_outputs/<project_slug>/dashboards/` |
+| `PROJECT_NAME` | Env / Arg 3 | Title-cased slug | Display name in dashboard header |
 | `SCORING_LOGIC` | Env | `quartile` | Scoring strategy used (`percentile`, `quartile`, `minmax`) |
 | `-o, --output` | String | `./agent_outputs/<slug>/nba-scores/dashboards/nba_summary_dashboard.html` | Custom output file destination |
 | `-t, --template` | String | `dashboard_template.html` next to the script | Path to template file |

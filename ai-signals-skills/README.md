@@ -21,7 +21,7 @@ Every ML solution follows the same 5 phases (defined in `shared/playbook.md`):
 4. **Production config** — apply the customer's answers, re-push, re-validate
 5. **Parent Segment + docs** — add score attributes and example audiences, write the documentation set to `agent_outputs/`
 
-All outputs are written to the git-ignored `agent_outputs/<customer_slug>/<solution_slug>/` folder in the user's working directory — see `shared/local_outputs.md`.
+All outputs are written to the git-ignored `agent_outputs/<project_slug>/` folder in the user's working directory — see `shared/local_outputs.md`.
 
 ## Sub-folder convention
 

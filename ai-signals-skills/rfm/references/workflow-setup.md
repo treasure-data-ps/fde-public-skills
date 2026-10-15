@@ -5,7 +5,7 @@ Use with `../../shared/push_pattern_td_workflows.md` (copy, gates, push, run). T
 - `<workdir>/README.md` — workflow structure, what every parameter does and how to choose it, outputs, customization points
 - `<workdir>/config/input_params.yml` — exact parameter names, nesting and syntax (edit this file in place; keep every key)
 
-`<workdir>` = `agent_outputs/<customer_slug>/rfm/workflow`. This file adds only what the template can't: how to pick values from the customer's data, RFM deploy details, and the output checks.
+`<workdir>` = `agent_outputs/<project_slug>/workflow`. This file adds only what the template can't: how to pick values from the customer's data, RFM deploy details, and the output checks.
 
 > **Minimal push first (Phase 3, before requirements come back).** Configure the real sources, IDs, timestamps, order amounts, context columns and filters from Phase 1; take the "First push" default of every rule below; template values for everything else; schedule and failure email left commented. Record each assumed value and data caveat in `project_state.md` as "default — confirm in requirements" and move on — caveats are resolved in Phase 4, not before the first run.
 

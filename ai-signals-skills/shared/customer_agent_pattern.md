@@ -1,12 +1,12 @@
 ---
 name: shared-customer-agent-pattern
 description: |
-  Generic mechanics for turning a solution's agent template (`project_templates/agent_template/`) into a customer-specific Claude skill in the Work Folder's `.claude/skills/<agent-name>/`: name gate, placeholder filling, hands-on build vs. final, interim and final guides, git-ignore guard, verification. The solution's `references/agent-setup.md` supplies the "what". Used by every solution under ai-signals-skills/.
+  Generic mechanics for turning a solution's agent template (`project_templates/agent_template/`) into a project-specific Claude skill in the Work Folder's `.claude/skills/<agent-name>/`: name gate, placeholder filling, hands-on build vs. final, interim and final guides, git-ignore guard, verification. The solution's `references/agent-setup.md` supplies the "what". Used by every solution under ai-signals-skills/.
 ---
 
 # Shared: Customer Agent Pattern
 
-Each solution ships a **blueprint** of its analysis agent in `<solution_dir>/project_templates/agent_template/`. It is never used directly. During an engagement it is copied into the user's Work Folder as a customer-specific skill:
+Each solution ships a **blueprint** of its analysis agent in `<solution_dir>/project_templates/agent_template/`. It is never used directly. During an engagement it is copied into the user's Work Folder as the project's own skill:
 
 ```
 <working directory>/.claude/skills/<agent-name>/
@@ -28,21 +28,21 @@ The solution's `references/agent-setup.md` lists the placeholders, the extra fil
 
 Re-run Steps 2–3 (and refresh the guides with Step 4) whenever the workflow config, business context or docs change materially.
 
-## Step 1: Name gate (first build only)
+## Step 1: Agent name (first build only)
 
-Default name: `<customer_slug>-<solution_slug>-agent` (e.g. `acme-rfm-agent`). Ask with `AskUserQuestion`: "Use `<default>` (Recommended)" / "Use a different name". Names: lowercase letters, digits, hyphens. If `.claude/skills/<name>/` already exists for a different engagement, ask before overwriting. Record the name in `project_state.md`.
+The name is `<project_slug>-agent` (e.g. `rfm-agent`, `loyalty-rfm-agent`), fixed by the project name chosen at the start — do not ask again. Only if `.claude/skills/<name>/` already exists for a different project, say so and ask for another name (lowercase letters, digits, hyphens). Record the name in `project_state.md`.
 
 ## Step 2: Build the agent in a staging folder
 
 Never copy an unfilled template into `.claude/skills/` — anything there is live immediately.
 
 ```bash
-stage="agent_outputs/<customer_slug>/<solution_slug>/agent_build/<agent-name>"
+stage="agent_outputs/<project_slug>/agent_build/<agent-name>"
 mkdir -p "$stage"
 cp -R "<solution_dir>/project_templates/agent_template/." "$stage/"
 mv "$stage/SKILL.template.md" "$stage/SKILL.md"
 rm -f "$stage"/references/*.template.md   # skeletons — guides filled in Step 4, business context below; never installed unfilled
-cp "agent_outputs/<customer_slug>/<solution_slug>/business-context.md" "$stage/references/business-context.md"
+cp "agent_outputs/<project_slug>/business-context.md" "$stage/references/business-context.md"
 [ -f "<solution_dir>/references/ai-signals-guide.md" ] && cp "<solution_dir>/references/ai-signals-guide.md" "$stage/references/"
 ```
 
@@ -53,9 +53,9 @@ Fill every `{{placeholder}}` in the **`.md` files** of `$stage` (Edit/Write tool
 | Placeholder | Value |
 |---|---|
 | `{{agent_name}}` | confirmed agent name (also the frontmatter `name:`) |
-| `{{customer_name}}` / `{{customer_slug}}` | customer |
+| `{{project_name}}` / `{{project_slug}}` | project display name / slug (`local_outputs.md` Step 2) |
 | `{{sink_database}}` | confirmed sink database (output tables live here) |
-| `{{engagement_dir}}` | `agent_outputs/<customer_slug>/<solution_slug>` |
+| `{{engagement_dir}}` | `agent_outputs/<project_slug>` |
 
 plus the solution-specific placeholders in `references/agent-setup.md`. Then check none remain:
 

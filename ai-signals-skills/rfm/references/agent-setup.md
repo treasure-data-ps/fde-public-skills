@@ -1,6 +1,6 @@
 # RFM Customer Segmentation — Customer Agent Setup
 
-RFM specifics for `../../shared/customer_agent_pattern.md` (name gate, staging build, install, verify). Template: `<solution_dir>/project_templates/agent_template/`. Default agent name: `<customer_slug>-rfm-agent`.
+RFM specifics for `../../shared/customer_agent_pattern.md` (agent name, staging build, install, verify). Template: `<solution_dir>/project_templates/agent_template/`. Agent name: `<project_slug>-agent` (`rfm-agent` by default).
 
 ## What the agent does
 
@@ -13,10 +13,10 @@ Only the standard placeholders are used, all in `.md` files:
 | Placeholder | Value | Used in |
 |---|---|---|
 | `{{agent_name}}` | Confirmed agent name | `SKILL.md` frontmatter, generator path in `SKILL.md` and `references/dashboard_template.md` |
-| `{{customer_name}}` | Customer display name | `SKILL.md` description and intro, dashboard command |
-| `{{customer_slug}}` | Customer slug | Dashboard command |
+| `{{project_name}}` | Project display name (e.g. `Loyalty RFM`) | `SKILL.md` description and intro, dashboard command |
+| `{{project_slug}}` | Project slug (e.g. `loyalty-rfm`) | Dashboard command |
 | `{{sink_database}}` | Confirmed sink database | `SKILL.md`, `references/data-dictionary.md`, `references/dashboard_template.md` |
-| `{{engagement_dir}}` | `agent_outputs/<customer_slug>/rfm` | `SKILL.md`, `references/dashboard_template.md` |
+| `{{engagement_dir}}` | `agent_outputs/<project_slug>` | `SKILL.md`, `references/dashboard_template.md` |
 
 `references/generate-data.js` and `references/dashboard_template.html` are copied unchanged — their `{{…}}` tokens are filled by the script at run time.
 
@@ -29,7 +29,7 @@ Two files are copied in at every build (`../../shared/customer_agent_pattern.md`
 After installing, from the Work Folder root:
 
 1. `tdx query -d <sink_database> "SELECT MAX(session_id) FROM rfm_stats_model_params"` returns the validated run.
-2. Generate the dashboard once with the command in the installed `SKILL.md`. Pass = the command exits without an error and `ls -l agent_outputs/<customer_slug>/rfm/dashboards/rfm_summary_dashboard.html` shows the file. Nothing else — the dashboard template and `generate-data.js` are pre-validated: run the command once and use the result as it is. Do not take screenshots, run browser, QA or validation scripts, re-check the data, or edit the generated HTML, and do not apply other visualization or design skills to it. If something looks wrong, tell the user instead of fixing it. Requires `node`; if it is missing, tell the user the chat analysis still works and the HTML dashboard needs Node.js.
+2. Generate the dashboard once with the command in the installed `SKILL.md`. Pass = the command exits without an error and `ls -l agent_outputs/<project_slug>/dashboards/rfm_summary_dashboard.html` shows the file. Nothing else — the dashboard template and `generate-data.js` are pre-validated: run the command once and use the result as it is. Do not take screenshots, run browser, QA or validation scripts, re-check the data, or edit the generated HTML, and do not apply other visualization or design skills to it. If something looks wrong, tell the user instead of fixing it. Requires `node`; if it is missing, tell the user the chat analysis still works and the HTML dashboard needs Node.js.
 
 ## Guides (Phase 4 interim, Phase 5 final)
 

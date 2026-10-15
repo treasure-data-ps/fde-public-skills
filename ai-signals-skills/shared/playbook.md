@@ -10,8 +10,8 @@ During an engagement you copy those templates into the user's working directory 
 | Layer | Location | Contents |
 |---|---|---|
 | Framework (read-only) | this plugin | instructions + templates |
-| Engagement workspace | `agent_outputs/<customer_slug>/<solution_slug>/` | workflow copy, project state, business context, requirements, docs, dashboards |
-| Customer agent | `.claude/skills/<agent-name>/` | customer-specific analysis skill, built from `agent_template/` |
+| Engagement workspace | `agent_outputs/<project_slug>/` | workflow copy, project state, business context, requirements, docs, dashboards |
+| Customer agent | `.claude/skills/<agent-name>/` | the project's analysis skill, built from `agent_template/` |
 
 `<solution_dir>` is the folder containing the solution's `SKILL.md` — resolve it to an absolute path from the skill's base directory before copying anything.
 
@@ -28,27 +28,28 @@ During an engagement you copy those templates into the user's working directory 
 
 ## Default-then-confirm names
 
-Three names are always proposed with a default and confirmed with `AskUserQuestion` ("Use `<default>` (Recommended)" / "Use a different name"). Record each answer in `project_state.md` and reuse it everywhere afterwards.
+These names are proposed with a default and confirmed with `AskUserQuestion` ("Use `<default>` (Recommended)" / "Use a different name"). Record each answer in `project_state.md` and reuse it everywhere afterwards.
 
-Before asking, check the default is free — the account may already hold another engagement of the same solution. If it is taken, say so and recommend a customer-specific name instead (project `nba_eng_prod` → `nba_eng_prod_acme`; sink database `td_agents` → `nba_acme`), so one engagement never overwrites another's tables or project. The checks are in `push_pattern_td_workflows.md` (Step 3a, Step 5) and `customer_agent_pattern.md` (Step 1).
+Before asking, check the default is free — the account may already hold another project of the same solution. If it is taken, say so and recommend a project-specific name instead, built from the project prefix with `-` → `_` (prefix `loyalty`: project `rfm_ais` → `rfm_ais_loyalty`; sink database `td_agents` → `rfm_loyalty`), so one project never overwrites another's tables or workflow. If the project has no prefix, ask the user for one (team or use case). The checks are in `local_outputs.md` (Step 2), `push_pattern_td_workflows.md` (Step 3a, Step 5) and `customer_agent_pattern.md` (Step 1).
 
 | Name | Asked | Default |
 |---|---|---|
+| Project name | Entry Point, before anything is written | no prefix — `<project_slug>` = `<solution_slug>` (`local_outputs.md` Step 2) |
 | Sink database | Phase 3, before writing the workflow config | `td_agents` |
 | Workflow project name | Phase 3, before the first push | the template's default (solution Quick Reference) |
-| Customer agent name | Phase 4, when the hands-on kit is built | `<customer_slug>-<solution_slug>-agent` |
+| Customer agent name | not asked — derived from the project name; asked only if taken (`customer_agent_pattern.md` Step 1) | `<project_slug>-agent` |
 
 ## Entry Point
 
 Ask: **"Is this a new solution engagement, or are you resuming an existing one?"**
 
-- **New:** present the 5-phase plan below, then start Phase 1.
-- **Resume:** list `agent_outputs/*/<solution_slug>/project_state.md` (see `project_state.md`), confirm the customer, read it — "Current phase" + "Next Action" say where to pick up.
+- **New:** ask for the project name first (`local_outputs.md` Step 2) with `AskUserQuestion`: "Use the default `<solution_slug>` — agent `<solution_slug>-agent` (Recommended)" / "Add a project prefix" (a team or use case, e.g. `loyalty` → `loyalty-<solution_slug>-agent`, so several people can build their own models side by side). Recommend a prefix instead if the default is already used here. State the resulting project slug and agent name once, use them everywhere afterwards, then present the 5-phase plan below and start Phase 1.
+- **Resume:** list `agent_outputs/*/project_state.md` and keep those whose **Solution** is this one (see `project_state.md`), confirm the project, read it — "Current phase" + "Next Action" say where to pick up.
 
 | User says | Likely phase |
 |---|---|
 | "the customer filled out their requirements" | Phase 4 |
-| "push a fresh workflow for [customer]" | Phase 1 → Phase 3 |
+| "push a fresh workflow for [project]" | Phase 1 → Phase 3 |
 | "create the requirements doc" | Phase 2 |
 | "build / update the customer agent", "build the dashboard", "write the workflow guide / setup walkthrough" | Phase 4 (hands-on kit) or Phase 5 (final) |
 | "add the scores to the parent segment" / "create example audiences" | Phase 5 Step 1 |
@@ -74,24 +75,24 @@ Rules for every phase:
 `business-context.md` holds what the customer knows about their business and the model can't learn from the data — business jargon, definitions (lead, high-value customer, conversion), buying cycles, data edge cases, goals and exclusion rules. It is the customer agent's main source of business meaning. How the model works does **not** belong here (that is in the solution's model guide, the agent's `data-dictionary.md` and the guides).
 
 1. `local_outputs.md` Step 1 — bootstrap `agent_outputs/`; `project_state.md` — create the state file (if not already there).
-2. Copy `<solution_dir>/project_templates/agent_template/references/business-context.template.md` to `agent_outputs/<customer_slug>/<solution_slug>/business-context.md`, fill `{{customer_name}}`, and follow its authoring rules: answer what the Phase 1 findings support with confidence, marked `[INFERRED — please confirm]`; leave every other question under its section marked `[NEEDS YOUR INPUT]`. Do not run extra queries for it.
-3. Show the user a short summary — one line per section: what was inferred, and the open questions — then ask with `AskUserQuestion`: "Looks right — continue (Recommended)" / "I'll add context now" / "Change assumptions". Write any answer into the file (customer answers replace inferences; remove the marker of each answered item) and record "Business context: drafted / reviewed `<date>`" in `project_state.md`.
+2. Copy `<solution_dir>/project_templates/agent_template/references/business-context.template.md` to `agent_outputs/<project_slug>/business-context.md`, fill `{{project_name}}`, and follow its authoring rules: answer what the Phase 1 findings support with confidence, marked `[INFERRED — please confirm]`; leave every other question under its section marked `[NEEDS YOUR INPUT]`. Do not run extra queries for it.
+3. Show the user a short summary — one line per section: what was inferred, and the open questions — then ask with `AskUserQuestion`: "Looks right — continue (Recommended)" / "I'll add context now" / "Change assumptions". Write any answer into the file (customer answers replace inferences; remove the marker of each answered item) and record "Business context: drafted / reviewed `<date>`" in `project_state.md`, with Current phase → "2 — requirements doc" and Next Action "Write the requirements doc".
 4. Continue to Phase 2 — questions still marked `[NEEDS YOUR INPUT]` go to the customer through the requirements doc.
 
 ### Phase 2: Customer Requirements Doc
 
 1. If not done in Phase 1: `local_outputs.md` Step 1 (bootstrap `agent_outputs/`) and `project_state.md` (create the state file).
-2. If `agent_outputs/<customer_slug>/<solution_slug>/requirements.md` already exists, read it and ask whether it is the customer's filled version — if yes, go to Phase 4.
-3. Write `requirements.md` there from the solution's `references/requirements_doc.md` (title `<Solution Name> Requirements - <Customer>`). It must read as a clean customer questionnaire — no "generated by" notes or discovery details (those belong in `project_state.md`).
+2. If `agent_outputs/<project_slug>/requirements.md` already exists, read it and ask whether it is the customer's filled version — if yes, go to Phase 4.
+3. Write `requirements.md` there from the solution's `references/requirements_doc.md` (title `<Project Name> Requirements`). It must read as a clean customer questionnaire — no "generated by" notes or discovery details (those belong in `project_state.md`).
 4. End it with a **Business context** section: every question still marked `[NEEDS YOUR INPUT]` in `business-context.md`, except those the doc's own sections already ask, each with `> _Your answer:_`. Omit the section if none are left.
-6. Hand its path to the user: it is plain markdown they can share in any format, and the customer's filled version must be saved back to the same path. Record "requirements doc sent `<date>`" in `project_state.md`.
-7. **Continue to Phase 3** — do not wait for the answers.
+5. Tell the user in one line, as soon as the file is written: its path, that it is plain markdown to share with the customer in any format, and that the filled version must be saved back to the same path. Then update `project_state.md`: requirements doc "sent `<date>`", Current phase → "3 — minimal workflow", Next Action "Push and validate the first workflow run".
+6. **Continue to Phase 3** — do not wait for the answers.
 
 ### Phase 3: Minimal Workflow
 
-1. `push_pattern_td_workflows.md` + the solution's `references/workflow-setup.md` — copy `workflow_template/`, read its `README.md`, confirm the sink database, write the config from Phase 1 findings + any answers (safe defaults otherwise), confirm the project name, push, ask before running.
+1. `push_pattern_td_workflows.md` + the solution's `references/workflow-setup.md` — copy `workflow_template/`, read its `README.md`, confirm the sink database, write the config from Phase 1 findings + any answers (safe defaults otherwise), confirm the workflow project name, push, ask before running.
 2. Validate the outputs per the "Validate" section of `references/workflow-setup.md`.
-3. Update `project_state.md`.
+3. Update `project_state.md` (Current phase → "4 — hands-on kit and requirements").
 4. **Offer the hands-on kit** — summarize the validated run, then ask with `AskUserQuestion` what to build now for Phase 4 testing:
    - "Agent, dashboard and both guides (Recommended)" — the customer agent, its HTML dashboard, `workflow-guide.md` and `model-setup-walkthrough.md`
    - "Agent and dashboard only"
@@ -112,7 +113,7 @@ The hands-on kit lets non-technical users and the customer test the model and se
 
 **Part B — Update from customer requirements** (usually a new session — **read `project_state.md` first**):
 
-1. Read the filled `requirements.md` (if the customer returned it elsewhere, ask the user to save it to `agent_outputs/<customer_slug>/<solution_slug>/requirements.md` first).
+1. Read the filled `requirements.md` (if the customer returned it elsewhere, ask the user to save it to `agent_outputs/<project_slug>/requirements.md` first).
 2. Map the answers with the mapping table at the end of the solution's `references/requirements_doc.md`, then present the planned config changes; wait for approval.
 3. Edit the config in the workflow copy (`references/workflow-setup.md`), re-push, re-run, re-validate.
 4. Merge the business answers (use case, Business context section, definitions in any answer) into `business-context.md` — customer answers replace inferences; remove the marker of each answered item.

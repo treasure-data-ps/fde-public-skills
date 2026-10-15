@@ -10,11 +10,11 @@
   customer RFM agent) substitutes with real data from the customer's RFM output tables.
 
   RECOMMENDED EXECUTION (Fast build-time query & bake via generate-data.js):
-    node generate-data.js [sink_database] [customer_slug] [customer_name]
+    node generate-data.js [sink_database] [project_slug] [project_name]
     # Or with environment variable:
-    SOURCE_DB=my_sink_db node generate-data.js acme-corp "ACME Corp"
+    SOURCE_DB=my_sink_db node generate-data.js loyalty-rfm "Loyalty RFM"
     # Or offline mock test:
-    node generate-data.js --mock test-customer "Test Customer Retail"
+    node generate-data.js --mock rfm "RFM"
 
   The generator:
     1. Executes queries Q1–Q8 against customer's sink_database via tdx CLI
@@ -22,7 +22,7 @@
     3. Substitutes all {{TOKEN}} placeholders
     4. Inlines window.RAW data object for programmatic access
     5. Writes the result to:
-         agent_outputs/<customer_slug>/rfm/dashboards/rfm_summary_dashboard.html
+         agent_outputs/<project_slug>/dashboards/rfm_summary_dashboard.html
     6. Opens with mcp__work__open_file
 
   All visual structure (TD palette, layout, tabs, chart shapes) is fixed.
@@ -53,7 +53,7 @@
   ──────────────────────────────────────────────────────────────────────────
 
   ── Header / metadata tokens ────────────────────────────────────────────────
-  {{customer_name}}          — e.g. "Test Customer Travel"
+  {{project_name}}          — e.g. "Loyalty RFM"
   {{sink_database}}          — e.g. "my_sink_db"
   {{customer_id_col}}        — customer identifier detected from rfm_combined_user_events schema
   {{session_id}}             — latest session_id (bigint)
@@ -214,7 +214,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RFM Customer Segmentation — {{customer_name}}</title>
+<title>RFM Customer Segmentation — {{project_name}}</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <style>
   :root {
@@ -282,7 +282,7 @@
 
 <header>
   <h1>RFM Customer Segmentation — Model Summary</h1>
-  <p>{{customer_name}} · {{sink_database}} · Session {{session_id}}</p>
+  <p>{{project_name}} · {{sink_database}} · Session {{session_id}}</p>
   <div class="meta-row">
     <span><strong>Run time:</strong> {{run_time_utc}}</span>
     <span><strong>Customer ID:</strong> {{customer_id_col}}</span>

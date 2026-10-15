@@ -55,12 +55,12 @@ Use `tdx-skills:tdx-basic`. Do not search by table-name patterns.
 6. **Record** in `project_state.md`: table, profile ID column, real event-time column, order value column (monetary sources), context column, filters needed, R/F/M contribution, first/last event date.
 7. **Business context** — playbook Phase 1 "Business context draft and review": copy `project_templates/agent_template/references/business-context.template.md`, answer what steps 1–6 showed (e.g. sales channels from the sources, what counts as a purchase from the order statuses, amount column and currency, test or internal records seen in the filters), review it with the user, continue to Phase 2.
 
-**Solution slug:** `rfm` — all engagement files live in `agent_outputs/<customer_slug>/rfm/`.
+**Solution slug:** `rfm` — all engagement files live in `agent_outputs/<project_slug>/` (`rfm` by default, `<prefix>-rfm` with a project prefix — `../shared/local_outputs.md` Step 2).
 
 ### Phase 2: Requirements Doc
 
-- Title: `RFM Requirements - <Customer>`
-- File: `agent_outputs/<customer_slug>/rfm/requirements.md`
+- Title: `<Project Name> Requirements`
+- File: `agent_outputs/<project_slug>/requirements.md`
 - Body: `references/requirements_doc.md` (pre-fill from Phase 1)
 
 Hand the path to the user and continue to Phase 3.
@@ -68,7 +68,7 @@ Hand the path to the user and continue to Phase 3.
 ### Phase 3: Minimal Workflow
 
 1. Read `../shared/push_pattern_td_workflows.md` and `references/workflow-setup.md`.
-2. Copy `project_templates/workflow_template/` to `agent_outputs/<customer_slug>/rfm/workflow/` and read its `README.md`.
+2. Copy `project_templates/workflow_template/` to `agent_outputs/<project_slug>/workflow/` and read its `README.md`.
 3. **Sink-database gate** (default `td_agents`; first check it holds no `rfm_*` tables from another engagement). The first run creates the database if missing (`references/workflow-setup.md` §3).
 4. Edit `workflow/config/input_params.yml` in place from Phase 1 findings, following `references/workflow-setup.md` §1–2 (minimal-push rule for anything not yet answered). Leave the schedule and failure email in `workflow/rfm_launch.dig` commented unless the user asks for them.
 5. **Project-name gate** (default `rfm_ais`; first check it isn't already taken), push. Ask before running, run, monitor. With `globals.model_type: ai_signals`, no secret is needed up front — only if scoring fails with 401/403, ask the user to set `td.apikey` themselves (`references/workflow-setup.md` §3).
@@ -80,7 +80,7 @@ Hand the path to the user and continue to Phase 3.
 
 **Part A — Hands-on kit** (per the Phase 3 answer, or whenever the user asks):
 
-1. **Agent-name gate** (default `<customer_slug>-rfm-agent`), then build and install the agent: `../shared/customer_agent_pattern.md` Steps 1–3 + `references/agent-setup.md`.
+1. **Agent** `<project_slug>-agent` (asked only if taken) — build and install it: `../shared/customer_agent_pattern.md` Steps 1–3 + `references/agent-setup.md`.
 2. Generate the dashboard and run the build checks in `references/agent-setup.md`.
 3. If the guides were chosen: fill `workflow-guide.md` and `model-setup-walkthrough.md` as **interim** guides (`../shared/customer_agent_pattern.md` Step 4) and reinstall the agent.
 4. Tell the user what was built and that testers can use the agent and dashboard in new chats in this folder; update `project_state.md`.
@@ -116,12 +116,13 @@ Hand the path to the user and continue to Phase 3.
 ## Quick Reference
 
 - **Solution slug:** `rfm`
-- **Workflow template:** `project_templates/workflow_template/` → working copy `agent_outputs/<customer_slug>/rfm/workflow/`
+- **Short name (project names):** `RFM` — e.g. `Loyalty RFM`
+- **Workflow template:** `project_templates/workflow_template/` → working copy `agent_outputs/<project_slug>/workflow/`
 - **Agent template:** `project_templates/agent_template/` → `.claude/skills/<agent-name>/`
 - **Default workflow project name:** `rfm_ais`
 - **Entry point:** `rfm_launch.dig`
 - **Config file:** `config/input_params.yml`
 - **Scoring model:** `globals.model_type` — `ai_signals` (default, `rfm_ai_signals.dig`) or `custom` (`rfm_custom.dig`)
 - **Key outputs:** `rfm_output_table` (Parent Segment attributes); `rfm_stats`, `rfm_stats_histogram`, `rfm_stats_model_params`, `rfm_stats_daily_agg`
-- **Default agent name:** `<customer_slug>-rfm-agent`
+- **Agent name:** `<project_slug>-agent` — `rfm-agent` by default
 - **Secrets:** `td.apikey` read by `ai_signals` — usually provided by TD Workflow; set only on 401/403

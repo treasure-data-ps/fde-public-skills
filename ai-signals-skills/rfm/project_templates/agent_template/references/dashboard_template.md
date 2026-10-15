@@ -14,7 +14,7 @@ Instead of manually executing queries and substituting tokens, use `generate-dat
 
 ```bash
 # Run from the Work Folder root (where agent_outputs/ lives).
-node ".claude/skills/{{agent_name}}/references/generate-data.js" {{sink_database}} {{customer_slug}} "{{customer_name}}" \
+node ".claude/skills/{{agent_name}}/references/generate-data.js" {{sink_database}} {{project_slug}} "{{project_name}}" \
   -o "{{engagement_dir}}/dashboards/rfm_summary_dashboard.html"
 ```
 
@@ -23,8 +23,8 @@ node ".claude/skills/{{agent_name}}/references/generate-data.js" {{sink_database
 | Parameter | Type | Default | Description |
 |-----------|------|---------|-------------|
 | `SOURCE_DB` | Env / Arg 1 | Required | Customer's sink database where RFM output tables live |
-| `CUSTOMER_SLUG` | Env / Arg 2 | `customer` | Target directory slug for output |
-| `CUSTOMER_NAME` | Env / Arg 3 | Title-cased slug | Display name in dashboard header |
+| `PROJECT_SLUG` | Env / Arg 2 | `rfm` | Project slug — default output folder `agent_outputs/<project_slug>/dashboards/` |
+| `PROJECT_NAME` | Env / Arg 3 | Title-cased slug | Display name in dashboard header |
 | `CUSTOMER_ID_COL` / `-c, --customer-id-col` | Env / Flag | Auto-detected | Customer identifier column in `rfm_combined_user_events` (e.g., `td_consumer_id`, `canonical_id`) |
 | `-o, --output` | String | `agent_outputs/<slug>/rfm/dashboards/rfm_summary_dashboard.html` (relative to cwd) | Custom output file path |
 | `-t, --template` | String | `dashboard_template.html` next to the script | Path to template file |

@@ -1,12 +1,12 @@
 ---
 name: shared-customer-docs-pattern
 description: |
-  Reusable Phase 5 documentation set, written as local markdown files to `agent_outputs/<customer_slug>/<solution_slug>/docs/`. Defines the standard doc files (Architecture, Behavior, Eval Results, Runbook, Access & Ownership), their create order, and the "what changes when X" rules. Used by every solution under ai-signals-skills/.
+  Reusable Phase 5 documentation set, written as local markdown files to `agent_outputs/<project_slug>/docs/`. Defines the standard doc files (Architecture, Behavior, Eval Results, Runbook, Access & Ownership), their create order, and the "what changes when X" rules. Used by every solution under ai-signals-skills/.
 ---
 
 # Shared: Customer-Specific Documentation Pattern
 
-After the production workflow is validated (and, for solutions with a Parent Segment step, after Phase 5 Step 1), every engagement writes a documentation set to `agent_outputs/<customer_slug>/<solution_slug>/docs/` (see `local_outputs.md`). The file set below is the default; the *content* of each file — and any solution-specific substitutions — come from the calling solution's `references/` directory.
+After the production workflow is validated (and, for solutions with a Parent Segment step, after Phase 5 Step 1), every engagement writes a documentation set to `agent_outputs/<project_slug>/docs/` (see `local_outputs.md`). The file set below is the default; the *content* of each file — and any solution-specific substitutions — come from the calling solution's `references/` directory.
 
 ## When to use
 
@@ -36,7 +36,7 @@ Each doc starts with a one-line audience marker so the user knows what can be sh
 | 4 | `docs/runbook.md` | internal | Re-deploy procedure (edit config in the working copy → `tdx wf push`), re-run + monitoring commands, common failure modes mapped to which parameter to change |
 | 5 | `docs/access_ownership.md` | internal | Solution owner, customer stakeholders with access, support contact, location of the workflow working copy, escalation path for platform issues |
 
-Doc titles inside each file: `# <Solution Name> <Doc Name> - <Customer>`.
+Doc titles inside each file: `# <Project Name> <Doc Name>`.
 
 ## Create Order
 

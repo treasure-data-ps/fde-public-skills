@@ -5,7 +5,7 @@ Use with `../../shared/push_pattern_td_workflows.md` (copy, gates, push, run). T
 - `<workdir>/README.md` — workflow structure, what every parameter does and how to choose it, outputs, customization points
 - `<workdir>/config/input_params.yml` — exact parameter names, nesting and syntax (edit this file in place; keep every key)
 
-`<workdir>` = `agent_outputs/<customer_slug>/nba-scores/workflow`. This file adds only what the template can't: how to pick values from the customer's data, NBA deploy details, and the output checks.
+`<workdir>` = `agent_outputs/<project_slug>/workflow`. This file adds only what the template can't: how to pick values from the customer's data, NBA deploy details, and the output checks.
 
 ---
 

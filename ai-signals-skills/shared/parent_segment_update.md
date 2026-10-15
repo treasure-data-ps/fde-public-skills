@@ -37,10 +37,10 @@ Do not read `references/parent_segment.md` yet — wait for explicit user approv
 ### 2a. Pull the current config
 
 ```bash
-( cd agent_outputs/<customer_slug>/<solution_slug> && tdx ps pull "<Parent Segment Name>" )
+( cd agent_outputs/<project_slug> && tdx ps pull "<Parent Segment Name>" )
 ```
 
-`tdx ps pull` takes the parent segment **name** (not the ID) and saves the config as a single YAML file at `agent_outputs/<customer_slug>/<solution_slug>/parent_segments/<ps-slug>.yml`. It also sets the user's tdx parent-segment context — mention this. (`tdx sg pull` in Step 3 writes to `segments/`, so the two never collide.)
+`tdx ps pull` takes the parent segment **name** (not the ID) and saves the config as a single YAML file at `agent_outputs/<project_slug>/parent_segments/<ps-slug>.yml`. It also sets the user's tdx parent-segment context — mention this. (`tdx sg pull` in Step 3 writes to `segments/`, so the two never collide.)
 
 ### 2b. Read the solution's attribute spec
 
@@ -92,7 +92,7 @@ behaviors:
 ### 2e. Push
 
 ```bash
-( cd agent_outputs/<customer_slug>/<solution_slug> && tdx ps push "<Parent Segment Name>" -y )   # reads parent_segments/<ps-slug>.yml
+( cd agent_outputs/<project_slug> && tdx ps push "<Parent Segment Name>" -y )   # reads parent_segments/<ps-slug>.yml
 ```
 
 Verify the diff shown by tdx confirms the new block appears under `attributes:` and that no behaviors were modified.
@@ -144,15 +144,15 @@ Example:
 tdx sg folder create "Retail Demo" "NBP Examples"
 ```
 
-**Step 2 — Pull the parent segment** to get the correct directory structure. **Always run it inside `agent_outputs/<customer_slug>/<solution_slug>/`, in a subshell** — `tdx sg pull` creates a `segments/<parent-slug>/` directory relative to the current working directory, and running it anywhere else will scatter a `segments/` folder outside the git-ignored `agent_outputs/` (see `local_outputs.md`).
+**Step 2 — Pull the parent segment** to get the correct directory structure. **Always run it inside `agent_outputs/<project_slug>/`, in a subshell** — `tdx sg pull` creates a `segments/<parent-slug>/` directory relative to the current working directory, and running it anywhere else will scatter a `segments/` folder outside the git-ignored `agent_outputs/` (see `local_outputs.md`).
 
 ```bash
-( cd agent_outputs/<customer_slug>/<solution_slug> && tdx sg pull "<Parent Segment Name>" -y )
+( cd agent_outputs/<project_slug> && tdx sg pull "<Parent Segment Name>" -y )
 ```
 
-This creates `agent_outputs/<customer_slug>/<solution_slug>/segments/<parent-slug>/`. After pull, a subdirectory matching the folder name will exist (or create it manually if it doesn't appear):
+This creates `agent_outputs/<project_slug>/segments/<parent-slug>/`. After pull, a subdirectory matching the folder name will exist (or create it manually if it doesn't appear):
 ```
-agent_outputs/<customer_slug>/<solution_slug>/segments/<parent-slug>/
+agent_outputs/<project_slug>/segments/<parent-slug>/
 └── <folder name>/   ← subdirectory name must exactly match folder name
     ├── segment-1.yml
     └── ...
@@ -165,7 +165,7 @@ agent_outputs/<customer_slug>/<solution_slug>/segments/<parent-slug>/
 Before any live push, run a dry-run on one file to confirm the push summary shows the folder prefix:
 
 ```bash
-( cd "agent_outputs/<customer_slug>/<solution_slug>/segments/<parent-slug>" && tdx sg push --dry-run "<folder name>/<segment-file>.yml" )
+( cd "agent_outputs/<project_slug>/segments/<parent-slug>" && tdx sg push --dry-run "<folder name>/<segment-file>.yml" )
 ```
 
 The push summary must read `<folder name>/<Segment Name>` — not just `<Segment Name>`. If the folder prefix is missing, the file is in the wrong directory. Do not proceed until the dry-run confirms correct placement.
@@ -175,7 +175,7 @@ The push summary must read `<folder name>/<Segment Name>` — not just `<Segment
 Push from the parent segment root using explicit relative paths (do not `cd` into the subfolder):
 
 ```bash
-( cd "agent_outputs/<customer_slug>/<solution_slug>/segments/<parent-slug>" && tdx sg push -y "<folder name>/<segment-file>.yml" )
+( cd "agent_outputs/<project_slug>/segments/<parent-slug>" && tdx sg push -y "<folder name>/<segment-file>.yml" )
 ```
 
 Confirm the push summary shows `<folder name>/<Segment Name>` for each push.
