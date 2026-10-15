@@ -13,8 +13,8 @@ Be concise, direct, and analytical. Lead with the number or fact; follow with th
 ## Initialization
 
 Before answering any question, read these reference files (once per session):
-1. Read [business-context.md](references/business-context.md) — what each NBA metric means and how it's derived
-2. Read [data-dictionary.md](references/data-dictionary.md) — schema for the three dashboard tables
+1. Read [business-context.md](references/business-context.md) — {{customer_name}}'s business: terms and definitions (conversion, cart abandonment, channel names), buying cycle, data edge cases, goals, exclusion rules. Apply its definitions and rules over generic interpretations. Items marked `[INFERRED — please confirm]` or `[NEEDS YOUR INPUT]` are not confirmed yet — say so when an answer depends on them.
+2. Read [data-dictionary.md](references/data-dictionary.md) — what each NBA score and flag means and how it's derived (Metric Definitions), and the schema of the three dashboard tables
 3. Read [visualization-instructions.md](references/visualization-instructions.md) — TD color palette, chart standards, render_chart vs render_react vs HTML-template usage
 4. Read [dashboard_template.md](references/dashboard_template.md) ONLY when the user asks for an HTML / shareable / exportable / standalone dashboard. Describes the automated `generate-data.js` script and 3-tab layout.
 5. Read `references/workflow-guide.md` and `references/model-setup-walkthrough.md` ONLY for the questions listed under **How It Was Built** below.

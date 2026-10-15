@@ -1,6 +1,6 @@
 # NBA Engagement Scores — Workflow Guide (<customer name>)
 
-Use this document to answer questions about how **this customer's deployed** NBA workflow works end to end: its structure, execution order, configuration, source mappings, customizations and the tables each step writes. For what the metrics mean, see `business-context.md`; for table schemas, see `data-dictionary.md`.
+Use this document to answer questions about how **this customer's deployed** NBA workflow works end to end: its structure, execution order, configuration, source mappings, customizations and the tables each step writes. For what the metrics mean and table schemas, see `data-dictionary.md`; for this customer's business definitions, see `business-context.md`.
 
 <!-- Build instructions (Phase 4 interim or Phase 5 final — remove this comment and every `fill` block when done):
 - Interim (Phase 4): describe the setup deployed so far; mark assumed defaults "to confirm"; sections with nothing yet

@@ -58,6 +58,10 @@ Title, one-line purpose ("These answers let us configure Next Best Action engage
 
 17. Which email address should receive workflow failure alerts?
 
+### 9. Business context
+
+The questions still marked `[NEEDS YOUR INPUT]` in `business-context.md` that sections 1–8 don't already ask, grouped under that file's headings (playbook Phase 2 step 4). Omit the section if none are left.
+
 Close with: "When done, save this file and send it back to the person who shared it with you."
 
 ---
@@ -83,6 +87,6 @@ Parameter meanings are in the template `README.md` (Configuration); choosing rul
 | 15–16 | `timeshift_change`, `timeshift_hours`, `day_breakdown[].logic` (against `adjusted_hour` when not UTC) |
 | 17 | `_error` → `to:` in `nba_eng_launch.dig` |
 
-Questions 1–2 feed the documentation set and the customer agent's business context (Phase 5).
+Questions 1–2, 7 (conversion), 10 (add-to-cart) and every section 9 answer also go into `business-context.md` (playbook Phase 4 Part B step 4); questions 1–2 feed the documentation set.
 
 Before editing the config in Phase 4, show the user a summary of planned changes (customer, sources and their roles, conversion definition, windows, history window, scoring, timezone/dayparts, schedule, alert email) and wait for approval.

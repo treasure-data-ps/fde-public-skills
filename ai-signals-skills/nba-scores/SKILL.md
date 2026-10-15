@@ -16,8 +16,8 @@ Read `../shared/playbook.md` — it defines the entry point (new vs. resume), th
 
 | Phase | What happens |
 |---|---|
-| Phase 1 | Data exploration — list and classify tables, confirm the touchpoint and conversion sources, run discovery queries |
-| Phase 2 | `agent_outputs/` + `project_state.md` + `requirements.md` — then continue without waiting |
+| Phase 1 | Data exploration — list and classify tables, confirm the touchpoint and conversion sources, run discovery queries; draft `business-context.md` and review it with the user |
+| Phase 2 | `requirements.md`, ending with the open business-context questions — then continue without waiting |
 | Phase 3 | Copy the workflow template, configure from Phase 1, push, run, validate; ask which hands-on kit to build |
 | Phase 4 | Hands-on kit (customer agent, dashboard, interim workflow guide + setup walkthrough); apply the customer's requirements, re-push, re-run, re-validate, refresh the kit |
 | Phase 5 | Parent Segment attributes + example audiences, documentation set, finalize the customer agent, offer the final guides |
@@ -51,6 +51,7 @@ Use `tdx-skills:tdx-basic`. Do not search by table-name patterns.
 4. **Confirm the list with `AskUserQuestion`** — show every activity table with include/exclude, touchpoint/conversion and a one-line reason ("Confirm as listed" / "Change the list"). Do not skip this.
 5. **Run the discovery queries** in `references/workflow-setup.md` §1 for each confirmed table (UTM coverage, channel values, conversion and add-to-cart patterns, event types/statuses, data date range).
 6. **Record** in `project_state.md`: table, profile ID column, real event-time column, URL/referrer/path columns, UTM coverage, conversion signal, add-to-cart signal, filters needed, first/last event date.
+7. **Business context** — playbook Phase 1 "Business context draft and review": copy `project_templates/agent_template/references/business-context.template.md`, answer what steps 1–6 showed (e.g. channels from UTM values and sources, what counts as a conversion and an add-to-cart, test or internal records seen in the filters, time zone of the event timestamps), review it with the user, continue to Phase 2.
 
 **Solution slug:** `nba-scores` — all engagement files live in `agent_outputs/<customer_slug>/nba-scores/`.
 
@@ -88,15 +89,17 @@ Hand the path to the user and continue to Phase 3.
 2. Map the answers with the table at the end of `references/requirements_doc.md`; choose values with `references/workflow-setup.md` §2.
 3. Present the planned changes; wait for approval.
 4. Edit the config (and `nba_eng_launch.dig` for schedule/alert email) in `workflow/`, re-push, re-run, re-validate (§4).
-5. Refresh the kit if it exists: rebuild the agent if the sink database, sources or business rules changed; regenerate the dashboard; refresh the interim guides. Then ask whether to continue to Phase 5.
+5. Merge the business answers into `business-context.md` (playbook Phase 4 Part B step 4).
+6. Refresh the kit if it exists: rebuild the agent if the sink database, sources or business rules changed; regenerate the dashboard; refresh the interim guides. Then ask whether to continue to Phase 5.
 
 ### Phase 5: Parent Segment, Documentation, Final Agent
 
 1. **Parent Segment** — `../shared/parent_segment_update.md` for the process; `references/parent_segment.md` for the attributes and example audiences — read it only after the user approves the plan.
 2. **Documentation** — `../shared/customer_docs_pattern.md` + `references/docs-setup.md` → `docs/`.
-3. **Finalize the agent** — `../shared/customer_agent_pattern.md` Step 5 + `references/agent-setup.md` (Finalize). If Phase 4 Part A was skipped, build the agent first (Steps 1–3, agent-name gate).
-4. **Final guides question** — ask whether to update `workflow-guide.md` and `model-setup-walkthrough.md` with the final production setup (Recommended), or create them if they were never built; on yes, `../shared/customer_agent_pattern.md` Step 4 (final) and reinstall.
-5. Update `project_state.md` → "complete — engagement live".
+3. **Confirm the business context** — playbook Phase 5 step 3.
+4. **Finalize the agent** — `../shared/customer_agent_pattern.md` Step 5 + `references/agent-setup.md` (Finalize). If Phase 4 Part A was skipped, build the agent first (Steps 1–3, agent-name gate).
+5. **Final guides question** — ask whether to update `workflow-guide.md` and `model-setup-walkthrough.md` with the final production setup (Recommended), or create them if they were never built; on yes, `../shared/customer_agent_pattern.md` Step 4 (final) and reinstall.
+6. Update `project_state.md` → "complete — engagement live".
 
 ---
 
