@@ -18,7 +18,8 @@ Engagements span multiple sessions. `agent_outputs/<project_slug>/project_state.
    ```
    If several match, ask the user which one with `AskUserQuestion`. The "Current phase" + "Next Action" fields determine where to pick up.
 4. **Authoritative.** When in doubt, the state file wins.
-5. **Rewrite, don't append.** Update by re-rendering the whole file with the new values (use the Write tool), keeping Key Decisions cumulative.
+5. **Rewrite, don't append.** Update by re-rendering the whole file with the new values in one Write at the end of each phase — not many small Edits — keeping Key Decisions cumulative.
+6. **Keep it short** — a resume summary, not a log: under about 80 lines, one line per decision or artifact. Record names, paths, the chosen values and why, assumed defaults, caveats and the latest validation result (counts, pass/fail). Leave out job IDs, command transcripts, timings and other evidence — except the workflow session ID of the latest run.
 
 ## Template
 
@@ -53,6 +54,9 @@ Living context store. Update at the end of every phase. New sessions read this f
 ## Key Decisions
 <none yet — append per phase>
 
+## Phase 4 iterations
+<none yet — one line per Part B round: date, what changed, validation result>
+
 ## Next Action
 <one-sentence handoff for the next session>
 ```
@@ -65,5 +69,5 @@ Living context store. Update at the end of every phase. New sessions read this f
 | Phase 2 requirements doc written | Current phase → 3, requirements doc status "sent <date>" |
 | Phase 3 minimal workflow pushed + validated | Current phase → 4, TD workflow project + push date, sink database, validation summary, hands-on kit answer |
 | Phase 4 Part A hands-on kit built | Customer agent "hands-on <date>", dashboard path, guides "interim <date>" (if chosen) |
-| Phase 4 Part B workflow updated from requirements | Current phase → 5, requirements doc status "returned <date>", business answers merged into business-context.md, parameter changes in Key Decisions, Round 2 validation summary, kit refreshed |
+| Phase 4 Part B workflow updated from requirements | Phase 4 iterations: one line for the round; requirements doc status "returned <date>", business answers merged into business-context.md, parameter changes in Key Decisions, Round 2 validation summary, kit refreshed |
 | Phase 5 Parent Segment + docs + agent finalized | Current phase → "complete — engagement live", Parent Segment, business context "confirmed <date>" (unanswered questions in Key Decisions), all doc paths, customer agent final, guides final (if updated) |

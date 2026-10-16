@@ -24,6 +24,21 @@ Two files are copied in at every build (`../../shared/customer_agent_pattern.md`
 
 `references/workflow-guide.template.md` and `references/model-setup-walkthrough.template.md` are **guide skeletons**: removed from every build and filled only when the user chose the guides — interim in Phase 4, final in Phase 5 (Guides, below).
 
+## Agent files
+
+Show this table to the user after every build (`../../shared/customer_agent_pattern.md` Step 6), with only the files the build contains, then a starter prompt.
+
+| File | What it is for | Ask it, for example |
+|---|---|---|
+| `SKILL.md` | The agent's instructions: what it answers, which tables it queries, its accuracy rules | "What can you help me with?" |
+| `references/business-context.md` | Your business knowledge — terms, definitions (purchase, high-value, lapsed), data edge cases, goals and exclusion rules. Keep adding to it while you test: the more it says, the better the agent understands your data and jargon, and the less it guesses | "Which of our business definitions are still unconfirmed?" |
+| `references/ai-signals-guide.md` | How the AI Signals RFM model works: the input it needs, its API parameters, how scores and segments are calculated, how to validate the outputs, common changes | "Explain how the RFM model scores customers mathematically, and how I can check the outputs are ready for production" |
+| `references/data-dictionary.md` | Every RFM output table and column, and what each score and segment means | "What does `R4F1M2` mean, and which segment does it fall into?" |
+| `references/workflow-guide.md` (if built) | The deployed workflow end to end: sources, filters, config values, output tables | "Which sources feed Monetary, and which filters are applied?" |
+| `references/model-setup-walkthrough.md` (if built) | What was decided during setup and why, the validation baseline and accuracy rules | "Why are returned orders excluded?" |
+| `references/dashboard_template.md`, `dashboard_template.html`, `generate-data.js`, `visualization-instructions.md` | The RFM Model Summary dashboard: the agent runs `generate-data.js` to fill the HTML template with the latest run, and follows the chart rules for answers in chat | "Show me the RFM dashboard" |
+| `references/runbook.md` (Phase 5) | Operating the production workflow | "How do I re-run the workflow?" |
+
 ## Build checks (Phase 4 Part A)
 
 After installing, from the Work Folder root:

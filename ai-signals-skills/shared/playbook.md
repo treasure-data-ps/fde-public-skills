@@ -28,22 +28,22 @@ During an engagement you copy those templates into the user's working directory 
 
 ## Default-then-confirm names
 
-These names are proposed with a default and confirmed with `AskUserQuestion` ("Use `<default>` (Recommended)" / "Use a different name"). Record each answer in `project_state.md` and reuse it everywhere afterwards.
+These names are proposed with a default and confirmed with `AskUserQuestion` — the project name on its own at the start, the two TD names together in the Phase 3 push-run-validate question. Record each answer in `project_state.md` and reuse it everywhere afterwards.
 
 Before asking, check the default is free — the account may already hold another project of the same solution. If it is taken, say so and recommend a project-specific name instead, built from the project prefix with `-` → `_` (prefix `loyalty`: project `rfm_ais` → `rfm_ais_loyalty`; sink database `td_agents` → `rfm_loyalty`), so one project never overwrites another's tables or workflow. If the project has no prefix, ask the user for one (team or use case). The checks are in `local_outputs.md` (Step 2), `push_pattern_td_workflows.md` (Step 3a, Step 5) and `customer_agent_pattern.md` (Step 1).
 
 | Name | Asked | Default |
 |---|---|---|
 | Project name | Entry Point, before anything is written | no prefix — `<project_slug>` = `<solution_slug>` (`local_outputs.md` Step 2) |
-| Sink database | Phase 3, before writing the workflow config | `td_agents` |
-| Workflow project name | Phase 3, before the first push | the template's default (solution Quick Reference) |
+| Sink database | Phase 3 — checked before writing the config, confirmed in the push-run-validate question | `td_agents` |
+| Workflow project name | Phase 3 — same question, before the first push | the template's default (solution Quick Reference) |
 | Customer agent name | not asked — derived from the project name; asked only if taken (`customer_agent_pattern.md` Step 1) | `<project_slug>-agent` |
 
 ## Entry Point
 
-Ask: **"Is this a new solution engagement, or are you resuming an existing one?"**
+**First reply — before any question or tool call:** introduce the setup in two or three sentences, then show the solution's Phase Summary table (solution `SKILL.md`) with its **Stage** column. For example: "I'd be happy to help you set up <Solution> step by step. Below is the plan. Phases 1–4 are **DEV**: we iterate on the model, the agent, the dashboard and the guides until you are confident in the results. Phase 5 is **PROD**: schedule, Parent Segment and audiences — we only start it when you say the model is ready. After each phase I update `project_state.md`, so we can resume later exactly where we left off." Then ask: **"Is this a new setup, or are you resuming an existing one?"**
 
-- **New:** ask for the project name first (`local_outputs.md` Step 2) with `AskUserQuestion`: "Use the default `<solution_slug>` — agent `<solution_slug>-agent` (Recommended)" / "Add a project prefix" (a team or use case, e.g. `loyalty` → `loyalty-<solution_slug>-agent`, so several people can build their own models side by side). Recommend a prefix instead if the default is already used here. State the resulting project slug and agent name once, use them everywhere afterwards, then present the 5-phase plan below and start Phase 1.
+- **New:** ask for the project name first (`local_outputs.md` Step 2) with `AskUserQuestion`: "Use the default `<solution_slug>` — agent `<solution_slug>-agent` (Recommended)" / "Add a project prefix" (a team or use case, e.g. `loyalty` → `loyalty-<solution_slug>-agent`, so several people can build their own models side by side). Recommend a prefix instead if the default is already used here. State the resulting project slug and agent name once, use them everywhere afterwards, then start Phase 1.
 - **Resume:** list `agent_outputs/*/project_state.md` and keep those whose **Solution** is this one (see `project_state.md`), confirm the project, read it — "Current phase" + "Next Action" say where to pick up.
 
 | User says | Likely phase |
@@ -62,9 +62,12 @@ When in doubt, **read `project_state.md` first**.
 Rules for every phase:
 
 - **Read files just in time.** In each phase, read only the files that phase names (here and in the solution `SKILL.md`). Do not open later-phase files early — for example, the requirements doc body is not needed in Phase 1; what to record there is listed in the solution's Phase 1 steps.
-- **Keep moving.** After each step, continue straight to the next step of the same phase. At the end of a phase, give a short summary and ask with `AskUserQuestion` whether to continue, with the next phase as the `(Recommended)` option. Never end a turn without either continuing or asking.
+- **Keep moving.** After each step, continue straight to the next step of the same phase. At the end of a phase, give a short summary and ask with `AskUserQuestion` whether to continue, with the next phase as the `(Recommended)` option — except at the end of Phase 4 (see Phase 4: DEV → PROD). Never end a turn without either continuing or asking.
 - **Phases 1–3 are a first pass.** Their goal is a validated first workflow run, fast. Use safe defaults, record every data caveat and assumption in `project_state.md` as "default — confirm in requirements", and do not investigate further unless the user asks or a validation check fails. A "basic" or "quick" request means defaults and no extra analysis — never skipping steps or the end-of-phase question.
-- **Query efficiently, without subagents.** Run discovery yourself with `tdx query` — do not launch subagents for it unless the user asks. Combine the same check across tables into one query (`UNION ALL`), and send independent queries as parallel tool calls in one turn rather than one after another.
+- **No subagents, in any phase.** Do every step yourself — discovery, config, validation, agent build, guides — unless the user asks for a subagent. Background helpers leave the user looking at a silent chat and repeat work.
+- **One command for independent work.** Separate tool calls can run one after another even when sent together, each with its own overhead, so never rely on parallel tool calls for speed. Combine the same check across tables into one query (`UNION ALL`, `information_schema`); when several commands are still needed, run them in one shell command (`cmd1 & cmd2 & wait`).
+- **No extra checks or helper files.** The templates are pre-validated: do not read their SQL or `.dig` files to check or review them (filling the guides may read them for content), validate the copied config locally, run dry runs, or write helper scripts (`.py`, `.sh`, …) — use only the queries and checks the phase names. Investigate files only when a command fails.
+- **Say when something takes a while.** Before a step that takes more than a minute (workflow run, agent build, guides), tell the user what is running, that it takes a few minutes, and that you'll report back when it's done — so a quiet chat never looks stuck.
 
 ### Phase 1: Data Exploration
 
@@ -76,7 +79,7 @@ Rules for every phase:
 
 1. `local_outputs.md` Step 1 — bootstrap `agent_outputs/`; `project_state.md` — create the state file (if not already there).
 2. Copy `<solution_dir>/project_templates/agent_template/references/business-context.template.md` to `agent_outputs/<project_slug>/business-context.md`, fill `{{project_name}}`, and follow its authoring rules: answer what the Phase 1 findings support with confidence, marked `[INFERRED — please confirm]`; leave every other question under its section marked `[NEEDS YOUR INPUT]`. Do not run extra queries for it.
-3. Show the user a short summary — one line per section: what was inferred, and the open questions — then ask with `AskUserQuestion`: "Looks right — continue (Recommended)" / "I'll add context now" / "Change assumptions". Write any answer into the file (customer answers replace inferences; remove the marker of each answered item) and record "Business context: drafted / reviewed `<date>`" in `project_state.md`, with Current phase → "2 — requirements doc" and Next Action "Write the requirements doc".
+3. Show the user a short summary — one line per section: what was inferred, and the open questions — then ask with `AskUserQuestion`: "Looks right — continue (Recommended)" / "I'll add context now" / "Change assumptions". "Looks right" confirms the inferences: remove their `[INFERRED — please confirm]` markers. Write any other answer into the file (answers replace inferences; remove the marker of each answered item). Use only the two standard markers, and keep the file to business knowledge — notes on how this setup is run (test scope, resources to leave alone) go in `project_state.md` and record "Business context: drafted / reviewed `<date>`" in `project_state.md`, with Current phase → "2 — requirements doc" and Next Action "Write the requirements doc".
 4. Continue to Phase 2 — questions still marked `[NEEDS YOUR INPUT]` go to the customer through the requirements doc.
 
 ### Phase 2: Customer Requirements Doc
@@ -90,7 +93,7 @@ Rules for every phase:
 
 ### Phase 3: Minimal Workflow
 
-1. `push_pattern_td_workflows.md` + the solution's `references/workflow-setup.md` — copy `workflow_template/`, read its `README.md`, confirm the sink database, write the config from Phase 1 findings + any answers (safe defaults otherwise), confirm the workflow project name, push, ask before running.
+1. `push_pattern_td_workflows.md` + the solution's `references/workflow-setup.md` — copy `workflow_template/`, read its `README.md`, check the sink database and workflow project names, write the config from Phase 1 findings + any answers (safe defaults otherwise). Then show the config and names and ask one question — push, run and validate (Recommended) — and do all three on yes (`push_pattern_td_workflows.md` Step 5).
 2. Validate the outputs per the "Validate" section of `references/workflow-setup.md`.
 3. Update `project_state.md` (Current phase → "4 — hands-on kit and requirements").
 4. **Offer the hands-on kit** — summarize the validated run, then ask with `AskUserQuestion` what to build now for Phase 4 testing:
@@ -109,7 +112,7 @@ The hands-on kit lets non-technical users and the customer test the model and se
 1. `customer_agent_pattern.md` Steps 1–3 + the solution's `references/agent-setup.md` — confirm the agent name, build and install the customer agent.
 2. Generate the dashboard once with the agent's dashboard command (`references/agent-setup.md` build checks). The bundled dashboard is pre-validated — check only that the file was written; no screenshots, QA scripts or edits.
 3. If the guides were chosen: `customer_agent_pattern.md` Step 4 (**interim** guides) — fill `workflow-guide.md` and `model-setup-walkthrough.md` from the engagement files so far, marked interim, and reinstall the agent.
-4. Tell the user what was built and how to use it (the agent is available in new chats in this folder), then update `project_state.md`.
+4. Tell the user what was built and how to use it: the agent is available in new chats in this folder; show the solution's **agent files** table (`references/agent-setup.md`) — what each file is for and a question it answers — and a starter prompt. Then update `project_state.md`.
 
 **Part B — Update from customer requirements** (usually a new session — **read `project_state.md` first**):
 
@@ -118,8 +121,11 @@ The hands-on kit lets non-technical users and the customer test the model and se
 3. Edit the config in the workflow copy (`references/workflow-setup.md`), re-push, re-run, re-validate.
 4. Merge the business answers (use case, Business context section, definitions in any answer) into `business-context.md` — customer answers replace inferences; remove the marker of each answered item.
 5. Refresh the hands-on kit if it exists: rebuild the agent if the sink database, output tables or business context changed; regenerate the dashboard; refresh the interim guides (`customer_agent_pattern.md` Step 4).
+6. Add the round to the **Phase 4 iterations** list in `project_state.md` (date, what changed, result).
 
-Repeat Part B as often as the testing needs. At the end of Phase 4, ask whether to continue to Phase 5 (production).
+Repeat Part B as often as the testing needs. After each round, offer another round or more testing with the kit — not Phase 5.
+
+**DEV → PROD.** Phase 5 starts only when the user says the model is ready for production (schedule, Parent Segment, audiences). Never offer it before; it is normal for Phase 4 to take several rounds. When the user asks for it, summarize the current setup from `project_state.md` (sources, filters, scoring model, latest validation, iteration rounds, open questions) and ask with `AskUserQuestion` to confirm the move to Phase 5. If fewer than two Phase 4 rounds are recorded, say so in the summary. On yes, set Current phase → 5 in `project_state.md`.
 
 ### Phase 5: Parent Segment, Documentation, Final Agent
 

@@ -11,8 +11,8 @@ Each solution bundles its TD Workflow template in `<solution_dir>/project_templa
 ## ALWAYS MUST
 
 - Never edit files under `project_templates/`. All customer edits happen in `agent_outputs/<project_slug>/workflow/`.
-- Before writing the config, confirm the sink database (Step 3a); before any `tdx wf push` / `tdx wf upload`, confirm the TD workflow project name (Step 5). Both use the default-then-confirm gate in `SKILL.md`.
-- Before any `tdx wf run`, ask the user whether to run now.
+- Check the sink database (Step 3a) and the TD workflow project name (Step 5) before using them; both are confirmed in the one approval question of Step 5, before any `tdx wf push` / `tdx wf upload` / `tdx wf run`.
+- The template is pre-validated. Do not read its SQL or `.dig` files to check or review them, validate the copied config locally, or run `--dry-run` pushes or runs. Look into files only when a push or run fails.
 
 ## Solution variables
 
@@ -50,7 +50,7 @@ You should NOT need to edit anything in `queries/`, `sql/`, `python/` or `python
 
 ### 3a: Sink database gate
 
-Default: `td_agents`. First check it doesn't already hold this solution's output tables from another engagement: `tdx tables "td_agents.<output_table_prefix>*"` (the prefix is in the template README's Outputs section, e.g. `nba_`). If it does, a run would overwrite them — recommend `<output_table_prefix><project_prefix>` with `-` → `_` (e.g. `nba_loyalty`) instead and say why — if the project has no prefix, ask the user for one. Ask with `AskUserQuestion`: "Use `<recommended>` (Recommended)" / "Use a different database" — explain that the workflow's output tables are written there and the customer agent will query it. Record the answer in `project_state.md`. If the database doesn't exist, the workflow's create-database step creates it on first run (check the template README).
+Default: `td_agents`. First check it doesn't already hold this solution's output tables from another engagement: `tdx tables "td_agents.<output_table_prefix>*"` (the prefix is in the template README's Outputs section, e.g. `nba_`). If it does, a run would overwrite them — use `<output_table_prefix><project_prefix>` with `-` → `_` (e.g. `nba_loyalty`) instead — if the project has no prefix, ask the user for one. Write the chosen name into the config; the user confirms it in Step 5 (the workflow's output tables are written there and the customer agent queries it). If the database doesn't exist, the workflow's create-database step creates it on first run (check the template README).
 
 ### 3b: Edit the config
 
@@ -66,9 +66,11 @@ tdx databases             # confirm you're in the right account by listing datab
 
 If the customer's region is non-default (EU01, AP02, etc.), confirm `tdx` is targeting that region. Templates with an `api_endpoint` config key (e.g. MTA, NBP) read it from their config, but `tdx` authenticates with your local profile.
 
-## Step 5: Confirm the Project Name and Push
+## Step 5: Approve, Push, Run
 
-First check the default isn't taken: `tdx wf projects <Workflow project name>`. If it exists, pushing would replace another project's workflow — recommend `<Workflow project name>_<project_prefix>` with `-` → `_` (e.g. `rfm_ais_loyalty`) instead and say why; if the project has no prefix, ask the user for one. Use `AskUserQuestion`: push under the recommended name, or a custom name (used for multiple isolated pipelines per region or brand).
+First check the default project name isn't taken: `tdx wf projects <Workflow project name>`. If it exists, pushing would replace another project's workflow — use `<Workflow project name>_<project_prefix>` with `-` → `_` (e.g. `rfm_ais_loyalty`) instead; if the project has no prefix, ask the user for one. (Run this check in the same command as the Step 3a check.)
+
+Then show the user, in one message: the edited config (the sources block and the changed values of `<Workflow Config file>`, as a code block), the sink database and the workflow project name — say why a name differs from the default — and the assumed defaults still to confirm. Ask one `AskUserQuestion`: "Push, run and validate the outputs (Recommended)" / "Change something first". On yes, do Steps 5–7 without asking again; record the names in `project_state.md`.
 
 Make sure `<workdir>/tdx.json` exists and names the confirmed project — some templates ship without one. Create or update it with the Write tool:
 
@@ -92,7 +94,7 @@ Set secrets with `tdx wf secrets` (see `tdx-skills:workflow`). Never write API k
 
 ## Step 6: Run the Workflow
 
-Ask the user first. If yes:
+Approved in Step 5. Tell the user the run takes several minutes and that you'll validate the outputs when it finishes, then:
 
 ```bash
 tdx wf run <Workflow project name>.<Workflow Entry point>
@@ -118,4 +120,4 @@ Run the output validation checks from the "Validate" section of the solution's `
 
 ## Re-deploying (Phase 4 and later)
 
-Edit the config in `<workdir>`, then re-run Step 5 (no new name confirmation needed unless the name changes) and Steps 6–7.
+Edit the config in `<workdir>`, show the changes, ask once to push, run and validate, then do Steps 5–7 (no name checks unless a name changes).

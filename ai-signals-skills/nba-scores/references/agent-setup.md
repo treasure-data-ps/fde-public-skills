@@ -24,6 +24,20 @@ The engagement's `business-context.md` is copied in at every build (`../../share
 
 `references/workflow-guide.template.md` and `references/model-setup-walkthrough.template.md` are **guide skeletons**: removed from every build and filled only when the user chose the guides — interim in Phase 4, final in Phase 5 (Guides, below).
 
+## Agent files
+
+Show this table to the user after every build (`../../shared/customer_agent_pattern.md` Step 6), with only the files the build contains, then a starter prompt.
+
+| File | What it is for | Ask it, for example |
+|---|---|---|
+| `SKILL.md` | The agent's instructions: what it answers, which tables it queries, its accuracy rules | "What can you help me with?" |
+| `references/business-context.md` | Your business knowledge — terms, definitions (conversion, cart abandonment, channel names), data edge cases, goals and exclusion rules. Keep adding to it while you test: the more it says, the better the agent understands your data and jargon, and the less it guesses | "Which of our business definitions are still unconfirmed?" |
+| `references/data-dictionary.md` | Every NBA dashboard table and column, and what each score and flag means (Next Best Channel, Time, Campaign, cart-abandon, new-visitor) | "How is the Next Best Channel chosen for a profile?" |
+| `references/workflow-guide.md` (if built) | The deployed workflow end to end: sources, filters, config values, output tables | "Which channels count as paid, and why?" |
+| `references/model-setup-walkthrough.md` (if built) | What was decided during setup and why, the validation baseline and accuracy rules | "Why is the cart-abandon window set to this value?" |
+| `references/dashboard_template.md`, `dashboard_template.html`, `generate-data.js`, `visualization-instructions.md` | The NBA Model Summary dashboard: the agent runs `generate-data.js` to fill the HTML template with the latest run, and follows the chart rules for answers in chat | "Show me the NBA dashboard" |
+| `references/runbook.md` (Phase 5) | Operating the production workflow | "How do I re-run the workflow?" |
+
 ## Build checks (Phase 4 Part A)
 
 After installing, from the Work Folder root:

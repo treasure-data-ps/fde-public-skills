@@ -17,7 +17,10 @@ AUTHORING RULES (for the engagement copy)
 - Replace each question with a terse answer bullet once known. Reader is the agent: concrete and
   imperative ("Treat orders with status `test` as internal", "A lead = a form fill in `<table>`").
 - Mark answers inferred from the data `[INFERRED — please confirm]`; keep unanswered questions as
-  `- [NEEDS YOUR INPUT] <question>`. Remove a marker once the customer has answered or confirmed.
+  `- [NEEDS YOUR INPUT] <question>`. Remove a marker once the customer has answered or confirmed. Use only these
+  two markers — no others.
+- Business knowledge only: no notes on how this setup is run (test scope, resources to leave alone,
+  approvals) — those belong in project_state.md.
 - Real table, column and value names in backticks; aggregates only — never raw customer records,
   names, emails or other PII.
 - Keep every section to a few bullets. Delete this comment and the line under the title in the copy.

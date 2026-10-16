@@ -29,7 +29,7 @@ Rules:
 
 ### Discovery queries
 
-Run with `tdx query` against the source database. Replace `<url>`, `<path>` etc. with the real column names from `tdx describe`.
+Run with `tdx query` against the source database. Replace `<url>`, `<path>` etc. with the real column names from the Phase 1 column query. Don't start the SQL with a `--` comment: `tdx query` reads it as an option and fails.
 
 UTM coverage on web data — **always run it**; clean-looking sample URLs often still carry UTMs:
 
@@ -107,7 +107,7 @@ Push and run with the shared pattern (`tdx wf push -y` from `<workdir>`, `tdx wf
 
 ## 4. Validate
 
-Run after every run (Phase 3 and Phase 4). Replace `<db>` with `sink_database`, `<id>` with `unique_user_id`, `<final>` with `final_nba_metrics_table`. Record the results in `project_state.md`.
+Run after every run (Phase 3 and Phase 4), as direct `tdx query` calls in one shell command (`tdx query … & tdx query … & wait`) — never through a script you write. Replace `<db>` with `sink_database`, `<id>` with `unique_user_id`, `<final>` with `final_nba_metrics_table`. Record the results in `project_state.md`.
 
 **1. Final table populated and one row per profile**
 

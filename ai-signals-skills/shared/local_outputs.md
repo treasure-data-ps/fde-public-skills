@@ -35,7 +35,7 @@ git check-ignore -q agent_outputs/probe 2>/dev/null && echo "agent_outputs is gi
 Asked at the start of a new engagement (`playbook.md` Entry Point), before anything is written, so the slug is never guessed. The user works in their own account, so the project — not the company — is what needs a name: several people may each build their own model and agent for the same solution.
 
 - `<project_prefix>` — optional, chosen by the user to tell projects of the same solution apart (team, use case, brand), e.g. `loyalty`, `email-marketing`. Empty by default.
-- `<project_slug>` — `<project_prefix>-<solution_slug>`, or just `<solution_slug>` without a prefix. Lowercase the user's input, replace non-alphanumerics by `-`, collapse runs of `-`, strip leading/trailing `-`; if the input already ends with the solution slug, don't add it twice.
+- `<project_slug>` — `<project_prefix>-<solution_slug>`, or just `<solution_slug>` without a prefix. Lowercase the user's input, replace non-alphanumerics by `-`, collapse runs of `-`, strip leading/trailing `-`; if the input already contains the solution slug as a word (`loyalty-rfm`, `rfm-retail-test`), keep it as typed — don't add it twice.
 - `<project_name>` — display name: the prefix in title case plus the solution's short name (solution Quick Reference), or the short name alone.
 
 | User input | `<project_slug>` | `<project_name>` | Agent name |

@@ -34,7 +34,7 @@ The name is `<project_slug>-agent` (e.g. `rfm-agent`, `loyalty-rfm-agent`), fixe
 
 ## Step 2: Build the agent in a staging folder
 
-Never copy an unfilled template into `.claude/skills/` — anything there is live immediately.
+Never copy an unfilled template into `.claude/skills/` — anything there is live immediately. Build it yourself, not through a subagent; tell the user first that the build takes a few minutes.
 
 ```bash
 stage="agent_outputs/<project_slug>/agent_build/<agent-name>"
@@ -81,7 +81,7 @@ Run only when the user chose the guides (Phase 3 end question, or Phase 5 final 
 | `references/workflow-guide.md` | `agent_template/references/workflow-guide.template.md` | How the deployed workflow works end to end (pipeline, config, mappings, customizations, output tables) |
 | `references/model-setup-walkthrough.md` | `agent_template/references/model-setup-walkthrough.template.md` | What was decided and done during setup (discovery, requirements, decision log, cleaning, validation baseline, artifacts, presentation recipe, accuracy rules) |
 
-To fill a skeleton: copy it from `<solution_dir>` (not from the installed agent — it does not contain it) to `$stage/references/<name>.md`, follow its build instructions, replace every `<!-- fill … -->` block with content, and delete the build-instructions comment. Sections with nothing to report yet (e.g. Parent Segment before Phase 5) say "Not done yet — Phase 5". Set the **Status** line:
+Write the guides yourself (no subagents), and only in `$stage/references/` — never a second copy in the engagement folder. Tell the user first that the guides take a few minutes. To fill a skeleton: copy it from `<solution_dir>` (not from the installed agent — it does not contain it) to `$stage/references/<name>.md`, follow its build instructions, replace every `<!-- fill … -->` block with content, and delete the build-instructions comment. Sections with nothing to report yet (e.g. Parent Segment before Phase 5) say "Not done yet — Phase 5". Set the **Status** line:
 
 - **Interim** (Phase 4): `Interim — pre-production, as of <date>`. Describes the setup as deployed so far, including assumed defaults still to be confirmed.
 - **Final** (Phase 5): `Final — production, as of <date>`. Update the existing files in place (keep the Decision Log history), or create them if they were never built.
@@ -105,4 +105,4 @@ Add the customer files listed in `references/agent-setup.md` (Finalize) to the s
 - `git check-ignore -q .claude/skills/<agent-name>/SKILL.md` succeeds when the working directory is a git repo.
 - The solution's build checks in `references/agent-setup.md`. Run no checks beyond these — no screenshots, browser tests or extra QA scripts.
 
-Tell the user the agent name and path, that it is available in new chats in this folder, and (Studio) that it can be shared to the account via Skills → Develop. Update `project_state.md`.
+Tell the user the agent name and path, that it is available in new chats in this folder, and (Studio) that it can be shared to the account via Skills → Develop. Then show the **agent files** table from the solution's `references/agent-setup.md` (only the files this build contains) and a starter prompt. Update `project_state.md`.
