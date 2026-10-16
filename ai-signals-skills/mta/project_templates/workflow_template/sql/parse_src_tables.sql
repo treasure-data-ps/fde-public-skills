@@ -1,1 +1,0 @@
-SELECT * FROM mta_table_params
