@@ -53,7 +53,7 @@ Use `tdx-skills:tdx-basic`. Do not search by table-name patterns.
 
 4. **Confirm the list with `AskUserQuestion`** — first show a markdown table of every activity table with include/exclude, R/F/M contribution and a one-line reason, then ask one short question ("Confirm as listed" / "Change the list"). Do not put the table inside the question. Do not skip this.
 5. **Run the discovery queries** in `references/workflow-setup.md` §1 yourself (no subagents): one `UNION ALL` profile query across all confirmed tables, then status / event-type breakdowns as parallel calls. Do not investigate caveats further — record them (step 6).
-6. **Record** in `project_state.md`: table, profile ID column, real event-time column, order value column (monetary sources), context column, filters needed, R/F/M contribution, first/last event date.
+6. **Record** in `project_state.md`: table, profile ID column, event-time column with its evidence (`references/workflow-setup.md` §1 event-time rule), order value column (monetary sources), context column, filters needed, R/F/M contribution, first/last event date.
 7. **Business context** — playbook Phase 1 "Business context draft and review": copy `project_templates/agent_template/references/business-context.template.md`, answer what steps 1–6 showed (e.g. sales channels from the sources, what counts as a purchase from the order statuses, amount column and currency, test or internal records seen in the filters), review it with the user, continue to Phase 2.
 
 **Solution slug:** `rfm` — all engagement files live in `agent_outputs/<project_slug>/` (`rfm` by default, `<prefix>-rfm` with a project prefix — `../shared/local_outputs.md` Step 2).

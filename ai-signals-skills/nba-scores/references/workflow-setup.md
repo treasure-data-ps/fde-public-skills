@@ -22,14 +22,42 @@ Each confirmed activity table becomes one entry in `aggregate_metrics_tables`. R
 | Other (app, store, survey…) | Decide: touchpoint (0.0) or conversion (1.0) | Fixed medium label | As decided | Non-null profile ID |
 
 Rules:
-- **Event time:** TD's `time` column is often the load time. Use the real event column when there is one (`TD_TIME_PARSE(<col>)` if it is a string). Check: `SELECT MIN(time), MAX(time)` vs. the event column — if `time` spans a few days but the events span months, use the event column.
+- **Event time:** Next Best Time, the flag windows and the time filter are computed from `unixtime_col`. Decide per table in Phase 1 whether TD's `time` column is the real event time or only the load / insert time:
+  1. **Candidate event columns** — from the column query: timestamp or date types, or names like `*_at`, `*_time`, `*_date`, `event_timestamp`, `order_date`. Skip columns about the record rather than the event (`updated_at`, `ingested_at`, `_load*`).
+  2. **Compare** `time` with the best candidate in the profile query below: both date ranges, `COUNT(DISTINCT time)` vs. rows, and the median per-row gap.
+  3. **Decide:**
+
+     | Profile shows | Meaning | Use |
+     |---|---|---|
+     | Same range, median gap under ~1 day | `time` is the event time | `time` — already UNIX seconds, filters on it read only the matching data, no time-zone guess |
+     | Median gap of exactly whole hours (e.g. `14400` = 4 h) | The same events; the candidate string is local time without a time zone | `time` (true UTC) — note the offset — it is the customer's time zone for `timeshift_hours` (§2) |
+     | `time` spans days while the candidate spans months, few distinct `time` values, or `time` always later than the candidate | `time` is the load time | The candidate — `TD_TIME_PARSE(<col>)` if it is a string (a string without a time zone is read as UTC; note it) |
+     | No candidate column | Only `time` exists | `time`, noted as a caveat and asked in the requirements doc |
+     | Several plausible candidates (e.g. `order_date`, `shipped_at`) | Unclear which event counts | The one matching the activity (order placed, not shipped), recorded as "default — confirm in requirements" |
+
+  4. **Record** the choice and its evidence per table in `project_state.md` (e.g. "`time` = event time: same range, median gap 0 s").
 - **Profile ID:** every source must carry the same ID as `unique_user_id`. If a source names it differently, set that source's `join_key` to its column.
+- **Filters:** only the must-have filters above, plus fixes for problems the profile query actually found. Do not add NULL-ID or timestamp-parse guards when the profile query shows none.
 - **Quotes:** string literals inside config values use doubled single quotes, as in the template.
 - **De-duplication:** if orders have one row per line item, conversions are counted per line. Either accept it (say so in the docs) or set `query_type: custom` and write `sql/union/<name>.sql` (copy the column list of the template's `sql/union/order_events.sql`).
 
 ### Discovery queries
 
-Run with `tdx query` against the source database. Replace `<url>`, `<path>` etc. with the real column names from the Phase 1 column query. Don't start the SQL with a `--` comment: `tdx query` reads it as an option and fails.
+Run with `tdx query` against the source database — yourself, not through subagents. Replace `<url>`, `<path>` etc. with the real column names from the Phase 1 column query. Don't start the SQL with a `--` comment: `tdx query` reads it as an option and fails. Run all discovery queries below in **one shell command** (`tdx query … & tdx query … & wait`), not as separate tool calls.
+
+Profile query for all confirmed tables — one `UNION ALL`, one block per table (ID coverage, event-time decision, data date range — §2 time filter). Omit `event_*` / `median_gap_s` for tables whose only timestamp is `time`; `<event_time>` is the candidate event column as UNIX seconds (`TD_TIME_PARSE(<col>)` for a string):
+
+```sql
+SELECT '<table>' AS src,
+       COUNT(*) AS total_rows, COUNT(<id>) AS rows_with_id, APPROX_DISTINCT(<id>) AS profiles,
+       TD_TIME_FORMAT(MIN(time), 'yyyy-MM-dd') AS time_first, TD_TIME_FORMAT(MAX(time), 'yyyy-MM-dd') AS time_last,
+       TD_TIME_FORMAT(MIN(<event_time>), 'yyyy-MM-dd') AS event_first, TD_TIME_FORMAT(MAX(<event_time>), 'yyyy-MM-dd') AS event_last,
+       COUNT(DISTINCT time) AS time_distinct,
+       APPROX_PERCENTILE(ABS(time - <event_time>), 0.5) AS median_gap_s
+FROM <source_database>.<table>
+UNION ALL
+SELECT '<next table>' AS src, …
+```
 
 UTM coverage on web data — **always run it**; clean-looking sample URLs often still carry UTMs:
 
@@ -60,20 +88,14 @@ WHERE REGEXP_LIKE(LOWER(<path>), 'thank|confirm|success|order|receipt|cart|baske
 GROUP BY 1 ORDER BY 2 DESC LIMIT 30
 ```
 
-Event types and statuses (email, CRM, orders):
+Event types and statuses (email, CRM, orders) — one `UNION ALL`, one block per column:
 
 ```sql
-SELECT <event_type_or_status_col>, COUNT(*) AS n
-FROM <source_database>.<table>
-GROUP BY 1 ORDER BY 2 DESC
-```
-
-Data date range (decides the time filter — §2):
-
-```sql
-SELECT TD_TIME_FORMAT(MIN(<event_time>), 'yyyy-MM-dd') AS first_event,
-       TD_TIME_FORMAT(MAX(<event_time>), 'yyyy-MM-dd') AS last_event
-FROM <source_database>.<table>
+SELECT '<table>' AS src, '<col>' AS col, CAST(<col> AS VARCHAR) AS value, COUNT(*) AS n
+FROM <source_database>.<table> GROUP BY 1, 2, 3
+UNION ALL
+SELECT '<next table>', '<col>', CAST(<col> AS VARCHAR), COUNT(*) FROM … GROUP BY 1, 2, 3
+ORDER BY src, col, n DESC
 ```
 
 Record the column names and findings in `project_state.md` (Phase 1) — they are needed again in Phase 4.

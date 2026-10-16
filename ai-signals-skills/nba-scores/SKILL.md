@@ -50,8 +50,8 @@ Use `tdx-skills:tdx-basic`. Do not search by table-name patterns.
    | Support tickets, chats, store visits, app sessions, surveys | ETL audit rows, pre-aggregated tables |
 
 4. **Confirm the list with `AskUserQuestion`** — show every activity table with include/exclude, touchpoint/conversion and a one-line reason ("Confirm as listed" / "Change the list"). Do not skip this.
-5. **Run the discovery queries** in `references/workflow-setup.md` §1 for each confirmed table (UTM coverage, channel values, conversion and add-to-cart patterns, event types/statuses, data date range).
-6. **Record** in `project_state.md`: table, profile ID column, real event-time column, URL/referrer/path columns, UTM coverage, conversion signal, add-to-cart signal, filters needed, first/last event date.
+5. **Run the discovery queries** in `references/workflow-setup.md` §1 yourself, all in one shell command (no subagents): one profile query across all confirmed tables (IDs, event-time decision, date range), UTM coverage and values, conversion and add-to-cart patterns, one event-type/status breakdown. Do not investigate caveats further — record them (step 6).
+6. **Record** in `project_state.md`: table, profile ID column, event-time column with its evidence (`references/workflow-setup.md` §1 event-time rule), URL/referrer/path columns, UTM coverage, conversion signal, add-to-cart signal, filters needed, first/last event date.
 7. **Business context** — playbook Phase 1 "Business context draft and review": copy `project_templates/agent_template/references/business-context.template.md`, answer what steps 1–6 showed (e.g. channels from UTM values and sources, what counts as a conversion and an add-to-cart, test or internal records seen in the filters, time zone of the event timestamps), review it with the user, continue to Phase 2.
 
 **Solution slug:** `nba-scores` — all engagement files live in `agent_outputs/<project_slug>/` (`nba-scores` by default, `<prefix>-nba-scores` with a project prefix — `../shared/local_outputs.md` Step 2).
