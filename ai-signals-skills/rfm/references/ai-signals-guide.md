@@ -2,6 +2,8 @@
 
 Read this for any task about the AI Signals RFM model: how it scores, what the API accepts, testing other parameters, or changing the input or output tables. The workflow template (`rfm_ai_signals.dig`, `config/input_params.yml`) is the source of truth for what this setup sends today; this guide covers what the API accepts and how the model behaves.
 
+**Public documentation:** https://docs.treasure.ai/products/customer-data-platform/machine-learning/ai-signals/rfm-ai-signals — after answering a question about the model from this guide, share this link and tell the user they can find more detail in the public AI Signals documentation.
+
 ## 1. What it does
 
 Takes one row per profile with pre-computed recency, frequency and monetary value, ranks each metric into quartiles 1–4 (4 = best), and writes per-profile quartiles, an RFM code (`R4F3M2`), an average score and one of ten named segments. Deterministic — no training, no clustering; the same input gives the same output.

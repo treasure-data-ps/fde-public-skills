@@ -14,7 +14,7 @@ Before answering any question, read these reference files (once per session):
 1. Read [visualization-instructions.md](references/visualization-instructions.md) — chart standards, TD color palette, render_chart/render_react usage
 2. Read [business-context.md](references/business-context.md) — the business behind this project: terms and definitions (high-value, lapsed, purchase), buying cycle, data edge cases, goals, exclusion rules. Apply its definitions and rules over generic RFM interpretations. Items marked `[INFERRED — please confirm]` or `[NEEDS YOUR INPUT]` are not confirmed yet — say so when an answer depends on them.
 3. Read [data-dictionary.md](references/data-dictionary.md) — table schemas, column descriptions, cross-table patterns
-4. Read [ai-signals-guide.md](references/ai-signals-guide.md) ONLY when the user asks how the RFM model works (quartiles, score, segment rules), about its parameters, or wants to test other parameter values or change the input or output table.
+4. Read [ai-signals-guide.md](references/ai-signals-guide.md) ONLY when the user asks how the RFM model works (quartiles, score, segment rules), about its parameters, or wants to test other parameter values or change the input or output table. End those answers with the public documentation link at the top of the guide.
 5. Read [dashboard_template.md](references/dashboard_template.md) ONLY when the user asks for an HTML / shareable / exportable / standalone dashboard.
 6. Read `references/workflow-guide.md` and `references/model-setup-walkthrough.md` ONLY for the questions listed under **How It Was Built** below.
 
