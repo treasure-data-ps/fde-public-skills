@@ -29,10 +29,10 @@ All tables are in `{{sink_database}}`.
 - `recency`, `frequency`, `monetary_value` — raw values for detailed analysis
 - `<customer_id_col>` — unique customer identifier; use `COUNT(DISTINCT <customer_id_col>)` for customer counts after resolving the actual column with `DESCRIBE`
 
-**Scoring logic (`custom` SQL scoring; `ai_signals` returns the same columns):**
+**Scoring logic (AI Signals RFM model):**
 - Recency: lower recency_days → higher r_quartile (reverse scale)
 - Frequency: higher touchpoints → higher f_quartile
-- Monetary: higher spend → higher m_quartile. `custom`: percentiles computed only from monetary_value > 0.05 (lower values → M1). `ai_signals`: all profiles count unless `mv_threshold` is set (default none; profiles at or below it → M1) — check the deployed `rfm_ai_signals.dig`
+- Monetary: higher spend → higher m_quartile. All profiles count unless `mv_threshold` is set (default none); with it, profiles at or below the threshold are left out of the cut-offs and get M1 — check the deployed `rfm_ai_signals.dig`
 
 **Usage:** Primary table for all segmentation analysis. Join with other customer tables using the resolved `<customer_id_col>` column.
 
@@ -103,7 +103,7 @@ All tables are in `{{sink_database}}`.
 |------------|-----------|-------------|
 | `run_time` | varchar | Timestamp of workflow execution |
 | `session_id` | bigint | Workflow run session identifier |
-| `model_type` | varchar | Scoring model used (`ai_signals` or `custom`) |
+| `model_type` | varchar | Scoring model used (always `ai_signals`) |
 | `source_table` | varchar | Source table name from `aggregate_metrics_tables` |
 | `time_filter` | varchar | Whether time filter was applied (`yes` / `no`) |
 | `lookback_days` | varchar | Effective lookback period |
@@ -274,4 +274,4 @@ ORDER BY segment_size DESC
 
 **Characteristics:** Segment names use mixed case as defined in the scoring SQL (e.g., `Champions`, `Cannot lose them`, `Lost customers`). Quartile scores are integers from 1 to 4. Monetary values are stored as doubles. The `rfm_quartile` column uses format `R<n>F<n>M<n>` (e.g., `R4F3M2`).
 
-**Edge Cases:** Customers with activity in only one source table may have biased frequency scores. Customers with no order data will all have `monetary_value = 0` — their m_quartile is still computed but based on the 0 values. Very recent customers may have high r_quartile but low f_quartile and m_quartile. With `custom` scoring (and with `ai_signals` when `mv_threshold` is set), the monetary percentiles exclude values at or below the threshold (0.05 for `custom`) to avoid skew from zero-spend profiles; `ai_signals` without `mv_threshold` includes them, so many zero-spend profiles can fill M1 and push buyers' cut-offs down.
+**Edge Cases:** Customers with activity in only one source table may have biased frequency scores. Customers with no order data will all have `monetary_value = 0` — their m_quartile is still computed but based on the 0 values. Very recent customers may have high r_quartile but low f_quartile and m_quartile. Without `mv_threshold` (the default), zero-spend profiles count in the monetary cut-offs, so many of them can fill M1 and push buyers' cut-offs down; setting `mv_threshold` (e.g. `0.05`) leaves them out of the cut-offs.

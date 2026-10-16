@@ -170,7 +170,7 @@ Spot-check segments against the rule table: `SELECT rfm_segment, rfm_quartile, C
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| POST returns 401/403 | The account has no AI Signals access, or the endpoint doesn't match the account's region | Check the region endpoint (§3); otherwise ask the account admin about AI Signals access, or switch to `globals.model_type: custom` |
+| POST returns 401/403 | The account has no AI Signals access, or the endpoint doesn't match the account's region | Check the region endpoint (§3); otherwise ask the account admin about AI Signals access |
 | `+poll_status` fails reading `id` | `store_content: true` missing, or a task inserted between POST and poll | Restore the template order |
 | Run fails on input | Missing or renamed column, wrong type, NULL values | `tdx describe <db>.<input_table>` — four columns, types as §2, no NULLs |
 | Output rows = a multiple of input profiles | `output_mode: append` without the empty-table step | Restore `+create_empty_output_table` |

@@ -5,7 +5,6 @@ globals:
 #Define input/output database names in TD
   canonical_id: canonical_id
   sink_database: <sink_database>
-  model_type: 'ai_signals'     #'ai_signals' runs rfm_ai_signals.dig (AI Signals batch API); 'custom' runs rfm_custom.dig (SQL quartile scoring)
   built_union_activity: yes
   api_endpoint: 'api.treasuredata.com'   #Reserved for future use - not read by the workflow yet
   num_bins: 10                 #Number of buckets in the dashboard histograms (rfm_stats_histogram) - does not change scoring

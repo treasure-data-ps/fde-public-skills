@@ -6,7 +6,7 @@ Sources for every value: `project_state.md`, `requirements.md`, the deployed con
 
 ## 1. `docs/architecture.md` (customer)
 
-- Data flow: each source table and what it adds (R and F; M for monetary sources) → union (one row per profile per source) → per-profile Recency / Frequency / Monetary → scoring (AI Signals or SQL quartiles — say which) → output table → Parent Segment attribute → dashboard tables → customer agent
+- Data flow: each source table and what it adds (R and F; M for monetary sources) → union (one row per profile per source) → per-profile Recency / Frequency / Monetary → scoring (AI Signals RFM model) → output table → Parent Segment attribute → dashboard tables → customer agent
 - TD workflow project name and entry point (`rfm_launch`), schedule (from the `.dig`), sink database
 - Output tables (from the README Outputs section) with the output table marked as the Parent Segment attribute table
 - Output columns the customer will use: `rfm_segment`, `rfm_score`, `rfm_quartile`, `r_quartile`, `f_quartile`, `m_quartile`
@@ -36,7 +36,7 @@ Plain English, no YAML. For this customer:
 - Working copy path and TD project name; re-deploy: edit `workflow/config/input_params.yml` → `( cd workflow && tdx wf push -y )` → `tdx wf run <project>.rfm_launch` → validate
 - Monitoring: `tdx wf sessions <project>`, `tdx wf timeline <project>.rfm_launch --follow`, `tdx wf attempt <id> tasks` / `logs +<task>`
 - Schedule and failure-alert recipient (from the `.dig`); how to change them (edit the `.dig`, re-push)
-- Scoring model (`globals.model_type`) and, for `ai_signals`, the API endpoint used (region); no secrets to manage
+- Scoring: the AI Signals RFM model, the API endpoint used (region) and any optional API parameters set (`references/ai-signals-guide.md` §3); no secrets to manage
 - The troubleshooting table from `workflow-setup.md`, filtered to what applies to this customer
 - Customizations made beyond the config (from the README Customization Points), with file paths
 - Rebuilding the customer agent after config changes (`../../shared/customer_agent_pattern.md`)

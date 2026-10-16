@@ -78,7 +78,7 @@ Use this document to answer questions about **how this customer's RFM model was 
 - Table of runs: session ID / attempt ID → date → result (success / failed) → what was learned or fixed
 - Validation checks of the final run (Validate section of the solution's workflow-setup.md): check → result → numbers
 - Baseline distributions for later comparison: profiles scored, segment sizes and shares, R / F / M quartile spread,
-  percentile cut-offs (custom scoring), per-source profiles and spend
+  monetary cut-offs if known, per-source profiles and spend
 -->
 
 ## Benchmark Comparison

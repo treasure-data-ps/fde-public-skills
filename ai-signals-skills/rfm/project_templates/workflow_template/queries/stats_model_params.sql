@@ -1,7 +1,7 @@
 SELECT
 TD_TIME_STRING(${session_unixtime}, 's!') AS run_time,
 ${session_id} as session_id,
-'${globals.model_type}' as model_type, 
+'ai_signals' as model_type, 
 source as source_table,
 '${apply_time_filter}' as time_filter,
 CASE 

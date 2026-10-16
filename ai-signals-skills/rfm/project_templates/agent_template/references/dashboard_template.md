@@ -139,7 +139,7 @@ Use the configured `globals.canonical_id` from the workflow or run `DESCRIBE {{s
 ### Tab 1 — Model Overview
 - **5 KPI Cards**: Total Profiles Scored (with % delta vs previous session), Average RFM Score (quartile scale 1–4), Average Recency (days), Average Frequency (touchpoints), Average Monetary Value ($ spend).
 - **Historic Segment Trend (Plotly Line Chart)**: Tracks population growth or shrinkage across each customer segment over all recorded sessions.
-- **Run Configuration Table**: Key/value summary of Session ID, Profiles Scored, Scoring Model (`ai_signals`/`custom`), Run Time (UTC), Time Filter, Source Table Count, and Sink Database.
+- **Run Configuration Table**: Key/value summary of Session ID, Profiles Scored, Scoring Model (`ai_signals`), Run Time (UTC), Time Filter, Source Table Count, and Sink Database.
 - **Executive Summary (Dynamic Bullets)**: 5 automated strategic insights highlighting high-value core segments, churn prevention priorities (e.g. 'Cannot lose them'), growth opportunities (e.g. 'Potential Loyalists'), and dormancy.
 
 ### Tab 2 — Segment Analysis

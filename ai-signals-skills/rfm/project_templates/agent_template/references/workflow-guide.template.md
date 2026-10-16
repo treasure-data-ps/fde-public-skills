@@ -24,7 +24,7 @@ Use this document to answer questions about how **this customer's deployed** RFM
 - One paragraph: what the workflow does for this customer (sources in, per-profile R/F/M scores and segment out, Parent Segment use)
 - TD workflow project name and ID, entry point (rfm_launch), last pushed revision and date (workflow/tdx.json)
 - Sink database, globals.canonical_id (profile ID column), working copy path (<engagement dir>/workflow/)
-- Scoring model as deployed (globals.model_type: ai_signals or custom) and why
+- Scoring with the AI Signals RFM model: endpoint (region) and any optional API parameters set in rfm_ai_signals.dig
 - History window as deployed: all history, or time_filter_type with its dates or lookback_period, in plain words
 - Schedule (or "manual runs only"), failure alert (enabled / commented out)
 -->
@@ -59,15 +59,15 @@ Use this document to answer questions about how **this customer's deployed** RFM
 
 <!-- fill:
 - How recency, frequency and monetary_value are computed per profile (min recency across sources, sum of touchpoints, sum of spend)
-- Scoring model: ai_signals (AI Signals batch API) or custom (SQL quartiles on the 25th/50th/75th percentiles; monetary
-  cut-offs computed only on profiles with spend > 0.05) — and the cut-off values seen in the latest run if known
-- rfm_score and rfm_quartile, and the segment rules (the ten segments) — note any change made to queries/rfm_custom.sql
+- Scoring: the AI Signals RFM model (quartiles on the 25th/50th/75th percentiles; with mv_threshold set, monetary cut-offs
+  come from profiles above it — ai-signals-guide.md §5) — and the cut-off values seen in the latest run if known
+- rfm_score and rfm_quartile, and the segment rules (the ten segments, fixed by the model)
 - Segment mix of the latest validated run (from rfm_stats), with the session ID
 -->
 
 ## Step-by-Step Reference
 
-<!-- fill — one subsection per .dig file that runs (rfm_union_all_activity, rfm_ai_signals or rfm_custom, rfm_agg_stats):
+<!-- fill — one subsection per .dig file that runs (rfm_union_all_activity, rfm_ai_signals, rfm_agg_stats):
 - Purpose in one sentence
 - Steps in order → output table of each step
 - Key SQL files and their logic — only those needed to explain behavior, plus every file changed for this customer

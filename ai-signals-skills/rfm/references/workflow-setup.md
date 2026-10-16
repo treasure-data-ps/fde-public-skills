@@ -83,7 +83,6 @@ Record the column names and findings in `project_state.md` (Phase 1) — they ar
 
 | Decision | Rule |
 |---|---|
-| Scoring model | `globals.model_type: ai_signals` (default). Switch to `custom` if the AI Signals scoring step keeps failing on access (401/403 with the right regional endpoint) or the customer wants fully transparent SQL scoring; record the choice in `project_state.md` |
 | Time filter | First setup: all history (`apply_time_filter: 'no'` everywhere) unless the requirements ask for a window. Rolling window → `interval` with a `lookback_period` long enough to see repeat purchases (6–24 months). Data that ends before today (demo, backfill, paused feed) → `range` covering the data, because `interval` counts back from the run time. Set `apply_time_filter` the same on every source and on the top-level label |
 | Recency on stale data | Recency is days since the last event, counted from the run time. On stale data every profile has a large recency, but quartiles are relative, so `r_quartile` still ranks profiles — say so in `project_state.md` and the docs |
 | `context_col` | Every source needs one; never leave it blank. Pick a descriptive column with many values — title or path, item, campaign, topic — that still varies **after** the source's filter. Never a status or event-type column, and never the column the filter fixes to one value (e.g. `action_type` when the filter keeps only `redeem`) |
@@ -153,14 +152,14 @@ FROM <db>.<stats_table>_model_params GROUP BY 1 ORDER BY 1 DESC LIMIT 3;
 
 SELECT COUNT(*) AS histogram_rows FROM <db>.<stats_table>_histogram;
 ```
-Pass: the latest session has one `_model_params` row per configured source and the configured `model_type`; the histogram table has rows.
+Pass: the latest session has one `_model_params` row per configured source and `model_type` `ai_signals`; the histogram table has rows.
 
 ### Troubleshooting
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `Table not found` / `Column not found` in the union step | Wrong `src_table`, column name or blank `context_col` | `tdx describe` the source; fix the entry |
-| Scoring step fails with 401/403 | Endpoint doesn't match the account's region, or the account has no AI Signals access | Use the regional endpoint (§3); otherwise ask the account admin about AI Signals access, or switch to `custom` |
+| Scoring step fails with 401/403 | Endpoint doesn't match the account's region, or the account has no AI Signals access | Use the regional endpoint (§3); otherwise ask the account admin about AI Signals access |
 | `<out>` empty | Run failed before or during scoring | `tdx wf attempt <id> tasks`, then `logs +<failed task>` |
 | A source missing from `<union>` | 0 rows after `custom_filter` + time filter | Run the source's filter as a `COUNT(*)`; widen the window or filter |
 | `m_quartile` the same for almost everyone | No monetary source, or `order_amount: 0.0` on the order source | Set the revenue column on the order source |

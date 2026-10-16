@@ -39,7 +39,7 @@ Title, one-line purpose ("These answers let us configure RFM (Recency, Frequency
 
 ### 6. Segments
 
-9. The workflow assigns ten standard segments (Champions, Loyal Customers, Potential Loyalists, Promising, New Customers, Cannot lose them, Need attention, Hibernating, High Value Sleeping, Lost customers). Which matter most for your campaigns? Do you need different names or rules?
+9. The workflow assigns ten standard segments (Champions, Loyal Customers, Potential Loyalists, Promising, New Customers, Cannot lose them, Need attention, Hibernating, High Value Sleeping, Lost customers). Which matter most for your campaigns? Do you use different names for any of them?
 
 ### 7. Schedule and notifications
 
@@ -66,7 +66,7 @@ Parameter meanings are in the template `README.md` (Configuration); choosing rul
 | 6 | each source's `custom_filter`; `query_type: custom` if a source needs de-duplication |
 | 7 | `order_amount` on the monetary source(s); `0.0` elsewhere |
 | 8 | `time_filter_type`, `lookback_period` or `time_range_start_date`/`time_range_end_date`, `apply_time_filter` on every source and the top-level label |
-| 9 | Example audiences in Phase 5; different names or rules → `globals.model_type: custom` and `queries/rfm_custom.sql` (a customization — record it) |
+| 9 | Example audiences in Phase 5; the customer's own names → `business-context.md` (RFM Definitions) so the agent uses them. The segment rules are fixed by the AI Signals model and cannot be changed |
 | 10 | `schedule` in `rfm_launch.dig` |
 | 11 | `_error` → `to:` in `rfm_launch.dig` |
 

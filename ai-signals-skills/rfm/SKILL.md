@@ -1,7 +1,7 @@
 ---
 name: fde-rfm
 description: |
-  RFM (Recency, Frequency, Monetary) Customer Segmentation for Treasure Data. Sets up a workflow that unions customer activity from multiple sources (pageviews, orders, email, sales), scores every profile on Recency, Frequency and Monetary value (AI Signals or SQL quartile scoring), assigns one of ten customer segments for use as Parent Segment attributes, then builds a customer-specific RFM insights agent and dashboard. Trigger on: RFM, recency frequency monetary, customer segmentation, RFM segments, champions, at-risk customers, RFM workflow setup, RFM configuration, RFM runbook, RFM output tables.
+  RFM (Recency, Frequency, Monetary) Customer Segmentation for Treasure Data. Sets up a workflow that unions customer activity from multiple sources (pageviews, orders, email, sales), scores every profile on Recency, Frequency and Monetary value with the AI Signals RFM model, assigns one of ten customer segments for use as Parent Segment attributes, then builds a customer-specific RFM insights agent and dashboard. Trigger on: RFM, recency frequency monetary, customer segmentation, RFM segments, champions, at-risk customers, RFM workflow setup, RFM configuration, RFM runbook, RFM output tables.
 ---
 
 # RFM Customer Segmentation
@@ -72,7 +72,7 @@ Tell the user its path in one line (playbook Phase 2 step 5) and continue to Pha
 2. Copy `project_templates/workflow_template/` to `agent_outputs/<project_slug>/workflow/` and read its `README.md`.
 3. **Name checks** — sink database (default `td_agents`; it must hold no `rfm_*` tables from another project) and workflow project (default `rfm_ais`; it must not exist yet), both in one command. The first run creates the database if missing (`references/workflow-setup.md` §3).
 4. Edit `workflow/config/input_params.yml` in place from Phase 1 findings, following `references/workflow-setup.md` §1–2 (minimal-push rule for anything not yet answered). Leave the schedule and failure email in `workflow/rfm_launch.dig` commented unless the user asks for them. Do not review the template's SQL or `.dig` files or validate the config locally — the template is pre-validated.
-5. **Approve, push, run** — `../shared/push_pattern_td_workflows.md` Step 5: show the config and both names, ask once to push, run and validate (Recommended); then push, tell the user the run takes a few minutes, run, monitor. No secret setup: with `globals.model_type: ai_signals` the API key is provided by the AI Signals architecture — never ask the user to set `td.apikey`.
+5. **Approve, push, run** — `../shared/push_pattern_td_workflows.md` Step 5: show the config and both names, ask once to push, run and validate (Recommended); then push, tell the user the run takes a few minutes, run, monitor. No secret setup: the AI Signals API key is provided by the AI Signals architecture — never ask the user to set `td.apikey`.
 6. Validate with `references/workflow-setup.md` §4. If check 2 or 4 shows a missing monetary source or a source with no rows, fix the config and re-run before continuing.
 7. Update `project_state.md` (names, scoring model, assumed defaults, validation results).
 8. **Hands-on kit question** — playbook Phase 3 step 4: summarize the run, then ask whether to build the agent, dashboard and both guides (Recommended), the agent and dashboard only, or nothing yet. Continue with Phase 4 Part A.
@@ -113,7 +113,7 @@ Only after the user says the model is ready and confirms the move (playbook Phas
 
 1. **Union** — every source in `aggregate_metrics_tables` is filtered and aggregated to one row per profile per source: last event, number of touchpoints, total spend, days since the last event.
 2. **Compute R/F/M** — per profile: Recency = the lowest days-since-last-event across sources; Frequency = the sum of touchpoints; Monetary = the sum of spend (never below 0).
-3. **Score** — `ai_signals` (default) sends the input table to the AI Signals batch API; `custom` assigns 1–4 quartile scores in SQL from the 25th/50th/75th percentiles. Both write `r_quartile`, `f_quartile`, `m_quartile`, `rfm_quartile` (e.g. `R4F3M2`), `rfm_score`. API parameters, scoring and segment rules: `references/ai-signals-guide.md`.
+3. **Score** — `rfm_ai_signals.dig` sends the input table to the AI Signals batch API, which assigns 1–4 quartile scores and writes `r_quartile`, `f_quartile`, `m_quartile`, `rfm_quartile` (e.g. `R4F3M2`), `rfm_score`. API parameters, scoring and segment rules: `references/ai-signals-guide.md`.
 4. **Segment** — each profile gets one of ten segments (Champions, Loyal Customers, Potential Loyalists, Promising, New Customers, Cannot lose them, Need attention, Hibernating, High Value Sleeping, Lost customers).
 5. **Dashboard stats** — per-segment stats and histograms for the latest run, plus run config and segment stats appended every run, which the customer agent reads.
 
@@ -126,7 +126,7 @@ Only after the user says the model is ready and confirms the move (playbook Phas
 - **Default workflow project name:** `rfm_ais`
 - **Entry point:** `rfm_launch.dig`
 - **Config file:** `config/input_params.yml`
-- **Scoring model:** `globals.model_type` — `ai_signals` (default, `rfm_ai_signals.dig`) or `custom` (`rfm_custom.dig`)
+- **Scoring model:** AI Signals only (`rfm_ai_signals.dig`) — the template has no other scoring option
 - **Key outputs:** `rfm_output_table` (Parent Segment attributes); `rfm_stats`, `rfm_stats_histogram`, `rfm_stats_model_params`, `rfm_stats_daily_agg`
 - **Agent name:** `<project_slug>-agent` — `rfm-agent` by default
 - **Secrets:** none to set — `${secret:td.apikey}` in `rfm_ai_signals.dig` is provided by the AI Signals architecture

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This Treasure Workflow project unions customer activity from several source tables (web, email, CRM, orders, …), computes three values per profile and scores them:
+This Treasure Workflow project unions customer activity from several source tables (web, email, CRM, orders, …), computes three values per profile and scores them with the AI Signals RFM model (ml-batch-api):
 
 - **Recency** — days since the profile's most recent activity in any source (counted from the run time)
 - **Frequency** — total number of activity rows across all sources
@@ -21,16 +21,14 @@ rfm_launch.dig                    # entry point: schedule, error email, runs the
 ├── +create_sink_database         # 0. td_ddl> creates sink_database if it does not exist yet
 ├── rfm_union_all_activity.dig    # 1. (if built_union_activity = yes) one row per profile per source → union_activity_table;
 │                                 #    per-source summary → rfm_src_table_summary; per-profile R/F/M values → input_table
-├── rfm_<model_type>.dig          # 2. scoring → output_table
-│   ├── rfm_ai_signals.dig        #    model_type 'ai_signals' (default): AI Signals batch API (ml-batch-api)
-│   └── rfm_custom.dig            #    model_type 'custom': SQL quartile scoring (queries/rfm_custom.sql)
+├── rfm_ai_signals.dig            # 2. scoring with the AI Signals RFM model (ml-batch-api) → output_table
 └── rfm_agg_stats.dig             # 3. dashboard stats: stats_table, _histogram, _model_params, _global_session_filter, _daily_agg
 ```
 
 | Folder | Contents |
 |---|---|
 | `config/` | `input_params.yml` — the only file a standard deployment edits |
-| `queries/` | Parameter parsing, input-table build, SQL scoring (`rfm_custom.sql`) and dashboard stats |
+| `queries/` | Parameter parsing, input-table build and dashboard stats |
 | `queries/union_src_tables/` | `insert_src_table.sql` — the generated per-source query (one row per profile per source) |
 | `sql/union_src_tables/` | Custom per-source SQL, read when a source sets `query_type: custom` (see Customization Points) |
 | `body.txt` | Failure email body |
@@ -46,7 +44,6 @@ All keys are in `config/input_params.yml`. The template values are a working exa
 | `globals` | Global settings section | — |
 | **`globals.canonical_id`** | Name of the profile ID column in every table the workflow writes; each source's `join_key` is renamed to it | The ID the Parent Segment joins on (e.g. `canonical_id`, `td_customer_id`) |
 | **`globals.sink_database`** | Database for every table the workflow writes | The confirmed sink database (sink-database gate). Created by the first run if it does not exist (`+create_sink_database`); the project owner needs permission to create databases, otherwise create it in the TD Console first |
-| **`globals.model_type`** | Scoring step: `ai_signals` runs `rfm_ai_signals.dig` (AI Signals batch API), `custom` runs `rfm_custom.dig` (SQL quartiles) | `ai_signals` (default). Use `custom` when the account has no access to the AI Signals batch API or the customer wants fully transparent SQL scoring |
 | `globals.built_union_activity` | `yes` rebuilds the union and input tables before scoring; `no` re-scores the existing `input_table` | `yes`. `no` only to re-run scoring on unchanged inputs |
 | `globals.api_endpoint` | *Not read* — reserved for future use | Leave as is |
 | `globals.num_bins` | Number of buckets in the dashboard histograms (`<stats_table>_histogram`). Does not change scoring — scores are always quartiles | Keep `10`; lower it for small populations |
@@ -105,7 +102,7 @@ All tables are written to `globals.sink_database`.
 
 ## Secrets & Requirements
 
-- **Secrets:** none to set. `rfm_ai_signals.dig` (`globals.model_type: ai_signals`) sends `${secret:td.apikey}` to the AI Signals batch API, which provides the key itself. `custom` needs no secret.
+- **Secrets:** none to set. `rfm_ai_signals.dig` sends `${secret:td.apikey}` to the AI Signals batch API, which provides the key itself.
 - **API endpoint:** `rfm_ai_signals.dig` calls the US endpoint (`https://ml-batch-api.treasuredata.com/v1/runs`). For other regions, change the URL in `+run_rfm` and `+poll_status`: Japan `ml-batch-api.treasuredata.co.jp`, EU `ml-batch-api.eu01.treasuredata.com`, AP `ml-batch-api.ap02.treasuredata.com` / `ml-batch-api.ap03.treasuredata.com`.
 - **Failure email:** the `_error` block in `rfm_launch.dig` is commented out. To enable it, uncomment it, replace `your-team@example.com` with the customer's address and put the customer name in `subject`.
 - **Schedule:** the `schedule:` block in `rfm_launch.dig` is commented out (example: monthly). Uncomment and set it if the customer wants scheduled runs.
@@ -118,6 +115,5 @@ Beyond `config/input_params.yml`, these are the only supported code changes. Rec
 | Change | Where |
 |---|---|
 | Source needs joins, de-duplication or a derived column | Set `query_type: custom` on the source and add `sql/union_src_tables/<name>.sql` returning the same columns as `queries/union_src_tables/insert_src_table.sql` (profile ID as `globals.canonical_id`, `time`, `latest_tstamp`, `source`, `total_touchpoints`, `total_spend`, `recency_days`, `events_list`) |
-| Different segment rules or quartile cut-offs (`custom` scoring only) | `queries/rfm_custom.sql` — keep the output columns, the dashboard stats read them |
 | Segment descriptions in the history table | `queries/stats_historic_agg.sql` |
 | Failure email, schedule | `rfm_launch.dig` |
