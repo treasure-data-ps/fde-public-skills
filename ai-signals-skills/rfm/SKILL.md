@@ -72,7 +72,7 @@ Tell the user its path in one line (playbook Phase 2 step 5) and continue to Pha
 2. Copy `project_templates/workflow_template/` to `agent_outputs/<project_slug>/workflow/` and read its `README.md`.
 3. **Name checks** — sink database (default `td_agents`; it must hold no `rfm_*` tables from another project) and workflow project (default `rfm_ais`; it must not exist yet), both in one command. The first run creates the database if missing (`references/workflow-setup.md` §3).
 4. Edit `workflow/config/input_params.yml` in place from Phase 1 findings, following `references/workflow-setup.md` §1–2 (minimal-push rule for anything not yet answered). Leave the schedule and failure email in `workflow/rfm_launch.dig` commented unless the user asks for them. Do not review the template's SQL or `.dig` files or validate the config locally — the template is pre-validated.
-5. **Approve, push, run** — `../shared/push_pattern_td_workflows.md` Step 5: show the config and both names, ask once to push, run and validate (Recommended); then push, tell the user the run takes a few minutes, run, monitor. With `globals.model_type: ai_signals`, no secret is needed up front — only if scoring fails with 401/403, ask the user to set `td.apikey` themselves (`references/workflow-setup.md` §3).
+5. **Approve, push, run** — `../shared/push_pattern_td_workflows.md` Step 5: show the config and both names, ask once to push, run and validate (Recommended); then push, tell the user the run takes a few minutes, run, monitor. No secret setup: with `globals.model_type: ai_signals` the API key is provided by the AI Signals architecture — never ask the user to set `td.apikey`.
 6. Validate with `references/workflow-setup.md` §4. If check 2 or 4 shows a missing monetary source or a source with no rows, fix the config and re-run before continuing.
 7. Update `project_state.md` (names, scoring model, assumed defaults, validation results).
 8. **Hands-on kit question** — playbook Phase 3 step 4: summarize the run, then ask whether to build the agent, dashboard and both guides (Recommended), the agent and dashboard only, or nothing yet. Continue with Phase 4 Part A.
@@ -129,4 +129,5 @@ Only after the user says the model is ready and confirms the move (playbook Phas
 - **Scoring model:** `globals.model_type` — `ai_signals` (default, `rfm_ai_signals.dig`) or `custom` (`rfm_custom.dig`)
 - **Key outputs:** `rfm_output_table` (Parent Segment attributes); `rfm_stats`, `rfm_stats_histogram`, `rfm_stats_model_params`, `rfm_stats_daily_agg`
 - **Agent name:** `<project_slug>-agent` — `rfm-agent` by default
-- **Secrets:** `td.apikey` read by `ai_signals` — usually provided by TD Workflow; set only on 401/403
+- **Secrets:** none to set — `${secret:td.apikey}` in `rfm_ai_signals.dig` is provided by the AI Signals architecture
+- **API endpoint:** US by default; other regions in `references/ai-signals-guide.md` §3

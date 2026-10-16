@@ -68,7 +68,7 @@ Record the column names and findings in `project_state.md` (Phase 1) — they ar
 
 | Decision | Rule |
 |---|---|
-| Scoring model | `globals.model_type: ai_signals` (default). Switch to `custom` if the AI Signals scoring step keeps failing on access (401/403 even with `td.apikey` set — §3) or the customer wants fully transparent SQL scoring; record the choice in `project_state.md` |
+| Scoring model | `globals.model_type: ai_signals` (default). Switch to `custom` if the AI Signals scoring step keeps failing on access (401/403 with the right regional endpoint) or the customer wants fully transparent SQL scoring; record the choice in `project_state.md` |
 | Time filter | First setup: all history (`apply_time_filter: 'no'` everywhere) unless the requirements ask for a window. Rolling window → `interval` with a `lookback_period` long enough to see repeat purchases (6–24 months). Data that ends before today (demo, backfill, paused feed) → `range` covering the data, because `interval` counts back from the run time. Set `apply_time_filter` the same on every source and on the top-level label |
 | Recency on stale data | Recency is days since the last event, counted from the run time. On stale data every profile has a large recency, but quartiles are relative, so `r_quartile` still ranks profiles — say so in `project_state.md` and the docs |
 | `context_col` | Every source needs one; never leave it blank. Pick a descriptive column with many values — title or path, item, campaign, topic — that still varies **after** the source's filter. Never a status or event-type column, and never the column the filter fixes to one value (e.g. `action_type` when the filter keeps only `redeem`) |
@@ -81,7 +81,8 @@ Record the column names and findings in `project_state.md` (Phase 1) — they ar
 |---|---|
 | Default project name | `rfm_ais` (from `tdx.json`) |
 | Entry point | `rfm_launch` |
-| Secrets | `rfm_ai_signals.dig` reads `${secret:td.apikey}`. TD Workflow usually provides it — a first test run succeeded with no project secret set — so push and run without it. Only if the scoring step fails with 401/403, ask the user to set it themselves: `! tdx wf secrets set <project> td.apikey=<master API key>`. Never ask for or handle the key yourself. None for `custom` |
+| Secrets | None to set. `rfm_ai_signals.dig` sends `${secret:td.apikey}`, which the AI Signals architecture provides — never ask the user to set it, and keep the header exactly as in the template |
+| API endpoint | The template uses the US endpoint. For an account in another region (`tdx status`), use that region's endpoint (`ai-signals-guide.md` §3) in `+run_rfm` and `+poll_status` of `rfm_ai_signals.dig` |
 | Schedule | Commented out in `rfm_launch.dig`. Ask whether the customer wants scheduled runs; leave it commented for a test account |
 | Sink database | Created by the first step of `rfm_launch.dig` (`+create_sink_database`, `td_ddl>`) if missing. Keep that step and the `td: database:` export above it — `td_ddl>` in the launch file fails with "Parameter 'database' is required" without it. If the project owner can't create databases, the user creates it in the TD Console before the first run |
 
@@ -144,7 +145,7 @@ Pass: the latest session has one `_model_params` row per configured source and t
 | Symptom | Likely cause | Fix |
 |---|---|---|
 | `Table not found` / `Column not found` in the union step | Wrong `src_table`, column name or blank `context_col` | `tdx describe` the source; fix the entry |
-| Scoring step fails with 401/403 | `td.apikey` not available to the project or not allowed to use the AI Signals API (`ai_signals`) | User sets the secret (§3) and re-runs; or switch to `custom` |
+| Scoring step fails with 401/403 | Endpoint doesn't match the account's region, or the account has no AI Signals access | Use the regional endpoint (§3); otherwise ask the account admin about AI Signals access, or switch to `custom` |
 | `<out>` empty | Run failed before or during scoring | `tdx wf attempt <id> tasks`, then `logs +<failed task>` |
 | A source missing from `<union>` | 0 rows after `custom_filter` + time filter | Run the source's filter as a `COUNT(*)`; widen the window or filter |
 | `m_quartile` the same for almost everyone | No monetary source, or `order_amount: 0.0` on the order source | Set the revenue column on the order source |

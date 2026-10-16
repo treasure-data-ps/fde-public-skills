@@ -32,7 +32,7 @@ All tables are in `{{sink_database}}`.
 **Scoring logic (`custom` SQL scoring; `ai_signals` returns the same columns):**
 - Recency: lower recency_days → higher r_quartile (reverse scale)
 - Frequency: higher touchpoints → higher f_quartile
-- Monetary: higher spend → higher m_quartile (percentiles computed only for monetary_value > 0.05)
+- Monetary: higher spend → higher m_quartile. `custom`: percentiles computed only from monetary_value > 0.05 (lower values → M1). `ai_signals`: all profiles count unless `mv_threshold` is set (default none; profiles at or below it → M1) — check the deployed `rfm_ai_signals.dig`
 
 **Usage:** Primary table for all segmentation analysis. Join with other customer tables using the resolved `<customer_id_col>` column.
 
@@ -274,4 +274,4 @@ ORDER BY segment_size DESC
 
 **Characteristics:** Segment names use mixed case as defined in the scoring SQL (e.g., `Champions`, `Cannot lose them`, `Lost customers`). Quartile scores are integers from 1 to 4. Monetary values are stored as doubles. The `rfm_quartile` column uses format `R<n>F<n>M<n>` (e.g., `R4F3M2`).
 
-**Edge Cases:** Customers with activity in only one source table may have biased frequency scores. Customers with no order data will all have `monetary_value = 0` — their m_quartile is still computed but based on the 0 values. Very recent customers may have high r_quartile but low f_quartile and m_quartile. The monetary percentiles exclude values <= 0.05 to avoid skew from zero-spend profiles.
+**Edge Cases:** Customers with activity in only one source table may have biased frequency scores. Customers with no order data will all have `monetary_value = 0` — their m_quartile is still computed but based on the 0 values. Very recent customers may have high r_quartile but low f_quartile and m_quartile. With `custom` scoring (and with `ai_signals` when `mv_threshold` is set), the monetary percentiles exclude values at or below the threshold (0.05 for `custom`) to avoid skew from zero-spend profiles; `ai_signals` without `mv_threshold` includes them, so many zero-spend profiles can fill M1 and push buyers' cut-offs down.

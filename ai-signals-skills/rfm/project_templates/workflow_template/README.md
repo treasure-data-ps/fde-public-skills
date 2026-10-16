@@ -105,7 +105,8 @@ All tables are written to `globals.sink_database`.
 
 ## Secrets & Requirements
 
-- **Secrets:** `rfm_ai_signals.dig` (`globals.model_type: ai_signals`) sends `${secret:td.apikey}` to the AI Signals batch API. TD Workflow usually provides it without a project secret; if the scoring step fails with 401/403, the user sets it: `tdx wf secrets set <project> td.apikey=<master API key>`. `custom` needs no secret.
+- **Secrets:** none to set. `rfm_ai_signals.dig` (`globals.model_type: ai_signals`) sends `${secret:td.apikey}` to the AI Signals batch API, which provides the key itself. `custom` needs no secret.
+- **API endpoint:** `rfm_ai_signals.dig` calls the US endpoint (`https://ml-batch-api.treasuredata.com/v1/runs`). For other regions, change the URL in `+run_rfm` and `+poll_status`: Japan `ml-batch-api.treasuredata.co.jp`, EU `ml-batch-api.eu01.treasuredata.com`, AP `ml-batch-api.ap02.treasuredata.com` / `ml-batch-api.ap03.treasuredata.com`.
 - **Failure email:** the `_error` block in `rfm_launch.dig` is commented out. To enable it, uncomment it, replace `your-team@example.com` with the customer's address and put the customer name in `subject`.
 - **Schedule:** the `schedule:` block in `rfm_launch.dig` is commented out (example: monthly). Uncomment and set it if the customer wants scheduled runs.
 - **Requirements:** `globals.sink_database` exists or can be created; every source has a profile ID column and a usable event timestamp; Trino (`presto`) engine. Large accounts may need a shorter `lookback_period`.
