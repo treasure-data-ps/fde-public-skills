@@ -11,7 +11,7 @@
 
 ####################### MAIN WORKFLOW ######################################
 _export:
-  !include : config/params.yml
+  !include : config/input_params.yml
   td:
     database: ${sink_database}
 
@@ -24,8 +24,8 @@ _export:
   call>: nbp_preprocessing.dig
 
 ################ RUN RECOMMENDATIONS SCRIPT ###########################
-+run_recommmendation_engine:
-  call>: nbp_model_train_${model_type}.dig
++run_recommendation_engine:
+  call>: nbp_ai_signals.dig
 
 ################ AGG MODEL PARAMS AND OUTPUTS #########################
 +aggregate_model_params:
@@ -33,5 +33,7 @@ _export:
 
 ############# CLEANUP TEMP TABLES ##################################
 +cleanup_temp_tables:
-  td_ddl>:
-  drop_tables: ["${prefix}user_item", "${prefix}recent_item_contacts", "${prefix}schema", "${prefix}topk_recommended_items_temp", "${prefix}als_sampled_input"]
+  if>: ${cleanup_temp_tables == 'yes'}
+  _do:
+    td_ddl>:
+    drop_tables: ["${prefix}user_item", "${prefix}schema", "${prefix}topk_recommended_items_temp", "${prefix}als_sampled_input"]

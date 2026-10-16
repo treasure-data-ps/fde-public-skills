@@ -10,7 +10,7 @@ Each subfolder is a self-contained solution with its own `SKILL.md` entry point.
 | `mta/` | Multi-Touch Attribution (Markov, Shapley, journey analytics) | Ready |
 | `classifier/` | Binary classification (lead scoring, churn, propensity) with SHAP explainability | Ready |
 | `nba-scores/` | NBA — Next Best Channel / Time / Campaign engagement scores | Ready |
-| `nbp/` | NBP — Next Best Product recommendations (Hivemall / PrecisionML) | Ready |
+| `nbp/` | NBP — Next Best Product recommendations (AI Signals NBP model) | Ready |
 
 ## Shared workflow pattern
 
@@ -27,7 +27,8 @@ All outputs are written to the git-ignored `agent_outputs/<project_slug>/` folde
 
 Each solution folder contains:
 - `SKILL.md` — entry point, solution-specific context per phase
-- `project_templates/` — the TD workflow template (read-only)
-- `workflow-setup/references/` — config templates, requirements doc template, eval checks, deploy instructions
-- `agent-skills/<insights-skill>/` — companion Claude skill for analyzing output tables and generating dashboards
-- `prod-docs/references/` — content for the documentation set
+- `project_templates/workflow_template/` — the TD workflow template (read-only; `README.md` + `config/` are the source of truth)
+- `project_templates/agent_template/` — the customer analysis agent blueprint (`SKILL.template.md` + `references/`)
+- `references/` — workflow setup, requirements doc, agent setup, docs content, Parent Segment spec, and the AI Signals model guide (AI Signals solutions)
+
+`rfm/`, `nba-scores/` and `nbp/` follow this layout (`shared/solution_standard.md`); `mta/` and `classifier/` are still being restructured.

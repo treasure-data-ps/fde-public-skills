@@ -26,10 +26,10 @@ Use ONLY when the user explicitly asks for a React/dashboard layout to be render
 
 Use this when the user asks for a **shareable, exportable, standalone HTML dashboard** (an artifact they can email, host, or open offline). Don't reach for `render_react` for this — that's chat-only.
 
-- Run `node "<skill_dir>/references/generate-data.js" <sink_database> <customer_slug> "<Customer Name>"` from the user's working directory (not from `references/`)
-- Script queries output tables concurrently in parallel via `tdx`, derives metrics & insights, and writes to `agent_outputs/<customer_slug>/nbp/dashboards/nbp_summary_dashboard.html` (relative to the current working directory)
+- Run the command in `references/dashboard_template.md` from the Work Folder root (where `agent_outputs/` lives): `node ".claude/skills/{{agent_name}}/references/generate-data.js" {{sink_database}} {{project_slug}} "{{project_name}}" -p {{table_prefix}} -o "{{engagement_dir}}/dashboards/nbp_summary_dashboard.html"`
+- Script queries output tables concurrently in parallel via `tdx`, derives metrics & insights, and writes to `{{engagement_dir}}/dashboards/nbp_summary_dashboard.html`
 - Open with `mcp__work__open_file`
-- See `references/dashboard_template.md` and SKILL.md for details
+- See `references/dashboard_template.md` and `SKILL.md` for details
 - Keep TD palette, layout CSS, and chart shapes intact
 
 ## TD Color Palette
@@ -66,7 +66,7 @@ Never substitute another palette. NBP dashboards live next to MTA / NBA / RFM / 
 | Item catalog breakdown by category | `render_chart` type: `treemap` (sized by item_count) |
 | Run-over-run coverage / item diversity trends | `render_chart` type: `line` |
 | Test set precision/recall histograms | `render_chart` type: `bar` (separate charts for precision and recall) |
-| Item-item similarity distribution (hive) | `render_chart` type: `area` or `bar` (binned by similarity score) |
+| Item-item similarity distribution | `render_chart` type: `area` or `bar` (binned by similarity score) |
 | Multi-chart "summarize the latest run" dashboard | `render_react` (only when user explicitly asks for a dashboard) |
 
 ## NBP-Specific Visualization Patterns
@@ -105,9 +105,9 @@ If `run_count >= 2`, add a line chart showing `total_product_matches` and `total
 
 Line chart with `run_time` (from `global_session_filter`) on the x-axis. One line per metric: `users_with_recs`, `distinct_items_recommended`, coverage rate. If config changed between runs, annotate the change directly on the chart.
 
-### Item-Item Similarity Distribution (hive engine)
+### Item-Item Similarity Distribution
 
-Histogram-style bar chart from `dash_similarity_stats_agg`. Bin the `similarity` values into ~10 buckets (e.g., 0.0–0.1, 0.1–0.2, ...) and show item pair count per bucket. This shows the shape of the similarity graph — useful for diagnosing whether `dimsum_similarity_threshold` is set too high (cutting off most pairs) or too low (including noisy low-similarity pairs).
+Histogram-style bar chart from `dash_similarity_stats_agg`. Bin the `similarity` values into ~10 buckets (e.g., 0.0–0.1, 0.1–0.2, ...) and show item pair count per bucket. The pairs come from the AI Signals model's similar-items output. This shows the shape of the similarity graph — a mass of low scores means weak item-item signal (sparse interactions), a cluster near 1.0 can point to duplicate items (one product under several IDs).
 
 ## Forbidden Patterns
 

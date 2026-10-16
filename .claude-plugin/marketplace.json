@@ -21,8 +21,7 @@
         "./ai-signals-skills/mta",
         "./ai-signals-skills/mta/agent-skills/mta-journey-analysis",
         "./ai-signals-skills/nba-scores",
-        "./ai-signals-skills/nbp",
-        "./ai-signals-skills/nbp/agent-skills/nbp-insights"
+        "./ai-signals-skills/nbp"
       ]
     },
     {

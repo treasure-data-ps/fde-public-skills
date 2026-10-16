@@ -2,16 +2,19 @@
 /**
  * NBP Next Best Product Dashboard Data Generator (Parallel Query Engine)
  *
- * Concurrently queries customer NBP output tables via tdx CLI and dynamically
+ * Concurrently queries NBP output tables via tdx CLI and dynamically
  * bakes metrics, chart datasets, and executive insights into the NBP Summary Dashboard template.
  *
  * Usage:
- *   node generate-data.js <sink_database> [customer_slug] [customer_name]
- *   SOURCE_DB=<sink_database> node generate-data.js [customer_slug] [customer_name]
+ *   node generate-data.js <sink_database> [project_slug] [project_name] [-p <table_prefix>]
+ *   SOURCE_DB=<sink_database> node generate-data.js [project_slug] [project_name]
  *
  * Examples:
- *   node generate-data.js nbp_output travel "Test Customer Travel"
- *   SOURCE_DB=nbp_output node generate-data.js retail "Test Customer Retail"
+ *   node generate-data.js my_sink_db retail-nbp "Retail NBP" -p nbp_
+ *   SOURCE_DB=my_sink_db node generate-data.js retail-nbp "Retail NBP"
+ *
+ * Output (default): ./agent_outputs/<project_slug>/dashboards/nbp_summary_dashboard.html
+ * relative to the current working directory (git-ignored engagement folder).
  */
 
 const fs = require('fs');
@@ -35,18 +38,18 @@ function printHelp() {
 NBP Next Best Product Dashboard Data Generator (Parallel Query Engine)
 
 Usage:
-  node generate-data.js <sink_database> [customer_slug] [customer_name]
-  SOURCE_DB=<sink_database> node generate-data.js [customer_slug] [customer_name]
+  node generate-data.js <sink_database> [project_slug] [project_name]
+  SOURCE_DB=<sink_database> node generate-data.js [project_slug] [project_name]
 
 Arguments:
   sink_database    Treasure Data database where NBP output tables reside (required, or env SOURCE_DB)
-  customer_slug    Directory slug for customer output (default: derived from customer name or "customer")
-  customer_name    Display name for customer (default: Title-cased slug)
+  project_slug     Project slug, names the output folder (default: "nbp")
+  project_name     Project display name in the dashboard header (default: Title-cased slug)
 
 Options:
   -p, --prefix     Table name prefix (default: nbp_ or env TABLE_PREFIX)
   -o, --output     Custom output file path
-                   (default: ./agent_outputs/<customer_slug>/nbp/dashboards/nbp_summary_dashboard.html)
+                   (default: ./agent_outputs/<project_slug>/dashboards/nbp_summary_dashboard.html)
   -t, --template   Path to dashboard_template.html (default: the copy next to this script)
   -v, --verbose    Show verbose query outputs and timings
   -h, --help       Show this help message
@@ -80,18 +83,18 @@ for (let i = 0; i < args.length; i++) {
 }
 
 let sinkDatabase = process.env.SOURCE_DB || '';
-let customerSlug = process.env.CUSTOMER_SLUG || '';
-let customerName = process.env.CUSTOMER_NAME || '';
+let projectSlug = process.env.PROJECT_SLUG || '';
+let projectName = process.env.PROJECT_NAME || '';
 const tablePrefix = customPrefix || process.env.TABLE_PREFIX || process.env.PREFIX || 'nbp_';
 
 if (posArgs.length > 0) {
   if (!sinkDatabase) {
     sinkDatabase = posArgs[0];
-    if (posArgs[1]) customerSlug = posArgs[1];
-    if (posArgs[2]) customerName = posArgs[2];
+    if (posArgs[1]) projectSlug = posArgs[1];
+    if (posArgs[2]) projectName = posArgs[2];
   } else {
-    customerSlug = posArgs[0];
-    if (posArgs[1]) customerName = posArgs[1];
+    projectSlug = posArgs[0];
+    if (posArgs[1]) projectName = posArgs[1];
   }
 }
 
@@ -101,12 +104,12 @@ if (!sinkDatabase) {
   printHelp();
 }
 
-if (!customerSlug) {
-  customerSlug = 'customer';
+if (!projectSlug) {
+  projectSlug = 'nbp';
 }
 
-if (!customerName) {
-  customerName = customerSlug
+if (!projectName) {
+  projectName = projectSlug
     .split(/[-_]/)
     .map(w => w.charAt(0).toUpperCase() + w.slice(1))
     .join(' ');
@@ -118,7 +121,7 @@ const templatePath = customTemplate
   ? path.resolve(process.cwd(), customTemplate)
   : path.resolve(scriptDir, 'dashboard_template.html');
 
-const defaultOutputDir = path.resolve(workRoot, 'agent_outputs', customerSlug, 'nbp', 'dashboards');
+const defaultOutputDir = path.resolve(workRoot, 'agent_outputs', projectSlug, 'dashboards');
 const outputPath = customOutput
   ? path.resolve(process.cwd(), customOutput)
   : path.join(defaultOutputDir, 'nbp_summary_dashboard.html');
@@ -131,7 +134,7 @@ if (!fs.existsSync(templatePath)) {
 console.log('='.repeat(65));
 console.log('  NBP Product Recommendations Dashboard Generator (Parallel Mode)');
 console.log('='.repeat(65));
-console.log(`  Customer:       ${customerName} (${customerSlug})`);
+console.log(`  Project:        ${projectName} (${projectSlug})`);
 console.log(`  Database:       ${sinkDatabase}`);
 console.log(`  Prefix:         ${tablePrefix}`);
 console.log(`  Template:       ${templatePath}`);
@@ -206,22 +209,16 @@ function escapeHtml(str) {
 }
 
 function parseModelConfig(paramsStr) {
-  let engine = 'automl';
+  const engine = 'AI Signals';
   let algorithm = 'als';
   if (!paramsStr) return { engine, algorithm };
 
   if (/algorithm:\s*([a-zA-Z0-9_-]+)/i.test(paramsStr)) {
     const match = paramsStr.match(/algorithm:\s*([a-zA-Z0-9_-]+)/i);
     algorithm = match[1].toLowerCase();
-    engine = 'automl';
-  } else if (/dimsum|hive/i.test(paramsStr)) {
-    engine = 'hive';
-    algorithm = 'dimsum';
   } else if (/popular/i.test(paramsStr)) {
-    engine = 'automl';
     algorithm = 'popular';
   } else if (/similar_to_latest/i.test(paramsStr)) {
-    engine = 'automl';
     algorithm = 'similar_to_latest';
   }
 
@@ -628,8 +625,8 @@ async function main() {
   } else {
     testsetTabContent = `
     <div class="callout" style="margin-top:20px;">
-      <strong>Test Set Evaluation Not Available.</strong> Model holdout evaluation was not enabled for this workflow run (<code>run_model_test_set: no</code> in <code>params.yml</code>), or testset tables contain no customer evaluation records.
-      <p style="margin-top:8px;margin-bottom:0;">To enable test set evaluation in future runs, set <code>run_model_test_set: yes</code> in your NBP workflow <code>config/params.yml</code>. This will automatically partition a holdout dataset, evaluate product and category match rates against random baselines, and generate precision/recall distributions.</p>
+      <strong>Test Set Evaluation Not Available.</strong> Test set evaluation was not enabled for this workflow run (<code>run_model_test_set: 'no'</code> in <code>config/input_params.yml</code>), or testset tables contain no customer evaluation records.
+      <p style="margin-top:8px;margin-bottom:0;">To enable test set evaluation in future runs, set <code>run_model_test_set: 'yes'</code> in your NBP workflow <code>config/input_params.yml</code>. This compares the recommendations with each customer's purchases in the last <code>test_lookback</code>, evaluates product and category match rates against random baselines, and generates precision/recall distributions.</p>
     </div>`;
   }
 
@@ -640,7 +637,7 @@ async function main() {
     `<strong>Audience Recommendation Reach:</strong> <strong>${fmtPct(coveragePctVal)}</strong> of addressable users (<strong>${fmtInt(usersWithRecs)}</strong> of <strong>${fmtInt(totalUsers)}</strong>) received personalized recommendations${coveragePctVal >= 80 ? ' — well above the 80% production health standard' : ' — review cold-start rules to expand coverage'}.`,
     `<strong>Catalog Breadth Utilization:</strong> The model surfaced <strong>${fmtInt(distinctItemsRecommended)} distinct items</strong> out of <strong>${fmtInt(totalItemsInCatalog)} catalog products</strong> (${fmtPct(totalItemsInCatalog > 0 ? distinctItemsRecommended / totalItemsInCatalog * 100 : 0)} active recommendation coverage).`,
     `<strong>Training Data Temporal Depth:</strong> Trained across a <strong>${timeRangeDays}-day lookback window</strong> (${leastRecentEvent} → ${mostRecentEvent}) to capture customer lifecycle and repeat purchase patterns.`,
-    `<strong>Recommendation Engine & Architecture:</strong> Deployed via <strong>${engine.toUpperCase()} (${algorithm.toUpperCase()})</strong> with automated matrix factorization for high-velocity inference.`,
+    `<strong>Recommendation Model:</strong> Generated by the <strong>${engine}</strong> NBP model with the <strong>${algorithm.toUpperCase()}</strong> algorithm.`,
     `<strong>Business Exclusion Rules:</strong> <strong>${fmtInt(filteredItemCount)} products</strong> were filtered by applied exclusion rules (${escapeHtml(exclusionFilters)}) prior to scoring.`
   ];
   const tab1InsightsHtml = tab1Bullets.map(b => `<li>${b}</li>`).join('\n          ');
@@ -705,7 +702,7 @@ async function main() {
   console.log('Baking dynamic data into dashboard template...');
 
   const tokenMap = {
-    '{{customer_name}}': escapeHtml(customerName),
+    '{{project_name}}': escapeHtml(projectName),
     '{{sink_database}}': escapeHtml(sinkDatabase),
     '{{prefix}}': escapeHtml(tablePrefix),
     '{{session_id}}': escapeHtml(sessionId),
@@ -787,7 +784,7 @@ async function main() {
 
   // Inline window.RAW for programmatic access
   const rawPayload = {
-    customer: { name: customerName, slug: customerSlug, database: sinkDatabase, prefix: tablePrefix },
+    project: { name: projectName, slug: projectSlug, database: sinkDatabase, prefix: tablePrefix },
     meta: {
       sessionId,
       runTime: runTimeUtc,

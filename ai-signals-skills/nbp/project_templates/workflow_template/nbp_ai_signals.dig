@@ -1,5 +1,5 @@
 _export:
-  !include : config/params.yml
+  !include : config/input_params.yml
   td:
     database: ${sink_database}
 
@@ -26,7 +26,7 @@ _export:
         output_table: ${sink_database}.${prefix}topk_recommended_items
         solution_name: nbp_train
         solution_arguments:
-          model_name: psdemo_test_${automl_model_type}
+          model_name: ${prefix}${automl_model_type}
           algorithm: ${automl_model_type}
           metrics_table: ${sink_database}.${prefix}metrics_temp
           user_column: userid
@@ -53,7 +53,7 @@ _export:
         output_table: ${sink_database}.${prefix}topk_recommended_items
         solution_name: nbp_train
         solution_arguments:
-          model_name: psdemo_test_${automl_model_type}
+          model_name: ${prefix}${automl_model_type}
           algorithm: ${automl_model_type}
           metrics_table: ${sink_database}.${prefix}metrics_temp
           user_column: userid
@@ -79,7 +79,7 @@ _export:
     output_table: ${sink_database}.${prefix}topk_recommended_items
     solution_name: nbp_predict
     solution_arguments:
-      model_name: psdemo_test_${automl_model_type}
+      model_name: ${prefix}${automl_model_type}
       algorithm: ${automl_model_type}
       user_column: userid
       item_column: itemid

@@ -1,12 +1,12 @@
 _export:
-  !include : config/params.yml
+  !include : config/input_params.yml
   td:
     engine: presto
     database: ${sink_database}
 
 +extract_model_params:
   +extract_automl:
-    td>: queries/extract_params_${model_type}.sql
+    td>: queries/extract_params.sql
     store_last_results: true
 
 +create_model_summary_tables:
@@ -37,7 +37,7 @@ _export:
     td>: queries/dash/item_category_mapping_agg.sql
     create_table: ${prefix}dash_item_category_mapping_agg
 
-  +dimsum_similarity_metrics:
+  +similarity_metrics:
     td>: queries/dash/similarity_metrics.sql
     create_table: ${prefix}dash_similarity_stats_agg
 
@@ -57,7 +57,7 @@ _export:
         insert_into: ${prefix}dash_final_recs_stats_agg
       +dash:
         td>:
-        query: "SELECT * FROM nbp_dash_final_recs_stats_agg WHERE event_date=(SELECT max(event_date) FROM nbp_dash_final_recs_stats_agg)"
+        query: "SELECT * FROM ${prefix}dash_final_recs_stats_agg WHERE event_date=(SELECT max(event_date) FROM ${prefix}dash_final_recs_stats_agg)"
         create_table: ${prefix}dash_final_recs_stats_daily
 
 +create_global_session_filter:

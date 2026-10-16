@@ -5,19 +5,17 @@
 ================================================================================
 
   RECOMMENDED EXECUTION (Fast build-time query & bake via generate-data.js):
-    node generate-data.js [sink_database] [customer_slug] [customer_name]
-    # Or with environment variable:
-    SOURCE_DB=<sink_database> node generate-data.js travel "Test Customer Travel"
-    # Or with custom prefix:
-    TABLE_PREFIX=nbp_ SOURCE_DB=<sink_database> node generate-data.js travel "Test Customer Travel"
+    node generate-data.js <sink_database> [project_slug] [project_name] [-p <table_prefix>]
+    # Or with environment variables:
+    SOURCE_DB=<sink_database> TABLE_PREFIX=nbp_ node generate-data.js retail-nbp "Retail NBP"
 
   The generator:
-    1. Executes queries Q1–Q7 against customer's sink_database via tdx CLI in parallel
+    1. Executes queries Q1–Q7 against the sink_database via tdx CLI in parallel
     2. Shapes metrics, formats tables, and synthesizes executive insights
     3. Substitutes all {{TOKEN}} placeholders
     4. Inlines window.RAW data object for programmatic access
     5. Writes the result to:
-         agent_outputs/<customer_slug>/nbp/dashboards/nbp_summary_dashboard.html
+         agent_outputs/<project_slug>/dashboards/nbp_summary_dashboard.html
     6. Opens with mcp__work__open_file
 
   All visual structure (TD palette, layout, tabs, chart shapes) is fixed.
@@ -56,20 +54,20 @@
       - Recall histogram (bar)
       - Insights
       When testset_available = false: render a single callout explaining testset is disabled
-      and how to enable it (set run_model_test_set: yes in params.yml).
+      and how to enable it (set run_model_test_set: 'yes' in config/input_params.yml).
 
   ──────────────────────────────────────────────────────────────────────────
   TOKEN REFERENCE
   ──────────────────────────────────────────────────────────────────────────
 
   ── Header / metadata tokens (strings) ─────────────────────────────────────
-  {{customer_name}}              — e.g. "Acme Corp"
+  {{project_name}}               — e.g. "Retail NBP"
   {{sink_database}}              — e.g. "ml_output"
-  {{prefix}}                     — e.g. "nbp_"
+  {<prefix>}                     — e.g. "nbp_"
   {{session_id}}                 — latest session_id (bigint)
   {{run_time_utc}}               — e.g. "2026-05-18 06:00 UTC"
-  {{engine}}                     — "hive" or "automl"
-  {{algorithm}}                  — "als" | "similar_to_latest" | "popular" | "dimsum" (hive)
+  {{engine}}                     — "AI Signals"
+  {{algorithm}}                  — "als" | "similar_to_latest" | "popular"
   {{run_count}}                  — int, total number of historical runs
 
   ── TAB 1 (Run Overview) tokens ────────────────────────────────────────────
@@ -151,8 +149,8 @@
   ── TAB 5 (Test Set) tokens — CONDITIONAL ──────────────────────────────────
   {{testset_available}}          — boolean string: "true" or "false"
                                    Set to "true" only when BOTH conditions hold:
-                                     1. run_model_test_set: yes is set in params.yml
-                                     2. {prefix}dash_testset AND {prefix}dash_testset_numbers
+                                     1. run_model_test_set: 'yes' is set in config/input_params.yml
+                                     2. <prefix>dash_testset AND <prefix>dash_testset_numbers
                                         tables exist and are non-empty for this session
                                    Otherwise set to "false" — the tab renders a disabled callout.
 
@@ -170,11 +168,11 @@
   {{testset_bar_model_json}}     — array<number>, [product_match_rate_float, category_match_rate_float]
   {{testset_bar_random_json}}    — array<number>, [random_item_rate_float*100, random_cat_rate_float*100]
 
-  Precision histogram from {prefix}dash_testset WHERE type='precision':
+  Precision histogram from <prefix>dash_testset WHERE type='precision':
   {{testset_prec_labels_json}}   — array<string>, bin label values, ASC
   {{testset_prec_values_json}}   — array<number>, bin_cnt per label, parallel
 
-  Recall histogram from {prefix}dash_testset WHERE type='recall':
+  Recall histogram from <prefix>dash_testset WHERE type='recall':
   {{testset_rec_labels_json}}    — array<string>, bin label values, ASC
   {{testset_rec_values_json}}    — array<number>, bin_cnt per label, parallel
 
@@ -193,73 +191,73 @@
              m.distinct_items_transactions_table, m.time_range_days,
              m.least_recent_event, m.most_recent_event,
              m.model_params, m.exclusion_filters, m.filtered_item_count
-      FROM {prefix}dash_model_param_stats_agg m
-      JOIN {prefix}global_session_filter s ON m.session_id = s.session_id
+      FROM <prefix>dash_model_param_stats_agg m
+      JOIN <prefix>global_session_filter s ON m.session_id = s.session_id
       WHERE s.session_rnk = 1
 
   Q2 — Top recommended items at ranks 1, 2, and 3 (Tab 2):
       -- Rank 1
       SELECT nbp_1 AS item, SUM(event_cnt) AS user_count
-      FROM {prefix}dash_final_recs_stats_daily
-      WHERE event_date = (SELECT MAX(event_date) FROM {prefix}dash_final_recs_stats_daily)
+      FROM <prefix>dash_final_recs_stats_daily
+      WHERE event_date = (SELECT MAX(event_date) FROM <prefix>dash_final_recs_stats_daily)
       GROUP BY nbp_1 ORDER BY user_count DESC LIMIT 15
       -- Rank 2
       SELECT nbp_2 AS item, SUM(event_cnt) AS user_count
-      FROM {prefix}dash_final_recs_stats_daily
-      WHERE event_date = (SELECT MAX(event_date) FROM {prefix}dash_final_recs_stats_daily)
+      FROM <prefix>dash_final_recs_stats_daily
+      WHERE event_date = (SELECT MAX(event_date) FROM <prefix>dash_final_recs_stats_daily)
       GROUP BY nbp_2 ORDER BY user_count DESC LIMIT 10
       -- Rank 3
       SELECT nbp_3 AS item, SUM(event_cnt) AS user_count
-      FROM {prefix}dash_final_recs_stats_daily
-      WHERE event_date = (SELECT MAX(event_date) FROM {prefix}dash_final_recs_stats_daily)
+      FROM <prefix>dash_final_recs_stats_daily
+      WHERE event_date = (SELECT MAX(event_date) FROM <prefix>dash_final_recs_stats_daily)
       GROUP BY nbp_3 ORDER BY user_count DESC LIMIT 10
 
   Q3 — Category distribution at ranks 1–3 (Tab 2):
       SELECT 'rank_1' AS rank_label, nb_category_1 AS category, SUM(event_cnt) AS user_count
-      FROM {prefix}dash_final_recs_stats_daily
-      WHERE event_date = (SELECT MAX(event_date) FROM {prefix}dash_final_recs_stats_daily)
+      FROM <prefix>dash_final_recs_stats_daily
+      WHERE event_date = (SELECT MAX(event_date) FROM <prefix>dash_final_recs_stats_daily)
       GROUP BY nb_category_1
       UNION ALL
       SELECT 'rank_2', nb_category_2, SUM(event_cnt)
-      FROM {prefix}dash_final_recs_stats_daily
-      WHERE event_date = (SELECT MAX(event_date) FROM {prefix}dash_final_recs_stats_daily)
+      FROM <prefix>dash_final_recs_stats_daily
+      WHERE event_date = (SELECT MAX(event_date) FROM <prefix>dash_final_recs_stats_daily)
       GROUP BY nb_category_2
       UNION ALL
       SELECT 'rank_3', nb_category_3, SUM(event_cnt)
-      FROM {prefix}dash_final_recs_stats_daily
-      WHERE event_date = (SELECT MAX(event_date) FROM {prefix}dash_final_recs_stats_daily)
+      FROM <prefix>dash_final_recs_stats_daily
+      WHERE event_date = (SELECT MAX(event_date) FROM <prefix>dash_final_recs_stats_daily)
       GROUP BY nb_category_3
       ORDER BY rank_label, user_count DESC
 
   Q4 — Catalog category breakdown + most ordered items (Tab 3):
-      SELECT item_category, item_count FROM {prefix}dash_item_category_mapping_agg ORDER BY item_count DESC
+      SELECT item_category, item_count FROM <prefix>dash_item_category_mapping_agg ORDER BY item_count DESC
       --
-      SELECT item_name, times_ordered FROM {prefix}dash_most_ordered_items ORDER BY times_ordered DESC LIMIT 10
+      SELECT item_name, times_ordered FROM <prefix>dash_most_ordered_items ORDER BY times_ordered DESC LIMIT 10
 
   Q5 — Historic run inventory (Tab 4):
       SELECT s.session_id, s.run_time,
              m.users_with_recs, m.distinct_users_transactions_table, m.distinct_items_recommended
-      FROM {prefix}dash_model_param_stats_agg m
-      JOIN {prefix}global_session_filter s ON m.session_id = s.session_id
+      FROM <prefix>dash_model_param_stats_agg m
+      JOIN <prefix>global_session_filter s ON m.session_id = s.session_id
       ORDER BY s.session_rnk DESC
 
   Q6 — Test set aggregate metrics (Tab 5 — only run if testset tables exist):
       SELECT n.total_customers, n.total_items_bought,
              n.total_product_matches, n.total_category_matches,
              n.random_item_rate, n.random_category_rate
-      FROM {prefix}dash_testset_numbers n
-      JOIN {prefix}global_session_filter s ON n.session_id = s.session_id
+      FROM <prefix>dash_testset_numbers n
+      JOIN <prefix>global_session_filter s ON n.session_id = s.session_id
       WHERE s.session_rnk = 1
 
   Q7 — Test set histograms (Tab 5 — only run if testset tables exist):
       SELECT t.label, t.bin_cnt, t.type
-      FROM {prefix}dash_testset t
-      JOIN {prefix}global_session_filter s ON t.session_id = s.session_id
+      FROM <prefix>dash_testset t
+      JOIN <prefix>global_session_filter s ON t.session_id = s.session_id
       WHERE s.session_rnk = 1
       ORDER BY t.type, t.label
 
   NOTE: Before running Q6/Q7, verify the tables exist:
-      SHOW TABLES IN <sink_db> LIKE '{prefix}dash_testset%'
+      SHOW TABLES IN <sink_db> LIKE '<prefix>dash_testset%'
   If they are absent or empty, set testset_available = "false" and skip Q6/Q7.
 
   ──────────────────────────────────────────────────────────────────────────
@@ -277,7 +275,7 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>NBP Next Best Product Summary — {{customer_name}}</title>
+<title>NBP Next Best Product Summary — {{project_name}}</title>
 <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
 <style>
   :root {
@@ -346,10 +344,10 @@
 
 <header>
   <h1>Next Best Product Model Summary</h1>
-  <p>{{customer_name}} · {{sink_database}} · Prefix: {{prefix}} · Session {{session_id}}</p>
+  <p>{{project_name}} · {{sink_database}} · Prefix: {{prefix}} · Session {{session_id}}</p>
   <div class="meta-row">
     <span><strong>Run time:</strong> {{run_time_utc}}</span>
-    <span><strong>Engine:</strong> {{engine}} / {{algorithm}}</span>
+    <span><strong>Model:</strong> {{engine}} / {{algorithm}}</span>
     <span><strong>Users with recs:</strong> {{users_with_recs}}</span>
     <span><strong>Coverage:</strong> {{coverage_pct}}</span>
     <span><strong>Items excluded by filters:</strong> {{filtered_item_count}}</span>
@@ -393,7 +391,7 @@
             <tbody>
               <tr><td><strong>Session ID</strong></td><td>{{session_id}}</td></tr>
               <tr><td><strong>Run time</strong></td><td>{{run_time_utc}}</td></tr>
-              <tr><td><strong>Engine</strong></td><td>{{engine}}</td></tr>
+              <tr><td><strong>Model</strong></td><td>{{engine}}</td></tr>
               <tr><td><strong>Algorithm</strong></td><td>{{algorithm}}</td></tr>
               <tr><td><strong>Training window</strong></td><td>{{time_range_days}} days</td></tr>
               <tr><td><strong>Items excluded by filters</strong></td><td>{{filtered_item_count}}</td></tr>

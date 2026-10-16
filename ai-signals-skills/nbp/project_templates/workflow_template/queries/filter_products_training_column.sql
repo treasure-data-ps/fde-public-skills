@@ -2,4 +2,4 @@
 SELECT
   DISTINCT itemid
 FROM ${prefix}transaction_unfiltered
-WHERE NOT REGEXP_LIKE(${exclusion_column}, '${exclusion_values}')
+WHERE REGEXP_LIKE(${exclusion_column}, '${exclusion_values}')

@@ -1,5 +1,5 @@
 _export:
-  !include : config/params.yml
+  !include : config/input_params.yml
   td:
     database: ${sink_database}
 

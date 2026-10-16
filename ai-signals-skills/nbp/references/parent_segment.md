@@ -4,17 +4,17 @@ description: |
   NBP Phase 5 Step 1 — specifies WHAT to add to the Parent Segment and WHAT example audiences to create in Audience Studio. Read by the calling agent alongside shared/parent_segment_update.md which handles the HOW.
 ---
 
-# Next Best Product — Parent Segment Update Spec
+# NBP (Next Best Product) — Parent Segment Update Spec
 
-This file is the solution-specific "what" for Phase 5 Step 1. The process (approval gates, push mechanics, section placement rules) is in `../../../shared/parent_segment_update.md`. Read both files together before making any changes.
+This file is the solution-specific "what" for Phase 5 Step 1. The process (approval gates, push mechanics, section placement rules) is in `../../shared/parent_segment_update.md`. Read both files together before making any changes.
 
 ---
 
 ## Attribute Block
 
 **Block name:** `Next Best Product`
-**Source table:** `<sink_database>.nbp_user_master`
-**Join key:** `<unique_user_id>` on both sides
+**Source table:** `<sink_database>.<user_master_attr_table>` (default `nbp_user_master`)
+**Join key:** the configured `original_user_id_column_name` column ↔ the Parent Segment's matching customer ID
 
 ### Core Columns (always include)
 
@@ -51,7 +51,7 @@ Include `nbp_4`/`nb_category_4` and above only if the customer's activation syst
 
 **Folder name:** `NBP Examples`
 
-Confirm this name with the user before creating any segments (per `shared/parent_segment_update.md` Step 3a).
+Confirm this name with the user before creating any segments (per `../../shared/parent_segment_update.md` Step 3a).
 
 ---
 
@@ -71,18 +71,18 @@ The default example set is exactly **5 segments** — one per rule type below. D
 | 4 | `[NBP] Contains Category: <Category>` | same category as #2, anywhere in array | `product_categories` | `Contain` |
 | 5 | `[NBP] Has Recommendations` | any recommendation exists | `nbp_1` | `IsNull` + `not: true` |
 
-For segments 1–4, query `nbp_user_master` to find the top product and category before presenting to the user:
+For segments 1–4, query `<user_master_attr_table>` to find the top product and category before presenting to the user:
 
 ```sql
 SELECT nbp_1, COUNT(*) AS cnt
-FROM ${sink_database}.nbp_user_master
+FROM <sink_database>.<user_master_attr_table>
 WHERE nbp_1 IS NOT NULL
 GROUP BY 1 ORDER BY 2 DESC LIMIT 1;
 
 SELECT nb_category_1, COUNT(*) AS cnt
-FROM ${sink_database}.nbp_user_master
+FROM <sink_database>.<user_master_attr_table>
 WHERE nb_category_1 IS NOT NULL
 GROUP BY 1 ORDER BY 2 DESC LIMIT 1;
 ```
 
-> **Note:** Confirm segment counts with the customer before presenting as production audiences. Run a `COUNT(*)` query per filter against `nbp_user_master` before finalizing the list.
+> **Note:** Confirm segment counts with the customer before presenting as production audiences. Run a `COUNT(*)` query per filter against `<user_master_attr_table>` before finalizing the list.
