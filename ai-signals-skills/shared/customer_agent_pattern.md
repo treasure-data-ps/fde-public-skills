@@ -48,7 +48,7 @@ cp "agent_outputs/<project_slug>/business-context.md" "$stage/references/busines
 
 `business-context.md` is the engagement copy drafted in Phase 1 (playbook) — copy it as it is, markers included: they tell the agent which definitions are still unconfirmed. If it does not exist yet, draft it first (playbook, Phase 1 business context steps 2–3). `ai-signals-guide.md` is copied unchanged.
 
-Fill every `{{placeholder}}` in the **`.md` files** of `$stage` (Edit/Write tools) from `project_state.md`. Never edit scripts or HTML (`*.js`, `*.html`, …): they are copied verbatim and their `{{…}}` tokens are runtime tokens filled by the script itself. At minimum:
+Fill every `{{placeholder}}` in the **`.md` files** of `$stage` (Edit/Write tools) from `project_state.md`. Find them with `grep -rn --include='*.md' '{{' "$stage"` and edit only those lines — don't read the whole files. Never read or edit scripts or HTML (`*.js`, `*.html`, …): they are copied verbatim and their `{{…}}` tokens are runtime tokens filled by the script itself. At minimum:
 
 | Placeholder | Value |
 |---|---|

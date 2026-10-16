@@ -1,4 +1,4 @@
-# NBA Engagement Scores — Workflow Guide (<customer name>)
+# NBA Engagement Scores — Workflow Guide (<project name>)
 
 Use this document to answer questions about how **this customer's deployed** NBA workflow works end to end: its structure, execution order, configuration, source mappings, customizations and the tables each step writes. For what the metrics mean and table schemas, see `data-dictionary.md`; for this customer's business definitions, see `business-context.md`.
 
@@ -6,8 +6,8 @@ Use this document to answer questions about how **this customer's deployed** NBA
 - Interim (Phase 4): describe the setup deployed so far; mark assumed defaults "to confirm"; sections with nothing yet
   (e.g. Parent Segment) say "Not done yet — Phase 5". Final (Phase 5): update the interim file in place, keep the history.
 - Save the filled copy as references/workflow-guide.md in the agent staging folder. Never install this .template.md file.
-- Sources, in priority order: the deployed working copy (workflow/config/input_params.yml, workflow/*.dig, any SQL changed
-  from the template), project_state.md, docs/architecture.md, the latest validated run (nba_dash_model_metrics,
+- Sources, in priority order: the deployed working copy (workflow/config/input_params.yml, workflow/*.dig for the pipeline; SQL
+  files only if they were changed from the template — don't read unchanged SQL), project_state.md, docs/architecture.md, the latest validated run (nba_dash_model_metrics,
   nba_dash_source_tables). Describe what is DEPLOYED, never template defaults.
 - Explain parameters in plain words (meanings from workflow/README.md) and quote exact values and expressions in backticks.
   No YAML blocks, no secrets, no personal names or email addresses (write the role or "alert recipient").

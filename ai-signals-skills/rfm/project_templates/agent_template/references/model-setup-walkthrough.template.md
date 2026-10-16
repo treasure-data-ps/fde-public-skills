@@ -1,4 +1,4 @@
-# RFM Customer Segmentation — Model Setup Walkthrough (<customer name>)
+# RFM Customer Segmentation — Model Setup Walkthrough (<project name>)
 
 Use this document to answer questions about **how this customer's RFM model was set up**: what data was explored, which decisions were made and why, what changed along the way, how the results were validated, and which artifacts exist. It is also the recipe for rebuilding or extending a customer-facing walkthrough presentation without repeating the discovery. For how the deployed workflow runs, see `workflow-guide.md`.
 

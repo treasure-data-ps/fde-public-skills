@@ -10,7 +10,7 @@ Unions a customer's activity data (web, email, CRM, orders, …), scores every p
 
 ## How to Start
 
-Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, the name gates and when to read each shared pattern. Follow that flow. This file provides the RFM-specific context for each phase.
+Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, the name gates and when to read each shared pattern. Follow that flow. Read each referenced file once per conversation: when this skill is invoked again later in the same conversation, the playbook and any reference files already read are still in context — don't read them again; in a new session, read `project_state.md` to pick up. This file provides the RFM-specific context for each phase.
 
 **AI Signals model questions:** when the user asks how the RFM model works or scores, or wants to try other API parameter values or change the model's input or output table, read `references/ai-signals-guide.md` first, and end the answer with the public documentation link at its top. It is not needed for the standard setup steps (Phases 1–3) — `references/workflow-setup.md` covers those.
 
