@@ -64,7 +64,7 @@ tdx use <profile_name>    # switch to the customer's profile/account
 tdx databases             # confirm you're in the right account by listing databases
 ```
 
-If the customer's region is non-default (EU01, AP02, etc.), confirm `tdx` is targeting that region. Templates with an `api_endpoint` config key (e.g. MTA, NBP) read it from their config, but `tdx` authenticates with your local profile.
+If the customer's region is non-default (EU01, AP02, etc.), confirm `tdx` is targeting that region. AI Signals templates read the ml-batch-api endpoint from their config (`ml_batch_api_endpoint` — set it from the `site` in `tdx status`), but `tdx` authenticates with your local profile.
 
 ## Step 5: Approve, Push, Run
 

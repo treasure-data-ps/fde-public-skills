@@ -19,7 +19,6 @@
         "./ai-signals-skills/classifier",
         "./ai-signals-skills/classifier/agent-skills/classifier-insights",
         "./ai-signals-skills/mta",
-        "./ai-signals-skills/mta/agent-skills/mta-journey-analysis",
         "./ai-signals-skills/nba-scores",
         "./ai-signals-skills/nbp"
       ]

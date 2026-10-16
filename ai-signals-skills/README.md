@@ -7,7 +7,7 @@ Each subfolder is a self-contained solution with its own `SKILL.md` entry point.
 | Folder | Solution | Status |
 |--------|----------|--------|
 | `rfm/` | RFM (Recency, Frequency, Monetary) customer segmentation | Ready |
-| `mta/` | Multi-Touch Attribution (Markov, Shapley, journey analytics) | Ready |
+| `mta/` | MTA — Multi-Touch Attribution (standard models + AI Signals Markov and Shapley) | Ready |
 | `classifier/` | Binary classification (lead scoring, churn, propensity) with SHAP explainability | Ready |
 | `nba-scores/` | NBA — Next Best Channel / Time / Campaign engagement scores | Ready |
 | `nbp/` | NBP — Next Best Product recommendations (AI Signals NBP model) | Ready |
@@ -31,4 +31,4 @@ Each solution folder contains:
 - `project_templates/agent_template/` — the customer analysis agent blueprint (`SKILL.template.md` + `references/`)
 - `references/` — workflow setup, requirements doc, agent setup, docs content, Parent Segment spec, and the AI Signals model guide (AI Signals solutions)
 
-`rfm/`, `nba-scores/` and `nbp/` follow this layout (`shared/solution_standard.md`); `mta/` and `classifier/` are still being restructured.
+`rfm/`, `nba-scores/`, `nbp/` and `mta/` follow this layout (`shared/solution_standard.md`); `classifier/` is still being restructured.
