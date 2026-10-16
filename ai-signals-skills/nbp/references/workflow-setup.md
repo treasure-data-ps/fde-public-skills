@@ -85,7 +85,7 @@ Record the column names and findings in `project_state.md` (Phase 1) — they ar
 
 | Decision | Rule |
 |---|---|
-| Algorithm (`automl_model_type`) | **First push:** `similar_to_latest`. `als` when most users have several interactions and personalization matters most; `popular` as a cold-start fallback or when interactions are very sparse. If the test set shows the model below the random baseline, try `similar_to_latest` or `popular` (§4 check 5) |
+| Algorithm (`automl_model_type`) | **First push:** `similar_to_latest`. `als` when most users have several interactions and personalization matters most; `popular` as a cold-start fallback or when interactions are very sparse. If the test set shows the model below the random baseline, or a personalized model doesn't beat `popular` on the training metrics, try `similar_to_latest` or `popular` (§4 check 5) |
 | ALS sampling | Only with `als`: `als_sample_rate` `1.0` under ~200K users, `0.5` for 200K–500K, `0.3` above; keep `als_max_users: 100000` |
 | `max_recommended_items` | **First push:** `5`; the requirements decide how many products each channel shows |
 | `filter_viewed` | **First push:** `false`; `true` when repeat purchases should not be recommended (durables, one-off purchases) |
