@@ -4,7 +4,11 @@ Skills for Treasure AI Studio that set up AI Signals models and custom AI agents
 
 ## How it works
 
-1. **Add the marketplace** `fde-public-skills` in Treasure AI Studio and enable the plugins you need.
+1. **Add the marketplace** `fde-public-skills` in Treasure AI Studio and enable the plugins you need. In Claude Code:
+   ```
+   /plugin install ai-signals-skills --marketplace treasure-data-ps/fde-public-skills
+   /plugin install custom-agent-skills --marketplace treasure-data-ps/fde-public-skills
+   ```
 2. **Start a setup in a Work Folder** — e.g. *"Set up RFM segmentation"*, *"Build a custom sales dashboard"*. The matching **setup skill** shows the plan and walks through it phase by phase, asking only what it can't learn from your data.
 3. **It copies its templates into the Work Folder** and customizes the copies: a Treasure Data workflow (AI Signals solutions, or a dashboard workflow when needed) and an agent template.
 4. **It installs your project's own agent** as a skill in `.claude/skills/<project>-agent/` (or `<project>-dashboard/`). That agent answers questions about your results in any chat in the folder, and can be shared with your team (Studio: Develop → Share).

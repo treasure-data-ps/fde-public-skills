@@ -6,12 +6,12 @@
   },
   "metadata": {
     "version": "2.0.0-public",
-    "description": "Skills for deploying Treasure AI ML solutions and custom AI agents — templates bundled locally, all engagement outputs written to a git-ignored agent_outputs/ folder"
+    "description": "Setup skills for Treasure AI Studio: AI Signals models and custom AI agents, set up step by step in a Work Folder — templates are copied into the folder and customized, outputs stay in agent_outputs/, and each project gets its own agent skill."
   },
   "plugins": [
     {
       "name": "ai-signals-skills",
-      "description": "AI Signals ML workflow skills for Treasure AI including RFM segmentation, multi-touch attribution (MTA), binary classification, journey analytics, next best action (NBA), and next best product (NBP). Trigger on: RFM, CLV, churn, classifier, classification, propensity, lead scoring, MTA, attribution, NBA, NBP, customer segmentation, predictive model, ML workflow.",
+      "description": "Set up AI Signals models on your Treasure Data account and get a project agent and dashboard for each: RFM customer segmentation, Next Best Product recommendations, Multi-Touch Attribution, Next Best Action engagement scores, and propensity scoring (binary classification for churn, lead scoring, conversion or response).",
       "source": "./",
       "strict": false,
       "skills": [
@@ -24,7 +24,7 @@
     },
     {
       "name": "custom-agent-skills",
-      "description": "Custom AI agent skills for Treasure AI: the Custom Audience Agent for CDP audience, customer-data and segment analysis and segment creation on any parent segment, and the Custom Dashboard Builder for building or resuming custom HTML dashboards from Treasure Data through a questionnaire-led 5-phase pipeline. Trigger on: audience agent, audience analysis, segment analysis, create a segment, CDP analysis, build a dashboard, KPI dashboard, HTML dashboard, resume dashboard, Sisense .dash migration.",
+      "description": "Set up custom AI agents on your Treasure Data data: an audience and segment-analysis agent for any CDP parent segment, and a custom HTML dashboard (new, or converted from a .dash export, HTML file or screenshot) with its own dashboard agent.",
       "source": "./",
       "strict": false,
       "skills": [
