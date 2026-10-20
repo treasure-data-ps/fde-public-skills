@@ -38,7 +38,7 @@ Stage A/B: Interactive     Phase 2: Workflow           Phase 3: Dashboard
 - Phase 2 queries: Optimized for incremental updates (fast daily runs, ~30 sec)
 - Phase 3 queries: SINK tables (pre-aggregated, < 2 sec, scheduled freshness)
 
-→ **See [`workflow-setup-configure.md`](references/workflow-setup-configure.md)** for full architecture details
+→ **See [`workflow-setup-configure.md`](./workflow-setup-configure.md)** for full architecture details
 
 ---
 
@@ -46,14 +46,14 @@ Stage A/B: Interactive     Phase 2: Workflow           Phase 3: Dashboard
 
 | Step | Topic | Details |
 |------|-------|---------|
-| 2a | Set up workflow project | **Copy the locally embedded workflow templates** — see `<skill_dir>/project_templates/workflow_template/`. See [`workflow-setup-configure.md`](references/workflow-setup-configure.md) |
-| 2b | Configure parameters | Edit `input_params.yaml` with Stage B metrics, tables, filters, SINK DB. **Multi-source:** use flat `source_db_*` keys (one per database) — never nest. See [`workflow-setup-configure.md`](references/workflow-setup-configure.md) + [`input_params_examples.md`](references/input_params_examples.md) |
-| 2c | Customize SQL queries | Replace template SQL with Stage B queries; optimize with `td_time_range()`. See [`workflow-setup-configure.md`](references/workflow-setup-configure.md) + [`td-time-functions.md`](references/td-time-functions.md) |
-| 2d | Configure datamodel | Only if you're using an SINK-aware analytics layer that requires a schema config file (e.g. a datamodel/join config). Skip if not applicable. See [`workflow-setup-configure.md`](references/workflow-setup-configure.md) |
-| 2e | Review config | **Verify workflow file structure with the user** (AskUserQuestion) + pre-deploy checklist + dry-run validation. See [`workflow-deployment-validate.md`](references/workflow-deployment-validate.md) |
-| 2f | **Deploy workflow + collision check** | Push to Treasure Data + trigger first run. **⚠️ Before locking in `project_prefix`, check for SINK table collisions** (see Step 2f details). See [`workflow-deployment-validate.md`](references/workflow-deployment-validate.md) |
-| 2g | **Validate output + re-verify metrics** | **Verify SINK tables created, row counts correct, re-run Stage B metrics fresh and diff against Stage B spot-checks** (not just verify column names exist). See [`workflow-deployment-validate.md`](references/workflow-deployment-validate.md) |
-| 2h | **Incremental strategy** | **After first run validated: assess data volatility, apply incremental pattern (append/upsert/state), run incremental test run and verify row counts + duration**. See [`workflow-deployment-validate.md`](references/workflow-deployment-validate.md) |
+| 2a | Set up workflow project | **Copy the locally embedded workflow templates** — see `<skill_dir>/project_templates/workflow_template/`. See [`workflow-setup-configure.md`](./workflow-setup-configure.md) |
+| 2b | Configure parameters | Edit `input_params.yaml` with Stage B metrics, tables, filters, SINK DB. **Multi-source:** use flat `source_db_*` keys (one per database) — never nest. See [`workflow-setup-configure.md`](./workflow-setup-configure.md) + [`input_params_examples.md`](./input_params_examples.md) |
+| 2c | Customize SQL queries | Replace template SQL with Stage B queries; optimize with `td_time_range()`. See [`workflow-setup-configure.md`](./workflow-setup-configure.md) + [`td-time-functions.md`](./td-time-functions.md) |
+| 2d | Configure datamodel | Only if you're using an SINK-aware analytics layer that requires a schema config file (e.g. a datamodel/join config). Skip if not applicable. See [`workflow-setup-configure.md`](./workflow-setup-configure.md) |
+| 2e | Review config | **Verify workflow file structure with the user** (AskUserQuestion) + pre-deploy checklist + dry-run validation. See [`workflow-deployment-validate.md`](./workflow-deployment-validate.md) |
+| 2f | **Deploy workflow + collision check** | Push to Treasure Data + trigger first run. **⚠️ Before locking in `project_prefix`, check for SINK table collisions** (see Step 2f details). See [`workflow-deployment-validate.md`](./workflow-deployment-validate.md) |
+| 2g | **Validate output + re-verify metrics** | **Verify SINK tables created, row counts correct, re-run Stage B metrics fresh and diff against Stage B spot-checks** (not just verify column names exist). See [`workflow-deployment-validate.md`](./workflow-deployment-validate.md) |
+| 2h | **Incremental strategy** | **After first run validated: assess data volatility, apply incremental pattern (append/upsert/state), run incremental test run and verify row counts + duration**. See [`workflow-deployment-validate.md`](./workflow-deployment-validate.md) |
 
 ---
 
@@ -87,7 +87,7 @@ schedule:
 
 **Common mistake:** Using `*` for BOTH day-of-month and day-of-week when one of them is actually constrained (e.g., `"0 8 * * MON"`) — Quartz cron rejects or misinterprets this because both fields can't be simultaneous wildcards when one of them has meaning tied to the other. When you constrain day-of-week (e.g., `MON`), set day-of-month to `?`, and vice versa.
 
-→ **See [`workflow-setup-configure.md`](references/workflow-setup-configure.md) → "Schedule Configuration"** for the full cron cheat sheet and worked examples.
+→ **See [`workflow-setup-configure.md`](./workflow-setup-configure.md) → "Schedule Configuration"** for the full cron cheat sheet and worked examples.
 
 ---
 
@@ -191,8 +191,8 @@ If you skip Phase 2, your Phase 3 queries will hit both databases on EVERY dashb
 1. **Edit `input_params.yaml`** — primary config: source tables, SINK DB, metrics list, time window, exclusion filters
 2. **Customize SQL files** — replace template SQL with Stage B queries; apply `td_time_range()` for partition pruning
 
-→ **See [`workflow-setup-configure.md`](references/workflow-setup-configure.md)** for detailed per-step guidance
-→ **See [`input_params_examples.md`](references/input_params_examples.md)** for `input_params.yaml` worked examples
+→ **See [`workflow-setup-configure.md`](./workflow-setup-configure.md)** for detailed per-step guidance
+→ **See [`input_params_examples.md`](./input_params_examples.md)** for `input_params.yaml` worked examples
 
 ### Step 2b: TD Time Functions
 
@@ -206,7 +206,7 @@ If you skip Phase 2, your Phase 3 queries will hit both databases on EVERY dashb
 - **1-day lookback:** For same-day corrections
 - **7-day lookback:** For corrections up to 7 days old
 
-→ **See [`td-time-functions.md`](references/td-time-functions.md)** for patterns, examples, and performance impact
+→ **See [`td-time-functions.md`](./td-time-functions.md)** for patterns, examples, and performance impact
 
 ### Step 2e-2g: Review & Deploy
 
@@ -214,14 +214,14 @@ If you skip Phase 2, your Phase 3 queries will hit both databases on EVERY dashb
 2. **Deploy workflow** to Treasure Data
 3. **Validate output tables** (verify SINK tables created with correct data)
 
-→ **See [`workflow-deployment-validate.md`](references/workflow-deployment-validate.md)** for deployment commands and validation queries
+→ **See [`workflow-deployment-validate.md`](./workflow-deployment-validate.md)** for deployment commands and validation queries
 
 ### Test & Troubleshoot (if needed)
 
 - Run testing checklist (schema, data quality, workflow, performance)
 - If issues, use troubleshooting guide for common problems
 
-→ **See [`testing-troubleshooting.md`](references/testing-troubleshooting.md)** for full checklist and troubleshooting guide
+→ **See [`testing-troubleshooting.md`](./testing-troubleshooting.md)** for full checklist and troubleshooting guide
 
 ---
 
@@ -230,11 +230,11 @@ If you skip Phase 2, your Phase 3 queries will hit both databases on EVERY dashb
 | I want to... | See... |
 |---|---|
 | **Understand the template structure** | `<skill_dir>/project_templates/workflow_template/` — launch, data-prep, cleaner, input_params.yaml |
-| **Get detailed guidance per step** | [`workflow-setup-configure.md`](references/workflow-setup-configure.md) (2a-2d), [`workflow-deployment-validate.md`](references/workflow-deployment-validate.md) (2e-2h) |
-| **Configure `input_params.yaml`** | [`input_params_examples.md`](references/input_params_examples.md) — worked examples for metrics, filters, time windows |
-| **Understand TD time functions** | [`td-time-functions.md`](references/td-time-functions.md) — patterns, incremental modes, performance testing |
-| **Test & troubleshoot** | [`testing-troubleshooting.md`](references/testing-troubleshooting.md) — checklist, common issues, diagnostics |
-| **Understand Phase 2 architecture** | [`workflow-setup-configure.md`](references/workflow-setup-configure.md) — architecture, key principles, datamodel design |
+| **Get detailed guidance per step** | [`workflow-setup-configure.md`](./workflow-setup-configure.md) (2a-2d), [`workflow-deployment-validate.md`](./workflow-deployment-validate.md) (2e-2h) |
+| **Configure `input_params.yaml`** | [`input_params_examples.md`](./input_params_examples.md) — worked examples for metrics, filters, time windows |
+| **Understand TD time functions** | [`td-time-functions.md`](./td-time-functions.md) — patterns, incremental modes, performance testing |
+| **Test & troubleshoot** | [`testing-troubleshooting.md`](./testing-troubleshooting.md) — checklist, common issues, diagnostics |
+| **Understand Phase 2 architecture** | [`workflow-setup-configure.md`](./workflow-setup-configure.md) — architecture, key principles, datamodel design |
 
 ---
 
@@ -286,9 +286,9 @@ If you skip Phase 2, your Phase 3 queries will hit both databases on EVERY dashb
 
 ## Troubleshooting & Testing
 
-- **Testing checklist:** See [`testing-troubleshooting.md`](references/testing-troubleshooting.md) (schema, data quality, workflow, performance)
-- **Common issues:** See [`testing-troubleshooting.md`](references/testing-troubleshooting.md) (deployment, empty tables, slow runs, etc.)
-- **Performance tuning:** See [`td-time-functions.md`](references/td-time-functions.md) (td_time_range optimization)
+- **Testing checklist:** See [`testing-troubleshooting.md`](./testing-troubleshooting.md) (schema, data quality, workflow, performance)
+- **Common issues:** See [`testing-troubleshooting.md`](./testing-troubleshooting.md) (deployment, empty tables, slow runs, etc.)
+- **Performance tuning:** See [`td-time-functions.md`](./td-time-functions.md) (td_time_range optimization)
 
 ---
 
@@ -304,7 +304,7 @@ Phase 3 covers:
 - Validate dashboard accuracy
 - Performance & mobile testing
 
-**Entry point:** `./phase-3/SKILL.md` → `./phase-3/references/phase-3-walkthrough.md`
+**Entry point:** `../../phase-3/INSTRUCTIONS.md` → `../../phase-3/references/phase-3-walkthrough.md`
 
 **Key difference:** Phase 3 queries `dashboard_db.kpi_daily` (SINK from Phase 2) instead of `sales_db.orders` (source from Stage B).
 
@@ -312,7 +312,7 @@ Phase 3 covers:
 
 ## Reference Directory
 
-All detailed guidance lives in: `./references/`
+All detailed guidance lives in: `./`
 
 
 ---
@@ -338,7 +338,7 @@ Before starting Phase 2, confirm all Stage A/B deliverables:
 
 **Do not run `tdx wf push` until you've completed the Pre-Deployment Checklist.**
 
-→ **See: `./references/pre-deployment-checklist.md`** — catches 99% of workflow failures:
+→ **See: `./pre-deployment-checklist.md`** — catches 99% of workflow failures:
 - Schema validation (column names match actual database)
 - Time function format (strftime, not Java format)
 - JOIN cardinality checks (prevent 10x metric inflation)
@@ -349,7 +349,7 @@ Before starting Phase 2, confirm all Stage A/B deliverables:
 
 ## If Workflow Fails After Deployment
 
-→ **See: `./references/testing-troubleshooting.md`** — covers: table not found, column not found, JOIN cardinality explosion, workflow push failures, missing `td_time_range`, date formatting issues.
+→ **See: `./testing-troubleshooting.md`** — covers: table not found, column not found, JOIN cardinality explosion, workflow push failures, missing `td_time_range`, date formatting issues.
 
 ---
 
@@ -520,13 +520,13 @@ Append to **`project_state.md`**:
 | Question | Reference |
 |----------|-----------|
 | Template structure | `<skill_dir>/project_templates/workflow_template/` |
-| Configure `input_params.yaml` | `./references/input_params_examples.md` |
-| Use `td_time_range()` | `./references/td-time-functions.md` |
-| Incremental mode choice | `./references/td-time-functions.md` — volatility decision table |
-| Configure datamodel (if applicable) | `./references/workflow-setup-configure.md` — Datamodel Design Principles section |
-| Deploy with `tdx wf push` | `./references/workflow-deployment-validate.md` Step 2f |
-| Validate SINK tables | `./references/workflow-deployment-validate.md` Step 2g |
-| Troubleshoot failures | `./references/testing-troubleshooting.md` |
+| Configure `input_params.yaml` | `./input_params_examples.md` |
+| Use `td_time_range()` | `./td-time-functions.md` |
+| Incremental mode choice | `./td-time-functions.md` — volatility decision table |
+| Configure datamodel (if applicable) | `./workflow-setup-configure.md` — Datamodel Design Principles section |
+| Deploy with `tdx wf push` | `./workflow-deployment-validate.md` Step 2f |
+| Validate SINK tables | `./workflow-deployment-validate.md` Step 2g |
+| Troubleshoot failures | `./testing-troubleshooting.md` |
 
 ---
 

@@ -14,7 +14,7 @@
 - ✅ `project_state.md` accessible — **read it at Phase 3 start** for exclusion rules, filter specs, metrics list, benchmark values, and any Phase 1/2 appended findings
 - ✅ Platform access confirmed (tdx CLI authenticated)
 
-**If resuming Phase 3:** Read `project_state.md` → find last completed step → open `references/steps.md` and jump directly to the next step.
+**If resuming Phase 3:** Read `project_state.md` → find last completed step → open `./steps.md` and jump directly to the next step.
 
 **Chart colors:** Use the TD palette for any Chart.js series — `["#B4E3E3", "#ABB3DB", "#D9BFDF", "#F8E1B0", "#8FD6D4", "#828DCA", "#C69ED0", "#F5D389", "#6AC8C6", "#5867B8"]` — unless the user specified brand colors during Phase 1 (check "Visual Preferences" in `project_state.md`).
 
@@ -133,11 +133,11 @@ cp <skill_dir>/project_templates/dashboard_template/generate-data.js \
    agent_outputs/<project_slug>/dashboards/generate-data.js
 ```
 
-Then customize `generate-data.js` with the confirmed tables/columns from Phase 1/2, and update the `<h1>` title in `dashboard.template.html`. See `references/rendering/html-client/template-customization.md` for the full walkthrough.
+Then customize `generate-data.js` with the confirmed tables/columns from Phase 1/2, and update the `<h1>` title in `dashboard.template.html`. See `./rendering/html-client/template-customization.md` for the full walkthrough.
 
 **All templates include Chart.js inline — no external dependencies, works offline.**
 
-**Now proceed to execute steps in [`references/steps.md`](references/steps.md)** — all steps 4b through Phase Exit are in one linear file. Use the quick-jump table at the top to land on the right step.
+**Now proceed to execute steps in [`./steps.md`](./steps.md)** — all steps 4b through Phase Exit are in one linear file. Use the quick-jump table at the top to land on the right step.
 
 Steps 4k (mobile) and 4l (load UX) are conditional — the step headers flag when to run them.
 
@@ -539,7 +539,7 @@ SINK_DB.fact_deduped (rows without duplicates)
 
 ## Performance & Payload Optimization (Phase 3)
 
-**Payload size budget (tiered — canonical policy, see `references/rendering/html-client/html-dashboard-patterns.md` → "Data Size Budget & Optimization"):**
+**Payload size budget (tiered — canonical policy, see `./rendering/html-client/html-dashboard-patterns.md` → "Data Size Budget & Optimization"):**
 
 ```
 < 500KB total   → inline directly (fast load, shareable) — IDEAL
@@ -655,7 +655,7 @@ If your dashboard shows **overview filters** (e.g., channel, type, status, date)
 - **Before:** 3,749 rows → 500+ KB payload → slow to load
 - **After:** Pre-aggregate to unique filter combinations → ~100-200 rows → 50 KB payload
 
-See [`references/query-patterns-for-dashboards.md`](references/query-patterns-for-dashboards.md) → "Pattern: Pre-Aggregate by Filter Dimensions" for exact SQL.
+See [`./query-patterns-for-dashboards.md`](./query-patterns-for-dashboards.md) → "Pattern: Pre-Aggregate by Filter Dimensions" for exact SQL.
 
 ### Chart.js Is Inlined, Not Loaded via CDN
 
@@ -824,11 +824,11 @@ Chart.js is inlined directly inside each template's HTML (no `<script src="...cd
 | I want to... | See... |
 |---|---|
 | **Copy dashboard templates** | `<skill_dir>/project_templates/dashboard_template/` (see How to Execute block above for exact `cp` commands) |
-| **Execute any Phase 3 step** | [`references/steps.md`](references/steps.md) |
-| **Run testing checklist** | [`testing-troubleshooting.md`](references/testing-troubleshooting.md) |
-| **Troubleshoot blank/wrong dashboard** | [`testing-troubleshooting.md`](references/testing-troubleshooting.md) |
+| **Execute any Phase 3 step** | [`./steps.md`](./steps.md) |
+| **Run testing checklist** | [`testing-troubleshooting.md`](./testing-troubleshooting.md) |
+| **Troubleshoot blank/wrong dashboard** | [`testing-troubleshooting.md`](./testing-troubleshooting.md) |
 | **Understand Non-Workflow vs Workflow architecture** | "Key Concept" section above (this file) |
-| **HTML Client engine details** | [`references/rendering/html-client/html-client.md`](references/rendering/html-client/html-client.md) |
+| **HTML Client engine details** | [`./rendering/html-client/html-client.md`](./rendering/html-client/html-client.md) |
 
 ---
 
@@ -877,5 +877,5 @@ At end of Phase 3, user receives:
 ## Next Phase
 
 ### ➡ Route to Phase 4 (required)
-**Next:** `../phase-4/INSTRUCTIONS.md` — build and install the dashboard agent, then Phase 5 (evaluation).
+**Next:** `../../phase-4/INSTRUCTIONS.md` — build and install the dashboard agent, then Phase 5 (evaluation).
 

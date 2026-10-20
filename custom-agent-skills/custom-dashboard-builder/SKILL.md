@@ -67,7 +67,7 @@ This builder follows the custom-agent principles in `<skill_dir>/../shared/playb
       → 10 test prompts until the agent passes; optional handoff docs
    ```
 
-3. Read `./phase-1/SKILL.md` and start Phase 1. After Phase 1, route to Phase 2 or Phase 3 per the path decision.
+3. Read `./phase-1/INSTRUCTIONS.md` and start Phase 1. After Phase 1, route to Phase 2 or Phase 3 per the path decision.
 
 **Special case — `.dash` file:** if the user provides a Sisense / Treasure Insights `.dash` export (or JSON with a `"widgets"` array and a `"datasource"` key) during session setup, Phase 1 converts it with `<skill_dir>/tools/dash_to_html.py` and prefills requirements and discovery — `./phase-1/references/steps-1pre.md` ("`.dash` / Sisense Special Case"). Prefilled answers are still shown and confirmed.
 
@@ -83,9 +83,9 @@ This builder follows the custom-agent principles in `<skill_dir>/../shared/playb
 
 | Phase | Read | Key output | Condition |
 |-------|------|-----------|-----------|
-| **1: Requirements + Data Discovery** | `./phase-1/SKILL.md` | Score (0-6) + path decision + `project_state.md`; `business-context.md`, `data-dictionary.md`, `requirements.md` (Step 1v) | Always |
-| **2: Workflow** | `./phase-2/SKILL.md` | SINK tables deployed + validated (`agent_outputs/<project_slug>/workflows/`) | Optional — Score 4-6 recommended, user can override |
-| **3: Build Dashboard** | `./phase-3/SKILL.md` | Approved `dashboard.template.html` + `generate-data.js` + `dashboard.html` (`agent_outputs/<project_slug>/dashboards/`) | Always |
+| **1: Requirements + Data Discovery** | `./phase-1/INSTRUCTIONS.md` | Score (0-6) + path decision + `project_state.md`; `business-context.md`, `data-dictionary.md`, `requirements.md` (Step 1v) | Always |
+| **2: Workflow** | `./phase-2/INSTRUCTIONS.md` | SINK tables deployed + validated (`agent_outputs/<project_slug>/workflows/`) | Optional — Score 4-6 recommended, user can override |
+| **3: Build Dashboard** | `./phase-3/INSTRUCTIONS.md` | Approved `dashboard.template.html` + `generate-data.js` + `dashboard.html` (`agent_outputs/<project_slug>/dashboards/`) | Always |
 | **4: Dashboard Agent** | `./phase-4/INSTRUCTIONS.md` | `<project_slug>-dashboard-agent` installed to `.claude/skills/` | Always |
 | **5: Evaluation → Production-Ready** | `./phase-5/INSTRUCTIONS.md` | `eval.md` rounds until ≥ 9/10 Pass + every Compliance case; finalized agent; optional docs | Always |
 

@@ -220,7 +220,7 @@ The generated `dashboard.html` is fully self-contained and stays in the project'
 
 ## References
 
-- `SKILL.md` — rendering engine overview, Pattern A rules
+- `html-client.md` — rendering engine overview, Pattern A rules
 - `getting-started.md` — step-by-step from zero to first dashboard
 - `html-dashboard-patterns.md` — multi-tab, filter, chart type patterns
 - `config-schema.md` — RAW object shape for each template

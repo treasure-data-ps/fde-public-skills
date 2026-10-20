@@ -1,14 +1,24 @@
+# Phase 3 — Build Interactive Dashboard
+
+> **Read in this order:** `../INSTRUCTIONS.md` (master rules) → `../references/execution-contract.md` (Phase 3 gate) → this file → the step references it names → `../references/guardrails-lite.md`.
+
+## Overview and Steps
+
+**Phase Goal:** See `../references/architecture-and-state.md` for phase overview.
+
+**Deliverable:** User-approved `dashboard.html` (self-contained) + `generate-data.js`
+
+**Rendering engine:** HTML Client only
+
 ---
-name: phase-3-instructions
-description: Phase 3 specific instructions for interactive dashboard building
-priority: HIGH
-load_order: 1.3
+
+→ **See `./references/phase-3-walkthrough.md`** for: pre-phase checklist, step table (4a–4l), build+validate loop, quality gates (22-point production checklist), deliverables, quick reference, and next phase routing.
+
+→ **See `./references/phase-3-data-patterns.md`** for: Filter architecture, three data shapes, cardinality handling, non-additive metrics, payload budgeting, schema validation, and implementation checklist — all production patterns integrated.
+
 ---
 
-# Phase 3 Instructions — Build Interactive Dashboard
-
-**Read this BEFORE `./SKILL.md`.**
-
+## Phase Rules and Checklists
 **Phase 3 is MANDATORY for all projects (after Phase 1, optionally Phase 2).**
 
 ---
@@ -329,7 +339,7 @@ Manually check (do NOT run code, just look):
 **If ANY item ⚠️ or ❌:**
 - **STOP** — do not proceed to spot-check
 - Identify missing filter/widget/tab
-- Return to phase-3/SKILL.md and add the missing element
+- Return to phase-3/INSTRUCTIONS.md and add the missing element
 - Re-render dashboard.html
 - Re-run completeness check
 - Repeat until all items ✓

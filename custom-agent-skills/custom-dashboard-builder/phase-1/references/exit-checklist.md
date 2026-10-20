@@ -157,8 +157,8 @@ After all gates pass:
    ```
 
 3. **Route to next phase:**
-   - **Phase 2 (Workflow, Score 4-6):** proceed to `../../phase-2/SKILL.md`
-   - **Phase 3 (Non-Workflow, Score 0-2, or `skip_workflow = true`):** proceed immediately to `../../phase-3/SKILL.md`
+   - **Phase 2 (Workflow, Score 4-6):** proceed to `../../phase-2/INSTRUCTIONS.md`
+   - **Phase 3 (Non-Workflow, Score 0-2, or `skip_workflow = true`):** proceed immediately to `../../phase-3/INSTRUCTIONS.md`
 
 ---
 

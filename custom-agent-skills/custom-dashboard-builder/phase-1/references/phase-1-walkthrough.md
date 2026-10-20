@@ -11,7 +11,7 @@ Run:
 tdx databases
 ```
 
-Should list your databases. If it fails with 401/403/not found, see [`references/step-0-verify-td-connection.md`](references/step-0-verify-td-connection.md) for troubleshooting.
+Should list your databases. If it fails with 401/403/not found, see [`./step-0-verify-td-connection.md`](./step-0-verify-td-connection.md) for troubleshooting.
 
 **If this step fails, everything else will fail.** Do not proceed to Session Setup until `tdx databases` succeeds.
 
@@ -33,33 +33,33 @@ Should list your databases. If it fails with 401/403/not found, see [`references
 | Setup-C | Target platform | ✅ Always | Treasure Work / Treasure AI Studio — gates sharing constraints (rendering is always HTML Client in lite) |
 | Setup-D | Data source type | ✅ Always | Raw/Transactional vs Pre-aggregated vs Snapshot — determines whether Phase 2 (Workflow) can be skipped |
 | Setup-E | Reference resources | ✅ Always | Existing dashboard/spec to replicate? If a `.dash`/Sisense/Treasure Insights export is provided, jump to the `.dash` Special Case in `steps-1pre.md` instead of Stage A |
-| **Stage A: Core Requirements (1a-1j, 1o — Always Ask)** | | | See [`steps-1a-1o.md`](references/steps-1a-1o.md) |
+| **Stage A: Core Requirements (1a-1j, 1o — Always Ask)** | | | See [`steps-1a-1o.md`](./steps-1a-1o.md) |
 | 1a | Purpose, Business Context & Success Criteria | ✅ | Dashboard purpose, prior art, success metric, audience + technical depth |
 | 1b | Metrics + Top Questions + Business Glossary | ✅ | 5-10 KPIs with formulas, top 3-5 analytical questions, glossary |
 | 1c+1d | Dimensions, Filters, Layout & Interactions | ✅ | Drill-down dimensions, filter list, layout preference |
 | 1e+1f | Date Range, Timezone, Refresh & Freshness | ✅ | Default range, timezone (⚠️ critical), acceptable freshness/latency |
 | 1g | Historical Data Depth | ✅ | How far back? Retention period? |
 | 1o | Exclusion Rules & Data Quality | ✅ Always | Exclusions (SQL format), null handling — validated in Stage B |
-| **1h + 1j — Sharing & Alerts** | | ✅ Customer-facing / ⚠️ internal | See [`steps-1a-1o.md`](references/steps-1a-1o.md) |
+| **1h + 1j — Sharing & Alerts** | | ✅ Customer-facing / ⚠️ internal | See [`steps-1a-1o.md`](./steps-1a-1o.md) |
 | 1h | Sharing, Access, Target Users & Downstream Consumers | ✅ Customer-facing | Who accesses? Technical depth? Sensitive data? Export needs merged in here |
 | 1j | Alert/Threshold Notifications | ⚠️ | Alert conditions, delivery, recipients |
-| **Optional (Ask Only If Relevant)** | | ⚠️ | See [`steps-1k-1n-optional.md`](references/steps-1k-1n-optional.md) |
+| **Optional (Ask Only If Relevant)** | | ⚠️ | See [`steps-1k-1n-optional.md`](./steps-1k-1n-optional.md) |
 | 1k | Mobile/Responsive Design | ⚠️ | Ask only if mobile use case likely |
 | 1l | Compliance, Governance & Data Sensitivity | ⚠️ | Ask only if sensitive data flagged in 1h |
 | 1m | Data Source Complexity + Canonical ID | ⚠️ | Ask only if multi-database joins likely |
 | 1n | Drill-Down Depth | ⚠️ | Ask only if dimensions suggest multi-level drill-down |
-| **Stage B: Data Discovery & Validation** | | ✅ Always | See [`stage-b-database-discovery.md`](references/stage-b-database-discovery.md) |
+| **Stage B: Data Discovery & Validation** | | ✅ Always | See [`stage-b-database-discovery.md`](./stage-b-database-discovery.md) |
 | 2a | Select/confirm database | ✅ | `tdx databases` if not already known |
 | 2b | Discover/confirm tables + time column | ✅ | Includes business-event-datetime vs insert-time detection |
 | 2c | Discover/validate metrics | ✅ | Aggregation queries confirm Stage A's assumed metrics |
 | 2d | Discover/validate dimensions + classify filter scope | ✅ | DISTINCT value queries, cardinality checks, filter scope map |
 | 2e | (Rendering engine is fixed to HTML Client in lite — no decision needed here) | — | — |
-| Data Quality Gate | Checks 1–12 before finalizing | ✅ Always | See [`validation-queries.md`](references/validation-queries.md) |
-| **Scoring & Path Decision** | | ✅ Always | See [`steps-1p-1t.md`](references/steps-1p-1t.md), [`stage-b-path-routing.md`](references/stage-b-path-routing.md) |
+| Data Quality Gate | Checks 1–12 before finalizing | ✅ Always | See [`validation-queries.md`](./validation-queries.md) |
+| **Scoring & Path Decision** | | ✅ Always | See [`steps-1p-1t.md`](./steps-1p-1t.md), [`stage-b-path-routing.md`](./stage-b-path-routing.md) |
 | 1p | Dashboard Complexity Scoring (0-6 model) | ✅ Always | 3 questions → path logic (score + data source) → Workflow vs Non-Workflow |
 | 1q | Workflow Configuration | 🔧 If score 4-6 | SINK DB, project name, run schedule — used by Phase 2 |
 | 1r | Dashboard Agent Scope | ✅ Always | What the Phase 4 agent should handle beyond opening the dashboard |
-| **Finalization** | Validate & get approval, write `project_state.md` | ✅ Always | See [`step-1u-finalization.md`](references/step-1u-finalization.md) |
+| **Finalization** | Validate & get approval, write `project_state.md` | ✅ Always | See [`step-1u-finalization.md`](./step-1u-finalization.md) |
 
 ---
 
@@ -72,7 +72,7 @@ Phase 1 has two stages with continuous step numbering:
 | Stage | Steps | File |
 |---|---|---|
 | **Stage A** | 1a-1u | This guide |
-| **Stage B** | 2a-2f (+ sub-steps) | `references/stage-b-database-discovery.md` |
+| **Stage B** | 2a-2f (+ sub-steps) | `./stage-b-database-discovery.md` |
 
 **Stage B breakdown:**
 - 2a: Discover & select database
@@ -192,9 +192,9 @@ Before scoring or routing, confirm the three-level filter hierarchy from Rule P1
   Proceed to Phase 2 (if Workflow) or Phase 3 (if Non-Workflow)
 ```
 
-→ **See [`steps-1a-1o.md`](references/steps-1a-1o.md)** for core requirement AskUserQuestion templates
-→ **See [`stage-b-database-discovery.md`](references/stage-b-database-discovery.md)** for data discovery walkthrough, time column detection, filter scope rules
-→ **See [`steps-1p-1t.md`](references/steps-1p-1t.md)** and [`stage-b-path-routing.md`](references/stage-b-path-routing.md) for scoring + routing templates
+→ **See [`steps-1a-1o.md`](./steps-1a-1o.md)** for core requirement AskUserQuestion templates
+→ **See [`stage-b-database-discovery.md`](./stage-b-database-discovery.md)** for data discovery walkthrough, time column detection, filter scope rules
+→ **See [`steps-1p-1t.md`](./steps-1p-1t.md)** and [`stage-b-path-routing.md`](./stage-b-path-routing.md) for scoring + routing templates
 
 ---
 
@@ -202,14 +202,14 @@ Before scoring or routing, confirm the three-level filter hierarchy from Rule P1
 
 | I want to... | See... |
 |---|---|
-| Ask core requirement questions correctly | [`steps-1a-1o.md`](references/steps-1a-1o.md) |
-| Ask optional requirements (mobile, compliance, drill-down) | [`steps-1k-1n-optional.md`](references/steps-1k-1n-optional.md) |
-| Understand time column discovery, metric/dimension validation | [`stage-b-database-discovery.md`](references/stage-b-database-discovery.md) |
-| Run the Data Quality Gate | [`validation-queries.md`](references/validation-queries.md) |
-| Avoid re-querying the same values in later phases | [`confirmed-values-checkpoint.md`](references/confirmed-values-checkpoint.md) |
-| Understand Dashboard Complexity Scoring & path decision | [`steps-1p-1t.md`](references/steps-1p-1t.md), [`stage-b-path-routing.md`](references/stage-b-path-routing.md) |
-| Handle conflicts between Stage A assumptions and Stage B data reality | [`workflow-notes.md`](references/workflow-notes.md) |
-| Write `project_state.md` and get final approval | [`step-1u-finalization.md`](references/step-1u-finalization.md), [`exit-checklist.md`](references/exit-checklist.md) |
+| Ask core requirement questions correctly | [`steps-1a-1o.md`](./steps-1a-1o.md) |
+| Ask optional requirements (mobile, compliance, drill-down) | [`steps-1k-1n-optional.md`](./steps-1k-1n-optional.md) |
+| Understand time column discovery, metric/dimension validation | [`stage-b-database-discovery.md`](./stage-b-database-discovery.md) |
+| Run the Data Quality Gate | [`validation-queries.md`](./validation-queries.md) |
+| Avoid re-querying the same values in later phases | [`confirmed-values-checkpoint.md`](./confirmed-values-checkpoint.md) |
+| Understand Dashboard Complexity Scoring & path decision | [`steps-1p-1t.md`](./steps-1p-1t.md), [`stage-b-path-routing.md`](./stage-b-path-routing.md) |
+| Handle conflicts between Stage A assumptions and Stage B data reality | [`workflow-notes.md`](./workflow-notes.md) |
+| Write `project_state.md` and get final approval | [`step-1u-finalization.md`](./step-1u-finalization.md), [`exit-checklist.md`](./exit-checklist.md) |
 
 ---
 
@@ -222,7 +222,7 @@ Before scoring or routing, confirm the three-level filter hierarchy from Rule P1
 | Examples | Weekly (1) | Maybe (1) | Internal (1) | **3 pts** | **Ask user** — "Quick build (Phase 3 now) or scheduled refresh (Phase 2 first)?" |
 | Examples | Rarely (0) | No (0) | Just me (0) | **0 pts** | **Non-Workflow** ✓ |
 
-→ For full scoring logic, see [`steps-1p-1t.md`](references/steps-1p-1t.md) and [`stage-b-path-routing.md`](references/stage-b-path-routing.md)
+→ For full scoring logic, see [`steps-1p-1t.md`](./steps-1p-1t.md) and [`stage-b-path-routing.md`](./stage-b-path-routing.md)
 
 ---
 
@@ -245,19 +245,19 @@ When requirements conflict (e.g. "Real-time" + "Minimize cost"):
 3. Propose a compromise if needed
 4. Note the trade-off decision in `project_state.md`
 
-→ **See [`steps-1a-1o.md`](references/steps-1a-1o.md)** for full iterative patterns and rollback scenarios
+→ **See [`steps-1a-1o.md`](./steps-1a-1o.md)** for full iterative patterns and rollback scenarios
 
 ---
 
 ## At End of Phase 1
 
-→ **See `../SKILL.md` Phase 1 Deliverables section** for the canonical end-of-phase checklist.
+→ **See `../INSTRUCTIONS.md` Phase 1 Deliverables section** for the canonical end-of-phase checklist.
 
 ---
 
 ## Reference Directory
 
-All detailed guidance lives in: `./references/`
+All detailed guidance lives in: `./`
 
 
 ---

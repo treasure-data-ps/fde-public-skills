@@ -80,10 +80,10 @@ This is the compact execution checklist for every engagement. Detailed procedure
 
 After compaction or a phase transition, re-read:
 
-1. `./INSTRUCTIONS.md`
-2. `./references/guardrails-lite.md`
-3. `./references/execution-contract.md`
-4. `./phase-N/INSTRUCTIONS.md`
-5. `./phase-N/SKILL.md` (Phases 1–3) or `./phase-N/INSTRUCTIONS.md` (Phases 4–5)
+1. `../INSTRUCTIONS.md`
+2. `./guardrails-lite.md`
+3. `./execution-contract.md`
+4. `../phase-N/INSTRUCTIONS.md`
+5. The current phase's step references
 
 Then append proof of the reads and the next unchecked gate to `project_state.md` before continuing.

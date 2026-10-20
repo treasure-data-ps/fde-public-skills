@@ -31,9 +31,9 @@ Load Order 1.1-1.5: ./phase-N/INSTRUCTIONS.md (phase-specific, includes checkpoi
 
 | Phase | Read First | Then Read | Checklist Location |
 |-------|-----------|-----------|-------------------|
-| **Phase 1** | `./phase-1/INSTRUCTIONS.md` | `./phase-1/SKILL.md` | Inline in SKILL.md (Section: "Pre-Flight Checklist") |
-| **Phase 2** | `./phase-2/INSTRUCTIONS.md` | `./phase-2/SKILL.md` | Inline in SKILL.md (Section: "Pre-Flight Checklist") |
-| **Phase 3** | `./phase-3/INSTRUCTIONS.md` | `./phase-3/SKILL.md` | Inline in SKILL.md (Section: "Pre-Flight Checklist") |
+| **Phase 1** | `./phase-1/INSTRUCTIONS.md` | The step references it names (`./phase-1/references/`) | Quick Checklist in INSTRUCTIONS.md |
+| **Phase 2** | `./phase-2/INSTRUCTIONS.md` | The step references it names (`./phase-2/references/`) | Quick Checklist in INSTRUCTIONS.md |
+| **Phase 3** | `./phase-3/INSTRUCTIONS.md` | The step references it names (`./phase-3/references/`) | Quick Checklist in INSTRUCTIONS.md |
 | **Phase 4** | `./phase-4/INSTRUCTIONS.md` | `./references/agent-setup.md` | Quality gates in INSTRUCTIONS.md |
 | **Phase 5** | `./phase-5/INSTRUCTIONS.md` | `./references/eval-setup.md` | Quality gates in INSTRUCTIONS.md |
 | **Cross-Phase** | `./references/guardrails-lite.md` | (guardrails + universal rules) | Reference throughout all phases |
@@ -331,7 +331,7 @@ JOIN (
 3. Re-read `./phase-N/INSTRUCTIONS.md`
 4. Re-read `./references/guardrails-lite.md`
 5. Re-read `./references/execution-contract.md`
-6. Verify the inline checklist in the current phase's SKILL.md
+6. Verify the Quick Checklist in the current phase's INSTRUCTIONS.md
 6. **Append re-read proof to project_state.md** (see template below)
 7. Continue with next action
 
@@ -343,7 +343,7 @@ JOIN (
 - ✓ Re-read ./INSTRUCTIONS.md (master)
 - ✓ Re-read ./phase-N/INSTRUCTIONS.md (phase-specific)
 - ✓ Re-read ./references/guardrails-lite.md (guardrails)
-- ✓ Verified inline checklist in phase-N/SKILL.md
+- ✓ Verified Quick Checklist in phase-N/INSTRUCTIONS.md
 - Ready to continue at: [next action]
 ```
 
@@ -353,7 +353,7 @@ JOIN (
 
 | I need to... | Do this |
 |---|---|
-| Start a new dashboard | 1. Read this file ✓ 2. Read `./phase-1/INSTRUCTIONS.md` 3. Read `./phase-1/SKILL.md` |
+| Start a new dashboard | 1. Read this file ✓ 2. Read `./phase-1/INSTRUCTIONS.md` 3. Read `./phase-1/INSTRUCTIONS.md` |
 | Resume existing project | 1. Read this file ✓ 2. Read `agent_outputs/<project_slug>/project_state.md` 3. Jump to "Next Action" |
 | Context was compacted | 1. **STOP** 2. Re-read this file ✓ 3. Re-read phase-N/INSTRUCTIONS.md 4. Re-read references/guardrails-lite.md 5. Continue |
 | Before Phase 2 deployment | 1. Re-read `./phase-2/INSTRUCTIONS.md` 2. Verify all 9 rules above 3. Get user approval 4. Proceed |

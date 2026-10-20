@@ -851,7 +851,7 @@ For EACH query used in dashboard:
 
 - `steps.md` Step 4b-pre — SINK/source column verification gate before writing any queries
 - `../../phase-1/references/validation-queries.md` — Stage B focused validation queries (metric/dimension/join/freshness checks)
-- `../../phase-1/SKILL.md` — Stage A/B process; these patterns used in Stage B Steps 2c-2d
+- `../../phase-1/INSTRUCTIONS.md` — Stage A/B process; these patterns used in Stage B Steps 2c-2d
 ---
 
 **Version:** 1.0.0

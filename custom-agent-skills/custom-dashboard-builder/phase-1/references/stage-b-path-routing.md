@@ -14,8 +14,8 @@
 2f-5  Evaluate path routing logic (score + data source)
 2f-8  ★ AskUserQuestion: confirm path (Phase 2 or Phase 3)
 2f-9  Final output checklist
-      → If Phase 2 (score 4-6, skip_workflow ≠ true): proceed to ../../phase-2/SKILL.md
-      → If Phase 3 (score 0-2, or skip_workflow = true): proceed directly to ../../phase-3/SKILL.md
+      → If Phase 2 (score 4-6, skip_workflow ≠ true): proceed to ../../phase-2/INSTRUCTIONS.md
+      → If Phase 3 (score 0-2, or skip_workflow = true): proceed directly to ../../phase-3/INSTRUCTIONS.md
       → If Score 3: ask user to choose Phase 2 or Phase 3, then proceed accordingly
 ```
 
@@ -340,22 +340,22 @@ AskUserQuestion:
 **Phase 3 path (score 0–3, or `skip_workflow = true`):**
 1. ✅ **2f-4 done** — `project_state.md` updated with Stage B inferences
 2. ✅ **2f-8 done** — path confirmed as Phase 3
-3. ✅ Proceed directly to `../../phase-3/SKILL.md`
+3. ✅ Proceed directly to `../../phase-3/INSTRUCTIONS.md`
 
 **Phase 2 path (score 4–6):**
 1. ✅ **2f-4 done** — `project_state.md` updated with Stage B inferences
 2. ✅ **2f-8 done** — path confirmed as Phase 2
-3. ✅ Proceed to `../../phase-2/SKILL.md`, then to `../../phase-3/SKILL.md`
+3. ✅ Proceed to `../../phase-2/INSTRUCTIONS.md`, then to `../../phase-3/INSTRUCTIONS.md`
 
 ---
 
 ## Next Phase Routing
 
 ### Route to Phase 2 (Workflow Path, Score 4-6, `skip_workflow ≠ true`)
-- Proceed to `../../phase-2/SKILL.md`
+- Proceed to `../../phase-2/INSTRUCTIONS.md`
 
 ### Route to Phase 3 (Non-Workflow Path, Score 0-2, or `skip_workflow = true`)
-- Proceed to `../../phase-3/SKILL.md` immediately — no pause, same session
+- Proceed to `../../phase-3/INSTRUCTIONS.md` immediately — no pause, same session
 
 ---
 

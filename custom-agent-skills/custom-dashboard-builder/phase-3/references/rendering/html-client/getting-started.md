@@ -154,7 +154,7 @@ The generated `dashboard.html` is fully self-contained and stays in `agent_outpu
 ## References
 
 - `html-dashboard-patterns.md` — Pattern A vs Pattern B deep dive, UI components, filters, chart types
-- `SKILL.md` — rendering engine overview and template locations
+- `html-client.md` — rendering engine overview and template locations
 
 ---
 
