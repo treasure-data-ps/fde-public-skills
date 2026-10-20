@@ -44,7 +44,7 @@ Phase 3 must query at that **same grain**, or:
 ### How to Validate
 
 Before writing `generate-data.js`:
-1. **Read Phase 1 `state.md`** → extract confirmed filters and their placement (dashboard/tab/both)
+1. **Read Phase 1 `project_state.md`** → extract confirmed filters and their placement (dashboard/tab/both)
 2. **List every dimension** per location — e.g., dashboard: `[date]`, Tab1: `[region, product]`, Tab2: `[customer_segment]`
 3. **Every query result must include those dimensions at minimum**
 4. **Spot-check filter combinations:** 
@@ -158,7 +158,7 @@ if (result.rows.length === LIMIT) {
 }
 ```
 
-**Document in state.md:**
+**Document in project_state.md:**
 ```yaml
 ## Cardinality Audit
 - Q4 (sales_monthly): expected 8,784 rows, LIMIT 20,000, actual 8,751 ✓
@@ -224,7 +224,7 @@ renderKPI({
 
 ### Validation Checklist
 
-- [ ] All `COUNT DISTINCT` columns documented in Phase 2 state.md
+- [ ] All `COUNT DISTINCT` columns documented in Phase 2 project_state.md
 - [ ] Phase 3 explicitly chooses handling (A/B/C above)
 - [ ] Non-additive columns never summed across dimension filters
 - [ ] Fallback metrics clearly annotated
@@ -322,7 +322,7 @@ Example:
 - **1.5–2 MB:** Acceptable; document and proceed
 - **> 2 MB:** STOP; split dashboard or reduce dimensions
 
-### Document in state.md
+### Document in project_state.md
 
 ```yaml
 ## Payload Budget
@@ -422,7 +422,7 @@ STAGE 2: VALIDATE (Steps 4e-4h)
 
 STAGE 3: APPROVE & DOCUMENT (Steps 4i-4l)
 ├─ 4i: User approval
-├─ 4j: Update state.md (Phase 3 block with all metadata)
+├─ 4j: Update project_state.md (Phase 3 block with all metadata)
 ├─ 4k: Mobile/responsive testing (if required)
 └─ 4l: Performance baseline + sign-off
 ```
@@ -440,7 +440,7 @@ Each stage has a quality gate — **cannot proceed until gate passes**.
 3. ✓ Verify aggregation method (SUM vs COUNT vs DISTINCT)
 4. ✓ Confirm SINK schema matches expected columns (run schema validation from item 9)
 5. ✓ Check dimension filtering applied consistently across Phase 1 and Phase 3
-6. If still unresolved: Document as open item in `state.md` + flag during approval (step 4i)
+6. If still unresolved: Document as open item in `project_state.md` + flag during approval (step 4i)
 
 ---
 
@@ -456,8 +456,8 @@ Before handing off Phase 3:
 - [ ] **6. Payload:** Pre-calculated and documented (< 2 MB)
 - [ ] **7. Limitations:** All limited widgets annotated with .widget-note
 - [ ] **8. Schema:** Validation passes; required columns present
-- [ ] **9. Spot-Check:** Date window matches Phase 1; expected values from state.md
-- [ ] **10. Spot-Check:** No hardcoded baselines (read from state.md or all-time metrics)
+- [ ] **9. Spot-Check:** Date window matches Phase 1; expected values from project_state.md
+- [ ] **10. Spot-Check:** No hardcoded baselines (read from project_state.md or all-time metrics)
 
 ---
 

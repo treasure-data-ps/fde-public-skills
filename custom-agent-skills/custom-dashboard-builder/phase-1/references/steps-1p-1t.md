@@ -164,7 +164,7 @@ Options:
 1. Final path = **Workflow** (from Step 1p logic table)
 2. `skip_workflow` flag is NOT `true`
 
-**If `skip_workflow = true`:** Skip this step entirely. The data source is already aggregated — no workflow needed regardless of score. Note in `state.md`: `"Phase 2 (Workflow) skipped: data source is pre-aggregated."`
+**If `skip_workflow = true`:** Skip this step entirely. The data source is already aggregated — no workflow needed regardless of score. Note in `project_state.md`: `"Phase 2 (Workflow) skipped: data source is pre-aggregated."`
 
 **AskUserQuestion — Workflow Configuration (batch 3 questions):**
 
@@ -207,57 +207,31 @@ AskUserQuestion:
 
 **DO NOT:** Assume the user has an existing workflow project; skip SINK database selection; recommend real-time scheduling.
 
-**Output:** SINK database name + TD Workflow project name + refresh schedule — recorded in `state.md`, used directly by Phase 2.
+**Output:** SINK database name + TD Workflow project name + refresh schedule — recorded in `project_state.md`, used directly by Phase 2.
 
 ---
 
-## Step 1r: LLM Agent Configuration (Optional — Track B Companion Agent)
+## Step 1r: Dashboard Agent Scope
 
-**Note:** Phase 4 (Automate & Deploy) includes both Track A (skill packaging) and Track B (Foundry agent). This step configures whether Track B runs. Track A is independent and always available regardless of this answer.
+Every engagement ends with a **dashboard agent** — a project skill built in Phase 4 and installed to `.claude/skills/<project_slug>-dashboard-agent/` in this Work Folder. It renders the dashboard on request and answers questions about it. This step only records what the agent should handle beyond showing the dashboard; the name is derived from the project slug (asked again only if taken).
 
 ```
 AskUserQuestion:
-  question: "Would you like a companion LLM agent for this dashboard?"
-  header: "Agent deployment"
-  multiSelect: false
+  question: "Besides opening the dashboard, what should the dashboard agent help with?"
+  header: "Agent scope"
+  multiSelect: true
   options:
-    - label: "No, dashboard only (Recommended)"
-      description: "Focus on the dashboard, no agent needed"
-    - label: "Yes, add an agent"
-      description: "Agent answers questions about dashboard data"
-    - label: "Not sure"
-      description: "Decide later, in Phase 4"
+    - label: "Explain metrics and numbers (Recommended)"
+      description: "Metric definitions, filters, why a number looks the way it does"
+    - label: "Ad-hoc data questions"
+      description: "Answer new questions with SQL against the same tables, outside the dashboard"
+    - label: "Add or change metrics"
+      description: "Add a KPI or chart to the dashboard template and regenerate it"
+    - label: "Trends and insights"
+      description: "Summarize changes, anomalies and recommendations from the latest data"
 ```
 
-**If YES, ask for agent configuration (batch 2 questions):**
-
-```
-AskUserQuestion:
-  questions:
-    - question: "What should we call the agent? (e.g. 'Sales Dashboard Assistant')"
-      header: "Agent name"
-      multiSelect: false
-      options:
-        - label: "I'll type the agent name"
-          description: "Short human-readable name — no special characters"
-        - label: "Generate from project purpose"
-          description: "I'll suggest a name based on the business goal from Setup-B"
-
-    - question: "Any specific agent capabilities needed?"
-      header: "Agent capabilities"
-      multiSelect: true
-      options:
-        - label: "No special capabilities (Recommended)"
-          description: "Keep it simple — answer questions about the dashboard data"
-        - label: "Trend analysis"
-          description: "Identify patterns and anomalies"
-        - label: "Ad-hoc queries"
-          description: "Run custom SQL queries"
-```
-
-**Output:** `agent_requirement` (no / yes / not sure — never blank) + `agent_name` + `agent_capabilities` — recorded in `state.md`, used by Phase 4 Track B.
-
-**DO NOT:** Push an agent if user says "no"; require agent configuration unless the user wants one.
+**Output:** `agent_scope` (list) — recorded in `project_state.md`; Phase 4 builds the agent with these capabilities and Phase 5 tests them.
 
 ---
 
@@ -265,7 +239,7 @@ AskUserQuestion:
 
 **Rendering is always HTML Client** in this lite skill — a single, portable, self-contained `dashboard.html` with data inlined at build time. No question is needed and no other engine is available.
 
-Record automatically: `rendering_engine = HTML Client` — written to `state.md`.
+Record automatically: `rendering_engine = HTML Client` — written to `project_state.md`.
 
 ---
 
@@ -294,7 +268,7 @@ Record automatically: `rendering_engine = HTML Client` — written to `state.md`
 
 **Key actions:**
 - Ask: "Is there anything specific to your data or use case that we haven't covered yet?"
-- Document any custom requirement + its dependencies or follow-up actions under a **"Custom Requirements"** note in `state.md`
+- Document any custom requirement + its dependencies or follow-up actions under a **"Custom Requirements"** note in `project_state.md`
 
 **Output:** Custom requirement answers (or "None") + dependencies identified + follow-up actions noted
 
@@ -313,7 +287,7 @@ Before moving to Stage B (data discovery), verify:
 - ✅ **Combined path decision made** (Workflow vs Non-Workflow)
 - ✅ Path recommendation confirmed and user approved
 - ✅ **Workflow configuration captured (if Score 4-6 AND `skip_workflow ≠ true`):** SINK DB, TD Project, Run Schedule
-- ✅ **Agent YES/NO decision explicitly recorded**
+- ✅ **Agent scope recorded** (Step 1r)
 - ✅ `rendering_engine` recorded as `HTML Client`
 - ✅ `dashboard_theme` captured (td-default or custom brand colors/logo)
 - ✅ `proposed_tabs` captured (customer input or TBD)

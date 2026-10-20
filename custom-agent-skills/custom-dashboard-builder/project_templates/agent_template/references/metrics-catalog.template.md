@@ -1,19 +1,35 @@
-# Knowledge Base Template — Metrics Dictionary
+<!--
+PURPOSE OF THIS FILE
+Every metric on the dashboard (and every metric added later): definition, formula, source,
+exclusions, validated value and where it appears. The dashboard agent reads it to explain numbers
+and to add new metrics consistently.
 
-This template defines every metric the agent uses to answer questions, including definition, source, confirmed values, and calculation notes.
+HOW TO USE
+Skeleton — never filled in place, never installed. Filled in Phase 4 from the approved Phase 3 queries (generate-data.js) and the
+Phase 1 metric formulas, in the agent staging folder (references/metrics-catalog.md).
+Every agent build copies the engagement file into the agent's references/. Fill every [bracketed]
+field; delete sections that don't apply and this comment in the copy. Aggregates only — never raw
+customer records or PII.
+-->
 
-**Usage**: Fill in each metric category with customer-validated definitions from Phase 2. Emphasize metrics with multiple valid definitions or calculation nuances.
+# {{project_name}} — Metrics Catalog
 
----
+## Catalog
 
-# Metrics Dictionary — [CUSTOMER_NAME] Dashboard
+One row per dashboard metric. Used to answer "what does X mean?", "why is X different from Y?" and to add a metric consistently.
+
+| Metric (as shown) | SQL formula | Source table | Exclusion rules | Validated value (date) | Dashboard location |
+|---|---|---|---|---|---|
+| [Metric] | `[formula]` | `[table]` | [rules] | [value] ([date]) | [tab / widget] |
+
+## Metric Notes
 
 ## [Category 1: Primary Revenue or Key Business Area]
 
 **[Metric 1]**
 - Definition: [What it measures]
 - Source: `[table].[column]`
-- Phase 3 confirmed value: [Value] ([note if variance or reconciliation exists])
+- Validated value: [Value] ([note if variance or reconciliation exists])
 - Use when: [Context — when to quote this metric]
 - NL phrasings: "[phrase 1]", "[phrase 2]", "[phrase 3]"
 
@@ -43,12 +59,12 @@ This template defines every metric the agent uses to answer questions, including
 
 - **Definition A (unique-recipient basis):** [Definition A text — e.g., "% of distinct recipients who opened at least one email"]
   - SQL: `[numerator_col] / [denominator_col]` FROM `[summary_table]`
-  - Phase 3 confirmed value: [Value]% ([N numerator] / [N denominator])
+  - Validated value: [Value]% ([N numerator] / [N denominator])
   - Use when: reporting reach (how many people engaged)
 
 - **Definition B (total-event basis):** [Definition B text — e.g., "% of total sends that resulted in an open, counting repeat opens"]
   - SQL: `SUM([event_col WHERE event='Opened']) / SUM([event_col WHERE event='Sent'])` FROM `[daily_table]`
-  - Phase 3 confirmed value: [Value]% ([N events] / [N total])
+  - Validated value: [Value]% ([N events] / [N total])
   - Use when: reporting volume (how much engagement activity)
 
 - **NL phrasings:** "[metric name]", "[metric name] rate", "how many [entities] [action]ed", "what's our [metric]"
@@ -74,8 +90,3 @@ This template defines every metric the agent uses to answer questions, including
 - Variance notes:
   - [Metric 1]: [Reconciliation — e.g., "3% grain delta, acceptable"]
   - [Metric 2]: [Note — e.g., "Two valid definitions, both shown above"]
----
-
-**Version:** 1.0.0
-**Last Updated:** 23 June 2026
-**Author:** FDE Team

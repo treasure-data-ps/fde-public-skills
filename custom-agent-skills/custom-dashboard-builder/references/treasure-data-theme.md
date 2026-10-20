@@ -344,7 +344,7 @@ If updating older Treasure Data materials or dashboards, use these **hard swap r
 
 If a customer provides custom brand colors in Phase 1 Step 1c, override only `--accent-1` and `--accent-2`, keeping the core Treasure AI structure:
 
-**From `state.md` (Phase 1):**
+**From `project_state.md` (Phase 1):**
 ```yaml
 dashboard_theme:
   primary_color: "#e74c3c"        # Custom brand primary

@@ -23,7 +23,7 @@ Build a single portable `dashboard.html` file that:
 
 **Deliverable:** 
 - User-approved interactive `dashboard.html`
-- state.md appended with Phase 3 results
+- project_state.md appended with Phase 3 results
 
 ---
 
@@ -38,12 +38,12 @@ Build a single portable `dashboard.html` file that:
 
 **Cannot execute Phase 3 without validating:**
 
-From `state.md` Phase 1 section, verify:
+From `project_state.md` Phase 1 section, verify:
 - ✅ Phase 1 marked ✅ Complete
 - ✅ KPIs documented are still relevant
 - ✅ Data sources accessible (database, tables still exist)
 
-From `state.md` Phase 2 section (if applicable), verify:
+From `project_state.md` Phase 2 section (if applicable), verify:
 - ✅ Phase 2 marked ✅ Complete (if Workflow path chosen)
 - ✅ SINK tables created and populated
 
@@ -69,7 +69,7 @@ SELECT COUNT(*) FROM <SOURCE_DB>.<source_table>  # Verify data exists
 **Pre-Phase-3 Gate**
 - [ ] Phase 1 complete (database, tables, metrics, dimensions validated)
 - [ ] Phase 2 skipped OR complete (SINK tables ready if done)
-- [ ] state.md updated with all findings
+- [ ] project_state.md updated with all findings
 - [ ] Rendering engine: HTML Client
 - [ ] Path confirmed: query source tables OR query SINK tables
 
@@ -93,7 +93,7 @@ SELECT COUNT(*) FROM <SOURCE_DB>.<source_table>  # Verify data exists
   - [ ] Breakdown charts respond to BOTH date + dimension filters
 - [ ] **Monthly cardinality validated** (no silent truncation; LIMITs set to 2× expected rows)
 - [ ] **Non-additive metrics handled** (COUNT DISTINCT columns documented + properly sourced)
-- [ ] **Payload budget pre-calculated** (documented in state.md; < 2 MB total)
+- [ ] **Payload budget pre-calculated** (documented in project_state.md; < 2 MB total)
 - [ ] **Known limitations annotated** (all limited widgets have .widget-note)
 - [ ] **Spot-checks passed** (3+ KPIs verified ±0.1% accuracy against SOURCE data) ← GATE 3
 - [ ] **Filter combos tested** (2–3 random dimension + date filter combinations verified) ← GATE 3b
@@ -109,7 +109,7 @@ SELECT COUNT(*) FROM <SOURCE_DB>.<source_table>  # Verify data exists
 - [ ] If YES → record sign-off, proceed to Phase 4/5 or close
 
 **Post-Approval**
-- [ ] Update state.md: "Phase 3 — Complete"
+- [ ] Update project_state.md: "Phase 3 — Complete"
 - [ ] Optionally proceed to Phase 4 (automation/agent)
 - [ ] Optionally proceed to Phase 5 (handoff docs)
 - [ ] Or close out and share dashboard.html
@@ -241,9 +241,9 @@ To proceed, please confirm: "Yes, looks good"
 
 Only after explicit confirmation proceed to completeness checks.
 
-**Step 1: Extract dashboard plan from state.md (Phase 1)**
+**Step 1: Extract dashboard plan from project_state.md (Phase 1)**
 
-From `state.md` → "Dashboard Plan Summary" section, list:
+From `project_state.md` → "Dashboard Plan Summary" section, list:
 - Tabs planned
 - Filters planned (global + tab-specific)
 - Widgets planned (chart types, metrics, dimensions)
@@ -323,7 +323,7 @@ Manually check (do NOT run code, just look):
 **Step 4: Compare to plan**
 
 **If ALL items ✓:**
-- Document in state.md: "Dashboard completeness check: PASSED"
+- Document in project_state.md: "Dashboard completeness check: PASSED"
 - Proceed to Rule P3-4 (spot-check KPIs)
 
 **If ANY item ⚠️ or ❌:**
@@ -422,7 +422,7 @@ KPI #3: Conversion Rate
 
 **Step 5: Only after all 3 pass**
 - Present dashboard for user approval
-- Document spot-check results in state.md
+- Document spot-check results in project_state.md
 
 **If user says "the numbers are close enough":**
 > "I cannot approve dashboard with any KPI off by 1% or more. Even small errors compound and destroy trust when customers use it.
@@ -590,7 +590,7 @@ grep -n '</html>' dashboard.html
 
 ### Rule P3-6b: Filter Edge Cases — Specification Before Build
 
-**⚠️ REQUIRED: Before Phase 3 build, capture edge case behaviors in state.md.**
+**⚠️ REQUIRED: Before Phase 3 build, capture edge case behaviors in project_state.md.**
 
 For each filter, document what happens in edge cases:
 
@@ -609,7 +609,7 @@ For each filter, document what happens in edge cases:
    - Show OR logic (any filter)? OR
    - Revert to unfiltered view?
 
-**Capture in state.md (from Phase 1):**
+**Capture in project_state.md (from Phase 1):**
 ```yaml
 ### Filter Edge Case Behaviors
 
@@ -648,7 +648,7 @@ WHERE region = ? -- user-selected filter
 
 **⚠️ CRITICAL: When a filter is applied, ALL widgets that should be affected MUST update. Filters that don't change data = broken dashboard.**
 
-**Step 1: Define filter scope in Phase 1 plan (from state.md)**
+**Step 1: Define filter scope in Phase 1 plan (from project_state.md)**
 
 For EACH filter, document which widgets it affects:
 
@@ -755,7 +755,7 @@ Common causes + fixes:
 #    - Or is it SELECT SUM(revenue) FROM orders (no filter)?
 ```
 
-**Step 4: Document in state.md**
+**Step 4: Document in project_state.md**
 
 ```yaml
 ### Interactive Filter Testing
@@ -951,7 +951,7 @@ Apply: Loyalty + Category + Global Date + Region
   Status: ✅ PASS (all filters work together)
 ```
 
-**Documentation in state.md:**
+**Documentation in project_state.md:**
 
 ```yaml
 ### Tab Filter Validation
@@ -1062,7 +1062,7 @@ See: `../references/treasure-data-theme.md`
 
 ### Rule P3-10: State.md Append
 
-Append Phase 3 results to state.md (updated in Phase 2 or created in Phase 1):
+Append Phase 3 results to project_state.md (updated in Phase 2 or created in Phase 1):
 
 ```yaml
 ---
@@ -1129,7 +1129,7 @@ Append Phase 3 results to state.md (updated in Phase 2 or created in Phase 1):
 
 ### Prerequisites
 - [ ] Dashboard Complexity Score available from Phase 1
-- [ ] state.md exists from Phase 1 (+ Phase 2 if applicable)
+- [ ] project_state.md exists from Phase 1 (+ Phase 2 if applicable)
 - [ ] All requirements + data findings documented
 
 ### Query Readiness
@@ -1180,7 +1180,7 @@ All checks pass?
     NO  ↓ → Debug (data issue? rendering issue? query issue?)
     ↓
 User approves?
-    YES ↓ → Append Phase 3 results to state.md
+    YES ↓ → Append Phase 3 results to project_state.md
     NO  ↓ → Gather feedback, adjust, re-test
     ↓
 END Phase 3
@@ -1200,7 +1200,7 @@ END Phase 3
 
 ### "I want the dashboard to update in real-time"
 **Response:**
-> "Phase 3 builds a static dashboard (data at build time). For live data, we'd need: (1) Phase 2 workflow refreshing SINK tables on schedule, or (2) Phase 4 Foundry agent for real-time queries. Which makes sense for your use case?"
+> "Phase 3 builds a static dashboard (data at build time). For live data, we'd need: (1) Phase 2 workflow refreshing SINK tables on schedule, or (2) the dashboard agent (Phase 4), which refreshes the data on request and answers live questions with SQL. Which makes sense for your use case?"
 
 ### "Can I share this dashboard with others?"
 **Response:**
@@ -1212,14 +1212,14 @@ END Phase 3
 
 **⚠️ CRITICAL: Before proceeding to Phase 4 (optional), verify:**
 
-- [ ] Phase 1 marked COMPLETE in state.md
-- [ ] Phase 2 marked COMPLETE in state.md (if applicable)
+- [ ] Phase 1 marked COMPLETE in project_state.md
+- [ ] Phase 2 marked COMPLETE in project_state.md (if applicable)
 - [ ] Dashboard HTML file exists and opens standalone
 - [ ] All filters tested and work correctly
 - [ ] All charts render without errors
 - [ ] 3+ KPI spot-checks PASSED (all exactly matching)
 - [ ] User explicitly approved dashboard (not just "looks good")
-- [ ] state.md appended with Phase 3 results:
+- [ ] project_state.md appended with Phase 3 results:
   - Dashboard file size and location
   - Queries executed (with row counts)
   - Spot-check results (3 KPIs, all matching)
@@ -1232,7 +1232,7 @@ END Phase 3
 > Please complete before moving forward."
 
 **Only after all items verified:**
-- Append "Phase 3 COMPLETE" to state.md
+- Append "Phase 3 COMPLETE" to project_state.md
 - If user wants Phase 4: proceed to phase-4/INSTRUCTIONS.md
 - If user wants Phase 5 or close: proceed to phase-5/INSTRUCTIONS.md
 - Or project is complete
@@ -1241,46 +1241,24 @@ END Phase 3
 
 ## After Phase 3 Completes (Rule 0: Phase Auto-Advance)
 
-**If dashboard is approved (IMMEDIATE OFFER, ONE QUESTION):**
+**If the dashboard is approved:** append the Phase 3 section to `project_state.md` (masters in `agent_outputs/<project_slug>/dashboards/`, spot-checks, approval date; header → Current phase "4 — dashboard agent") and continue straight to Phase 4 — it is required:
 
-**Say this (EXACT SCRIPT):**
 ```
-✅ Phase 3 Complete — Dashboard approved and ready
+✅ Phase 3 Complete — Dashboard approved
 
 ### Summary
 [tabs] | [metrics] | [filters] | [data size] | [load time]
 All spot-checks passed (±0.1% accuracy)
 
-### Next: What's next?
-
-**Option A (Recommended):** Phase 4A — Extract a Reusable Skill
-→ Turn this dashboard into a Claude skill for future projects
-→ Time: 1 hour
-→ Benefit: Next similar dashboard builds 10× faster
-
-**Option B:** Phase 4B — Deploy Conversational Agent
-→ Create a Foundry agent for natural language queries
-→ Time: 1.5 hours
-→ Benefit: Users ask "Revenue by region?" instead of opening filters
-
-**Option C:** Phase 5 — Documentation & Handoff
-→ Create runbooks, access guides, and architecture docs
-→ Time: 1 hour
-→ Benefit: Support team can troubleshoot without escalating
-
-**Option D:** Close engagement
-→ Dashboard is ready to share as-is
-
-**→ Which? (A/B/C/D)**
+### Next: Phase 4 — Dashboard Agent
+→ I'll build your project's dashboard agent: it opens and refreshes this dashboard with one command,
+  explains every metric, answers follow-up data questions and can add metrics later.
+→ It is installed in this Work Folder (.claude/skills/<project_slug>-dashboard-agent/) after your approval.
 ```
 
-**Then wait for ONE answer and proceed immediately (no second approval):**
-- User says A → Start Phase 4 Track A
-- User says B → Start Phase 4 Track B
-- User says C → Start Phase 5
-- User says D → "Dashboard is ready. Closing engagement."
+Then read `../phase-4/INSTRUCTIONS.md`.
 
-**If dashboard needs rework:**
+**If the dashboard needs rework:**
 ```
 ✗ Phase 3 Not Approved → Gather Feedback
 
@@ -1290,44 +1268,6 @@ What needs to change?
 
 Adjusting and re-testing...
 ```
-
-**Why:** Phase 3 is optional→required junction. Must present Phase 4 immediately after approval, not wait for "what's next?"
-
----
-
-## After Phase 3: What's Next?
-
-**Phase 3 COMPLETE → Dashboard Ready**
-
-You now have a working, user-approved dashboard. What happens next depends on what the user needs:
-
-### Option A: Phase 4 Track A — Create Reusable Skill ✅ (Recommended)
-- Package this dashboard as a skill in `~/.claude/skills/` (available across all sessions)
-- Next similar dashboard builds 10× faster (reusable templates, queries, patterns)
-- Optional: zip and share with team
-- Time: ~1 hour
-- → Read `./phase-4/SKILL.md`
-
-### Option B: Phase 4 Track B — Deploy Conversational Agent ✅
-- Add a Foundry AI agent that answers questions about the dashboard data
-- Users can ask: "What's driving revenue? Which regions perform best?"
-- Agent handles natural language → SQL translation
-- Time: ~1-2 hours
-- → Read `./phase-4/SKILL.md`
-
-### Option C: Phase 5 — Handoff Documentation ✅
-- Create 4 markdown files (Architecture, Usage Guide, Runbook, Access/Ownership)
-- Enables team to maintain dashboard independently
-- Time: ~30-60 minutes
-- → Read `./phase-5/SKILL.md`
-
-### Option D: Close Engagement ✅
-- Dashboard is ready and deployed
-- No additional automation or documentation needed
-- User can share `dashboard.html` directly with stakeholders
-- Project complete
-
-**Next step:** Ask the user: "A, B, C, or D?" — then proceed immediately to the selected phase.
 
 ---
 

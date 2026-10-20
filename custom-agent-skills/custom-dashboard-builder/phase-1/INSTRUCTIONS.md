@@ -15,7 +15,7 @@ load_order: 1.1
 
 Gather business requirements (Stage A), validate them against real data (Stage B), calculate Dashboard Complexity Score (0-6), decide Workflow vs Non-Workflow path, and get user approval — **all in one session**.
 
-**Deliverable:** `./<project-name>/state.md` containing approved requirements, confirmed data findings, Dashboard Complexity Score, and path decision.
+**Deliverable:** `agent_outputs/<project_slug>/project_state.md` containing approved requirements, confirmed data findings, Dashboard Complexity Score, and path decision.
 
 ---
 
@@ -26,7 +26,7 @@ Gather business requirements (Stage A), validate them against real data (Stage B
 If resuming from a broken session:
 - ✅ User has Treasure Data access (can run `tdx databases`)
 - ✅ Database name confirmed and accessible
-- ✅ Previous progress saved in `state.md`
+- ✅ Previous progress saved in `project_state.md`
 
 If starting fresh:
 - ✅ Project name chosen (lowercase with hyphens, no spaces)
@@ -35,7 +35,7 @@ If starting fresh:
 
 **If validation FAILS:**
 → STOP: "Missing prerequisite: [reason]"
-→ User action: Confirm database access or provide state.md from prior session
+→ User action: Confirm database access or provide project_state.md from prior session
 
 ---
 
@@ -86,7 +86,7 @@ If starting fresh:
 - [ ] Path decision made (Score 0-2 → Phase 3, Score 3 → user chooses, Score 4-6 → Phase 2 then Phase 3)
 
 **Completion**
-- [ ] state.md created with all findings
+- [ ] project_state.md created with all findings
 - [ ] User approval obtained
 - [ ] Ready to proceed to Phase 2 or Phase 3
 
@@ -107,7 +107,7 @@ These files establish the baseline for all Stage A questions and ensure consiste
 
 ### Gate P1-X: Execution Contract Check
 
-Before asking or recording any Phase 1 question, read `../references/execution-contract.md`. Use `AskUserQuestion` for every mandatory questionnaire, record each answer or refusal reason in `state.md`, and do not advance with a missing checkbox.
+Before asking or recording any Phase 1 question, read `../references/execution-contract.md`. Use `AskUserQuestion` for every mandatory questionnaire, record each answer or refusal reason in `project_state.md`, and do not advance with a missing checkbox.
 
 **Canonical scoring:** `./references/steps-1p-1t.md` is the sole Q1–Q3 Dashboard Complexity Score source. Do not use an inferred technical-factor rubric.
 
@@ -148,7 +148,7 @@ Before asking or recording any Phase 1 question, read `../references/execution-c
 - Use AskUserQuestion for EVERY question in mandatory list
 - If customer says "skip this" → **STOP and ask why** → Escalate if truly not applicable
 - Do NOT offer skip-out on mandatory questions
-- Document in `state.md` if customer refuses to answer (with reason)
+- Document in `project_state.md` if customer refuses to answer (with reason)
 
 **If customer refuses a mandatory question:**
 > "I cannot proceed without answering this. This information shapes the entire dashboard design. If [question] isn't applicable, let's clarify why — there might be a misunderstanding about what we're building."
@@ -254,7 +254,7 @@ During Step 1c (Dimensions, Filters, Layout), capture:
 
 **See:** `./references/dashboard-design-questions.md` for question sets and examples
 
-**Capture in state.md:**
+**Capture in project_state.md:**
 ```yaml
 ### Dashboard Design Specification
 
@@ -314,7 +314,7 @@ If requirements include 2+ tables:
 - [ ] Identify the business event or insert timestamp column
 - [ ] Verify it's non-nullable: `tdx describe <db>.<table>`
 - [ ] If nullable, flag as data quality issue — inform user
-- [ ] Document the column name in state.md
+- [ ] Document the column name in project_state.md
 
 **Example:**
 ```yaml
@@ -354,7 +354,7 @@ Common answers:
 - "Don't show customer names (PII)"
 - "Don't include last 24h (data quality lag)"
 
-Document as "Exclusions" in state.md.
+Document as "Exclusions" in project_state.md.
 
 ---
 
@@ -490,7 +490,7 @@ HTML Client stores data INLINE in the HTML file (not fetched from API). This cre
    - **Contact FDE team** for alternative solution options
    - Don't force dashboard into HTML Client if data doesn't fit
 
-**Capture in state.md:**
+**Capture in project_state.md:**
 ```yaml
 ### HTML Client Data Validation
 
@@ -652,7 +652,7 @@ During Step 1c (dashboard design specification), **before** diving into technica
 
 ---
 
-### Capture Customer Approval in state.md
+### Capture Customer Approval in project_state.md
 
 ```yaml
 ### HTML Client Payload Constraints & Approval
@@ -749,7 +749,7 @@ Q: "Unique Visitors" filtered by "Page"
    User decides: (a/b/c)
 ```
 
-**Capture in state.md:**
+**Capture in project_state.md:**
 ```yaml
 ### Filter Edge Case Behaviors (if filter makes computation impossible)
 
@@ -793,7 +793,7 @@ For each **KPI/metric** that will have filters applied, specify:
 2. "If a metric can't be accurately filtered (e.g., Unique Customers by date), should we show an estimate, hide it, or show a warning?"
 3. "When multiple filters are applied together, should metrics show the intersection, or revert to unfiltered?"
 
-**Capture in state.md:**
+**Capture in project_state.md:**
 ```yaml
 ### Filter Interaction Rules
 
@@ -813,7 +813,7 @@ For each **KPI/metric** that will have filters applied, specify:
 
 ### Rule P1-10: State.md Creation
 
-At end of Phase 1, create `state.md` with this structure:
+At end of Phase 1, create `project_state.md` with this structure:
 
 ```yaml
 # Dashboard Project: [project-name]
@@ -1180,7 +1180,7 @@ Conflicts Detected: None
 ## Next Action
 
 1. ✓ Phase 1 complete
-2. User to review state.md and approve
+2. User to review project_state.md and approve
 3. If Score ≤2: Jump to Phase 3 (`../phase-3/INSTRUCTIONS.md`)
 4. If Score 3: User decides Phase 2 or Phase 3
 5. If Score ≥4: Jump to Phase 2 (`../phase-2/INSTRUCTIONS.md`)
@@ -1194,8 +1194,8 @@ Conflicts Detected: None
 
 ### Engagement Setup
 - [ ] Engagement type confirmed: new project or resuming existing?
-- [ ] If resuming: project name confirmed, state.md located
-- [ ] User understands Phase 1 goal (1-2 hours, produces state.md)
+- [ ] If resuming: project name confirmed, project_state.md located
+- [ ] User understands Phase 1 goal (1-2 hours, produces project_state.md)
 
 ### Data Access
 - [ ] TD account accessible (`tdx auth show` works)
@@ -1230,9 +1230,9 @@ DECISION POINT:
     Score 3?    → Ask user: Phase 2 (workflow) or Phase 3 (direct)?
     Score 4-6?  → Route to Phase 2 (workflow)
     ↓
-Create state.md with requirements + findings
+Create project_state.md with requirements + findings
     ↓
-Get user approval on state.md
+Get user approval on project_state.md
     ↓
 END Phase 1
 ```
@@ -1270,7 +1270,7 @@ END Phase 1
 - [ ] Dashboard Plan Summary displayed to user (Rule P1-12) — includes data validation
 - [ ] User reviewed and approved the plan (including data feasibility)
 - [ ] Path Confirmation obtained (Rule P1-11)
-- [ ] state.md created with ALL Phase 1 results:
+- [ ] project_state.md created with ALL Phase 1 results:
   - Business requirements documented
   - Data findings documented
   - Time column identified
@@ -1286,7 +1286,7 @@ END Phase 1
 > Please complete before moving forward."
 
 **Only after all items verified:**
-- Append "Phase 1 COMPLETE" to state.md with timestamp
+- Append "Phase 1 COMPLETE" to project_state.md with timestamp
 - Record: "Dashboard plan reviewed and approved by user"
 - Move to next phase based on Dashboard Complexity Score and user confirmation
 

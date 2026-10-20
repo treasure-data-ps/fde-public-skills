@@ -15,7 +15,7 @@
 > If "Read it now" → read `../../references/guardrails-lite.md` in full before any step.
 >
 > **Single local file for state.**
-> Only update: `state.md`, in `./<project_name>/`.
+> Only update: `project_state.md`, in `agent_outputs/<project_slug>/`.
 
 ## ⚠ CRITICAL: Schema Inspection BEFORE Any SQL (5 min)
 
@@ -46,7 +46,7 @@ tdx describe -d commerce_db orders
 - ✅ Ran `tdx describe` on all Stage A/B source tables
 - ✅ Confirmed all assumed column names exist in actual schema
 - ✅ Noted any renamed or missing columns
-- ✅ Updated `state.md` with corrections if needed
+- ✅ Updated `project_state.md` with corrections if needed
 
 ---
 
@@ -90,15 +90,15 @@ Past incident: `transactions LEFT JOIN transactions_items` (avg 1.59 items/order
 
 ## Phase 2 Entry Requirements: Read From Stage A (5 min — DO THIS NEXT)
 
-**Before starting Step 2a, extract these values from `state.md` Session Setup block:**
+**Before starting Step 2a, extract these values from `project_state.md` Session Setup block:**
 
 This step ensures Phase 2 has all required configuration from Stage A, without re-asking the user.
 
 ### Required Stage A Artifacts:
 
-Open `./<project_name>/state.md` (local file) and locate:
+Open `agent_outputs/<project_slug>/project_state.md` (local file) and locate:
 
-| Stage A Step | Field | Location in state.md | Phase 2 Use |
+| Stage A Step | Field | Location in project_state.md | Phase 2 Use |
 |---|---|---|---|
 | **1g** | Historical Data Depth | Under "Historical Data Retention" | How many days back for `td_time_range()` window |
 | **1e+1f** | Refresh Schedule | Under "Data Freshness & Refresh" | When should workflow run? (daily 2 AM UTC typical) |
@@ -109,7 +109,7 @@ Open `./<project_name>/state.md` (local file) and locate:
 ### Extraction Checklist:
 
 ```
-From state.md Session Setup block:
+From project_state.md Session Setup block:
 
 Historical window:
   [ ] Found under Step 1g: _____ days (e.g., 365)
@@ -127,7 +127,7 @@ Data volatility / lookback:
   [ ] Found under Step 1q: _____ (append-only / 1-day / 7-day)
 ```
 
-**If ANY field is missing:** Go back to Stage A/B and confirm the field directly with the user, then update `state.md` before proceeding.
+**If ANY field is missing:** Go back to Stage A/B and confirm the field directly with the user, then update `project_state.md` before proceeding.
 
 **Proceed to Step 2a only after all fields extracted.**
 
@@ -171,13 +171,13 @@ source_db_commerce: commerce_db
 
 1. **Copy the embedded template into your project working directory:**
    ```bash
-   mkdir -p ./<project_name>/workflows
-   cp -r <skill_dir>/project_templates/workflow_template/. ./<project_name>/workflows/
+   mkdir -p agent_outputs/<project_slug>/workflows
+   cp -r <skill_dir>/project_templates/workflow_template/. agent_outputs/<project_slug>/workflows/
    ```
 
 2. **Rename workflow files with project name** (REQUIRED):
    ```bash
-   cd ./<project_name>/workflows
+   cd agent_outputs/<project_slug>/workflows
    
    # Rename all .dig files to use the project name
    mv SLUG_launch.dig <project_name>_launch.dig
@@ -194,7 +194,7 @@ source_db_commerce: commerce_db
 
 3. **Verify template structure after renaming:**
    ```
-   ./<project_name>/workflows/
+   agent_outputs/<project_slug>/workflows/
    ├── input_params.yaml                    ← Customize: metrics, dimensions, schedule
    ├── <project_name>_launch.dig            ← Renamed from SLUG_launch.dig
    ├── <project_name>_data_prep.dig         ← Renamed from SLUG_data_prep.dig
@@ -540,7 +540,7 @@ AskUserQuestion:
 - [ ] If > 100K rows: user approved trade-offs (performance, filtering scope)
 - [ ] All measures are additive (or recalculated from additive components)
 - [ ] Dashboard query performance estimated/tested (< 3 seconds acceptable)
-- [ ] Filters removed vs original requirements: documented in state.md with reasoning
+- [ ] Filters removed vs original requirements: documented in project_state.md with reasoning
 
 ---
 

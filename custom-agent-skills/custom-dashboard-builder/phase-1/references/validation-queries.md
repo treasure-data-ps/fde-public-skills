@@ -409,7 +409,7 @@ WHERE {time_filter};
 - Phase 3 (Build, no workflow): On-demand queries must complete in < 60 seconds
 
 ```sql
--- Time this query; document in state.md
+-- Time this query; document in project_state.md
 -- Include ALL Stage A filters and exclusions
 SELECT 
   {dimension_col1},

@@ -5,7 +5,7 @@ This is the compact execution checklist for every engagement. Detailed procedure
 ## How to use
 
 1. Read this file after the master and cross-phase instructions, and again after compaction.
-2. Keep the checklist in the project `state.md` and update it **append-only** at every gate.
+2. Keep the checklist in the project `project_state.md` and update it **append-only** at every gate.
 3. A gate is not complete because a file was read or a plan was written. Record the actual user answer, validation result, or approval.
 4. If a required item is unanswered, ambiguous, refused without a documented reason, or failed, stop and resolve it. Never infer completion.
 
@@ -14,7 +14,7 @@ This is the compact execution checklist for every engagement. Detailed procedure
 - [ ] New vs. resume answered explicitly
 - [ ] Master instructions, cross-phase instructions, and current phase instructions read
 - [ ] For a new engagement: guardrails and theme references read
-- [ ] For a resume: project folder and `state.md` located; state integrity validated
+- [ ] For a resume: project folder and `project_state.md` located; state integrity validated
 
 ## Phase 1 gate — requirements and discovery
 
@@ -27,7 +27,8 @@ This is the compact execution checklist for every engagement. Detailed procedure
 - [ ] HTML Client data-size feasibility checked
 - [ ] Canonical Q1–Q3 Dashboard Complexity Score answered and recorded
 - [ ] Path decision recorded; score 3 has an explicit user choice
-- [ ] Phase 1 `state.md` section appended with a clear next action
+- [ ] Phase 1 `project_state.md` section appended with a clear next action
+- [ ] Step 1v: `business-context.md` (markers) and `data-dictionary.md` drafted and reviewed with the user; `requirements.md` written and its path given
 
 **Phase 1 cannot advance while any mandatory questionnaire is missing.**
 
@@ -38,7 +39,7 @@ This is the compact execution checklist for every engagement. Detailed procedure
 - [ ] Dry-run completed and output reviewed before approval is requested
 - [ ] User approval matches `YES, APPROVE [ACTION]` (case-insensitive); any other response re-opens the gate
 - [ ] Physical objects created only after approval
-- [ ] SINK outputs validated and appended to `state.md`
+- [ ] SINK outputs validated and appended to `project_state.md`
 
 ## Phase 3 gate — dashboard
 
@@ -50,22 +51,23 @@ This is the compact execution checklist for every engagement. Detailed procedure
 - [ ] Filter and performance checks passed
 - [ ] User approval obtained before declaring the dashboard complete
 
-## Phase 4 gate — automation or agent (optional)
+## Phase 4 gate — dashboard agent (required)
 
-- [ ] Track A/B selected explicitly with `AskUserQuestion`
-- [ ] Track-specific pre-flight and reference templates read
-- [ ] Physical skill/agent creation approval obtained before creation
-- [ ] Track A: `generate-data.js` validation passed
-- [ ] Track A: full Step 4a-vi packaging instructions shown after validation, even if a zip already exists
-- [ ] Track B: staging/dry-run and test checks passed before production deployment
-- [ ] Output and next action appended to `state.md`
+- [ ] Phase 3 approval recorded; `business-context.md` and `data-dictionary.md` exist
+- [ ] Master `generate-data.js` passes `phase-4/references/agent-build-rules.md` (one command, no questions, inline data, output outside the skill folder)
+- [ ] `metrics-catalog.md` and `sql-templates.md` filled in `agent_outputs/<project_slug>/`
+- [ ] User approval matches `YES, APPROVE AGENT INSTALL FOR <project_slug>-dashboard-agent` before the install
+- [ ] Agent built in `agent_build/`, no unfilled placeholders, installed to `.claude/skills/<name>/`; build checks passed
+- [ ] Output and next action appended to `project_state.md`
 
-## Phase 5 gate — handoff (optional)
+## Phase 5 gate — evaluation → production-ready
 
-- [ ] User explicitly selected documentation/handoff
-- [ ] Four handoff documents created from the actual project state
-- [ ] Access, ownership, table/workflow names, and troubleshooting steps are concrete
-- [ ] Files reviewed and completion appended to `state.md`
+- [ ] 10-prompt plan written to `eval.md` and approved before running
+- [ ] Every round recorded in `eval.md`; fixes applied only with approval; agent rebuilt after fixes
+- [ ] Production bar met on the last full run: ≥ 9/10 Pass and every Compliance case Pass
+- [ ] Business context confirmed (no `[NEEDS YOUR INPUT]`) before finalize; final round re-run if it changed
+- [ ] Handoff docs created only if the user selected them; feedback question asked and recorded
+- [ ] Completion appended to `project_state.md`
 
 ## Response rule
 
@@ -82,6 +84,6 @@ After compaction or a phase transition, re-read:
 2. `./references/guardrails-lite.md`
 3. `./references/execution-contract.md`
 4. `./phase-N/INSTRUCTIONS.md`
-5. `./phase-N/SKILL.md`
+5. `./phase-N/SKILL.md` (Phases 1–3) or `./phase-N/INSTRUCTIONS.md` (Phases 4–5)
 
-Then append proof of the reads and the next unchecked gate to `state.md` before continuing.
+Then append proof of the reads and the next unchecked gate to `project_state.md` before continuing.

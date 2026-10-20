@@ -2,11 +2,11 @@
 
 **MANDATORY — Do this FIRST before proceeding with Phase 2 steps. Time: 5 min.**
 
-Phase 2 workflow optimization depends on 5 configuration values captured during Stage A/B. These are stored in `state.md`.
+Phase 2 workflow optimization depends on 5 configuration values captured during Stage A/B. These are stored in `project_state.md`.
 
 ## The 5 Required Fields
 
-Extract these from `./<project_name>/state.md` (Section: "Session Setup" — DO NOT EDIT):
+Extract these from `agent_outputs/<project_slug>/project_state.md` (Section: "Session Setup" — DO NOT EDIT):
 
 1. **Historical Window** — Used in `td_time_range()` queries for partition pruning (e.g., `365`, `90`, `30` days)
 2. **Refresh Schedule** — Determines cron schedule in `.dig` file (e.g., `daily`, `hourly`, `weekly`)

@@ -10,7 +10,7 @@
 
 **End of Stage B, after Steps 2c/2d values are confirmed with the user in-session:**
 
-In `state.md` Stage B block, add:
+In `project_state.md` Stage B block, add:
 
 ```yaml
 confirmed_values:
@@ -67,18 +67,13 @@ If workflow produces a different value → Flag as a data issue (not a change in
 Dashboard Widget: Active Customers = 737 ✓ (matches confirmed_values)
 ```
 
-### Phase 4 Track A/B (Automation & Agents)
-**Instead of:** Re-querying metrics for Track A knowledge base or Track B Foundry agent
+### Phase 4 (Dashboard Agent)
+**Instead of:** Re-querying metrics for the agent's metrics catalog
 
-**Do:** Reference confirmed_values in knowledge sources
+**Do:** Copy confirmed_values into `metrics-catalog.md` as the validated value of each metric
 
-```yaml
-# Track B agent knowledge_bases/metrics.yml
-metrics:
-  total_revenue:
-    value: 4319297.65  # From confirmed_values
-    source: "state.md Stage B — validated 2026-07-06"
-    cardinality_check: ✅ (all 6,561 transactions sum correctly)
+```markdown
+| Total Revenue | `SUM(amount)` | `sink.agg_sales` | excludes refunds | 4,319,297.65 (2026-07-06, project_state.md Stage B) | Overview / KPI 1 |
 ```
 
 ---
@@ -108,7 +103,7 @@ metrics:
 
 1. Check your query logic — did you include the same filters/exclusions?
 2. Check data freshness — has source data changed since Stage B?
-3. Document the discrepancy in `state.md` Phase 2/3/4 block
+3. Document the discrepancy in `project_state.md` Phase 2/3/4 block
 4. Investigate root cause before proceeding
 
 **Q: Can we update confirmed_values after Stage B?**
@@ -130,11 +125,11 @@ Use the final value after the user confirms it directly (in the same session). D
 ```
 Stage B — End:
   ├─ All metrics confirmed with the user (no open questions)
-  ├─ Write confirmed_values to state.md
+  ├─ Write confirmed_values to project_state.md
   └─ Complete Stage B → route to Phase 2 or Phase 3
 
 Phase 2/3/4 — Validation Steps:
-  ├─ Read confirmed_values from state.md
+  ├─ Read confirmed_values from project_state.md
   ├─ Spot-check outputs against confirmed_values
   ├─ If match: ✅ (no re-query needed)
   ├─ If differ: 🚩 (investigate)

@@ -112,7 +112,7 @@ AskUserQuestion:
 - Ask: "What metrics are most important?" (revenue, count, rate, efficiency?)
 - Get user's definition: "How do you calculate Total Revenue?" — include edge cases (refunds? date restrictions? currency?)
 - Ask: **"Which metric groups should this dashboard include?"** — e.g., "Sales, Customers, Products, Trends"
-- Ask: **"What does a 'good' number look like for your top metric?"** — e.g., "Revenue should be around $5M last month", "Churn should be below 3%". Captured as `benchmark_values` in `state.md`. Used in Phase 4 as sanity-check baseline when validating widget output and in Stage B to flag if sample values are wildly off.
+- Ask: **"What does a 'good' number look like for your top metric?"** — e.g., "Revenue should be around $5M last month", "Churn should be below 3%". Captured as `benchmark_values` in `project_state.md`. Used in Phase 4 as sanity-check baseline when validating widget output and in Stage B to flag if sample values are wildly off.
 - Ask: **"What are the 3-5 questions you most frequently want answered from this data?"** — e.g., "Which reps are behind quota?" or "What's our churn by segment this month?" — these reveal implicit KPIs and dimensions not captured in the formal list
 - Ask: **"Are there any business terms or abbreviations I should know?"** — e.g., "We call converted customers 'activated', status=4 means closed-won, ARR excludes trials" — document as a glossary
 - Confirm business terms and abbreviations if provided
@@ -183,7 +183,7 @@ AskUserQuestion:
   - Ask: **"Do you prefer summary cards at the top or raw tables? Charts or numbers? Color-coded status indicators or plain text?"** — captures layout preference before Phase 3 build
   - Ask: **"If you had to draw this on a whiteboard, what would it look like?"** — optional, often unlocks clearer mental model
   - Ask: **"Do you have brand colors or a logo you'd like applied to the dashboard?"** — capture hex codes or brand guide link; fall back to Treasure Data default theme if not provided. See output field `dashboard_theme` below.
-  - Ask: **"Do you have a rough idea of how many sections or tabs you'd want?"** — e.g., "Sales, Customers, Products, Trends". Even a rough sketch here reduces rework later. Not required — Stage B will infer if not provided. Captured as `proposed_tabs` in `state.md`.
+  - Ask: **"Do you have a rough idea of how many sections or tabs you'd want?"** — e.g., "Sales, Customers, Products, Trends". Even a rough sketch here reduces rework later. Not required — Stage B will infer if not provided. Captured as `proposed_tabs` in `project_state.md`.
 - Confirm all via AskUserQuestion
 
 **AskUserQuestion — Dashboard Structure Batch 1: Tabs & Organization (Step 1c):**
@@ -376,7 +376,7 @@ AskUserQuestion:
 - Complete filter list (names, types, dependencies)
 - Layout preference (summary vs table, charts vs numbers, color coding)
 - Filter combination assumptions
-- `dashboard_theme` — `td-default` | `{ primary_color, secondary_color, logo_url, logo_background }` — written to `state.md` Session Setup; read during the Phase 3 dashboard build
+- `dashboard_theme` — `td-default` | `{ primary_color, secondary_color, logo_url, logo_background }` — written to `project_state.md` Session Setup; read during the Phase 3 dashboard build
 - `proposed_tabs` — list of proposed tab names/topics from customer (e.g., "Sales, Customers, Products") | `TBD` — used in Stage B to validate tab grouping against discovered data
 
 ---
@@ -537,8 +537,8 @@ AskUserQuestion:
 - Ask: **"What is their role and how technical are they?"** — e.g., "VP of Sales — wants a 3-number executive summary" vs "Data analyst — wants sortable columns, exact values" — determines layout density, label detail, summary cards vs data tables
 - Ask: **"How do they prefer to consume data?"** — narratives, tables, interactive filters
 - Ask: **"Does this data contain revenue, PII, or competitive info that shouldn't be visible to all viewers?"** — determines masking, value ranges vs exact numbers. Flag for Step 1l if formal compliance applies
-- Ask: **"Who or what else will consume this dashboard's data?"** — e.g., weekly reports, Slack digests, Foundry agents. Impacts output column naming, precision, Phase 4 planning
-- Note: since HTML Client output is a single portable file, sharing is simply distributing that file (or hosting it) — no login gating or platform-specific ACLs apply
+- Ask: **"Who or what else will consume this dashboard's data?"** — e.g., weekly reports, Slack digests, the dashboard agent's follow-up questions. Impacts output column naming, precision, Phase 4 planning
+- Note: since HTML Client output is a single portable file in the Work Folder, sharing means sharing that file — no login gating or platform-specific ACLs apply
 
 **Output:** Access audience + technical depth + communication style + data sensitivity flag + downstream consumers
 
@@ -561,7 +561,7 @@ AskUserQuestion:
 
 **Output:** Alert requirements (yes/no) + threshold definitions + notification delivery method + escalation rules (if applicable)
 
-**⚠️ NOTE:** A static HTML Client dashboard cannot alert natively — alerting requires a companion workflow or Foundry agent (see Phase 4, Track B) to check thresholds and notify externally.
+**⚠️ NOTE:** A static HTML Client dashboard cannot alert natively — alerting requires a companion workflow (Phase 2) to check thresholds and notify externally.
 
 ---
 
@@ -628,15 +628,15 @@ Stage A is iterative — users can revisit any step before approving requirement
 - Final approval at Finalization
 
 **Post-Stage-A change (before Stage B start):**
-- **Minor change** (e.g., metric formula adjustment): Update requirement; proceed to Stage B with caveat; Stage B validates and reflects it in `state.md`
+- **Minor change** (e.g., metric formula adjustment): Update requirement; proceed to Stage B with caveat; Stage B validates and reflects it in `project_state.md`
 - **Major change** (e.g., new dimension, different refresh schedule): Revisit appropriate Stage A steps; revalidate quality checklist; re-approve with user before Stage B
 
 **During Stage B (data discovery shows requirements can't be met):**
 - Note the gap (e.g., "This dimension doesn't exist in your data")
 - Propose alternatives or workarounds
-- Update Stage A requirements; `state.md` reflects final validated requirements
+- Update Stage A requirements; `project_state.md` reflects final validated requirements
 
-**Phase 1 "complete"** = user explicitly approves all requirements at Finalization. `state.md` captures final validated requirements after Stage B.
+**Phase 1 "complete"** = user explicitly approves all requirements at Finalization. `project_state.md` captures final validated requirements after Stage B.
 
 ---
 
@@ -646,7 +646,7 @@ Stage A and Stage B are **designed to work together** within the same phase, not
 
 - **Stage A** gathers **business requirements** (what, why, who)
 - **Stage B** validates against **actual data** (does it exist, how to calculate, what values)
-- If Stage B finds conflicts → circle back to Stage A clarification → `state.md` reflects agreed resolution
+- If Stage B finds conflicts → circle back to Stage A clarification → `project_state.md` reflects agreed resolution
 
 ### Examples of Stage A → Stage B Bridging
 

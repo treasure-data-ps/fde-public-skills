@@ -18,7 +18,7 @@ Failures here cause mid-run workflow crashes or silently wrong metrics. This che
 - [ ] Ran `tdx describe` on EVERY source table used in Stage A/B
 - [ ] Copied exact column names from `tdx describe` output into SQL
 - [ ] No column names guessed or from Stage A/B notes (verify each one)
-- [ ] If any columns missing or renamed: updated `state.md` with actual names
+- [ ] If any columns missing or renamed: updated `project_state.md` with actual names
 - [ ] All Stage B metric names match real database columns
 
 **Example check:**
@@ -81,7 +81,7 @@ tdx describe -d <source_db> service_history
 
 ## Workflow Structure Verification (MANDATORY)
 
-- [ ] Ran `find ./<project_name>/workflows -type f | sort` and presented output to the user
+- [ ] Ran `find agent_outputs/<project_slug>/workflows -type f | sort` and presented output to the user
 - [ ] User explicitly confirmed all expected `.dig` files are present
 - [ ] User explicitly confirmed all expected SQL files under `sql/` are present
 - [ ] User confirmed no leftover or unintended template files are in the folder

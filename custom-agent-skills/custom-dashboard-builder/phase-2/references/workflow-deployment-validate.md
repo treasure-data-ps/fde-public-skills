@@ -13,7 +13,7 @@ Before running any validation, show the user the complete workflow file tree and
 
 ```bash
 # Print the full workflow folder tree
-find ./<project_name>/workflows -type f | sort
+find agent_outputs/<project_slug>/workflows -type f | sort
 ```
 
 Present the output and use `AskUserQuestion`:
@@ -33,7 +33,7 @@ AskUserQuestion:
 If user selects **"Show me the .dig file contents first"**, run:
 ```bash
 # Print each .dig file for review
-for f in ./<project_name>/workflows/*.dig; do echo "=== $f ==="; cat "$f"; echo; done
+for f in agent_outputs/<project_slug>/workflows/*.dig; do echo "=== $f ==="; cat "$f"; echo; done
 ```
 
 Then re-ask the AskUserQuestion above. Do NOT proceed to dry-run until the user explicitly confirms the structure is correct.
@@ -59,7 +59,7 @@ Then re-ask the AskUserQuestion above. Do NOT proceed to dry-run until the user 
 **Dry-run validation:**
 
 ```bash
-cd ./<project_name>/workflows
+cd agent_outputs/<project_slug>/workflows
 tdx wf push --dry-run
 
 # Expected output:
@@ -100,7 +100,7 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
    tdx wf projects 2>&1
    ```
 
-   Scan the list for projects that share the same name or are close variations of the intended `workflow_project_name` (from `state.md`, set in Stage A). Present findings to the user:
+   Scan the list for projects that share the same name or are close variations of the intended `workflow_project_name` (from `project_state.md`, set in Stage A). Present findings to the user:
 
    ```
    Existing projects found:
@@ -175,7 +175,7 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
    **Rules:**
    - If collision is from an unrelated table/project → **STOP and use a different prefix or SINK DB** (data loss risk)
    - If collision is from this same project (workflow re-deployed) → **OK to proceed** (intentional full refresh)
-   - Document collision findings in `state.md` (Phase 2 section) for reference
+   - Document collision findings in `project_state.md` (Phase 2 section) for reference
 
 4. **Create SINK database (if it doesn't exist):**
 
@@ -215,7 +215,7 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
 
    If user selects **"Show dry-run output first"**:
    ```bash
-   cd ./<project_name>/workflows
+   cd agent_outputs/<project_slug>/workflows
    tdx wf push --dry-run
    ```
    Display output, then re-ask the confirmation above. **Do NOT push until user explicitly selects "Yes, deploy now"**.
@@ -223,7 +223,7 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
 6. **First deployment: Create project with `tdx wf upload`** (only after confirmation above)
 
    ```bash
-   cd ./<project_name>/workflows
+   cd agent_outputs/<project_slug>/workflows
    tdx wf upload --name ${PROJECT_NAME}
 
    # Expected:
@@ -239,7 +239,7 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
 7. **Subsequent deployments: Update with `tdx wf push`** (same confirmation pattern — ask before pushing)
 
    ```bash
-   cd ./<project_name>/workflows
+   cd agent_outputs/<project_slug>/workflows
    tdx wf push --dry-run
 
    # Expected:
@@ -382,11 +382,11 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
    2. Run it against the source tables (do NOT query SINK yet — SINK is still being populated)
    3. Compare result to the Stage B recorded sample value
    4. If mismatch: identify why (missing WHERE clause? wrong column? JOIN fan-out?) and fix before Phase 3
-   5. Document each metric check in `state.md` (Phase 2 section): one row per metric — Stage B value → Phase 2 re-run value → ✅/❌
+   5. Document each metric check in `project_state.md` (Phase 2 section): one row per metric — Stage B value → Phase 2 re-run value → ✅/❌
 
    **Example:**
    ```bash
-   # Stage B spot-check (from state.md):
+   # Stage B spot-check (from project_state.md):
    # Metric: "Active Customers (90-day)" → Value: 558 (55.8%)
 
    # Phase 2 validation (re-run fresh):
@@ -434,9 +434,9 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
    - Metric column names match what Stage B approved (e.g., `total_revenue` not `revenue`)
    - Dimension column names match Stage B filter spec (e.g., `region` not `geo_region`)
 
-   Document confirmed column names in `state.md` (Phase 2 section) → "SINK Tables" list. Phase 3 reads this before writing any query.
+   Document confirmed column names in `project_state.md` (Phase 2 section) → "SINK Tables" list. Phase 3 reads this before writing any query.
 
-   **If a column name differs from the Stage B plan:** update `state.md` now — do not leave Phase 3 to discover the discrepancy mid-build.
+   **If a column name differs from the Stage B plan:** update `project_state.md` now — do not leave Phase 3 to discover the discrepancy mid-build.
 
 8. **NULL audit on all metric columns (prevents silent blank widgets):**
 
@@ -471,7 +471,7 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
    # DATE    → safe to use directly in date range filters
    ```
 
-   **If date column is VARCHAR:** two options — fix in workflow SQL now (preferred), or note it in `state.md` so Phase 3 applies a `CAST(date_col AS DATE)` in every query.
+   **If date column is VARCHAR:** two options — fix in workflow SQL now (preferred), or note it in `project_state.md` so Phase 3 applies a `CAST(date_col AS DATE)` in every query.
 
    Fix in SQL (preferred):
    ```sql
@@ -487,7 +487,7 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
 - ✅ Spot-check metrics match Stage B values
 - ✅ `create_table:` behavior confirmed — replaces on re-run (no duplicates, no truncate needed)
 - ✅ Cross-join table cardinality validated (if applicable)
-- ✅ Column names locked in `state.md` as Phase 3 contract
+- ✅ Column names locked in `project_state.md` as Phase 3 contract
 - ✅ No NULLs in metric columns
 - ✅ Date column types confirmed (DATE, not VARCHAR)
 - ✅ **Ready for Phase 3 (dashboard build)**
@@ -498,7 +498,7 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
 
 After validating SINK tables, document each one. This becomes the reference for Phase 3 dashboard queries, Phase 4 agent knowledge base, and Phase 5 customer handoff.
 
-**Create one entry per SINK table (in `state.md`):**
+**Create one entry per SINK table (in `project_state.md`):**
 
 ```
 ## [SINK_DB].[table_name]
@@ -800,7 +800,7 @@ Then re-ask the confirmation above. Do NOT push until explicit "Yes".
 
 Only push after explicit "Yes":
 ```bash
-cd ./<project_name>/workflows
+cd agent_outputs/<project_slug>/workflows
 tdx wf push --yes
 ```
 
@@ -892,7 +892,7 @@ If **revert**: switch all `insert_into:` back to `create_table:`, remove delete 
 
 **Recovery steps:**
 
-1. **Fix the workflow SQL** in `./<project_name>/workflows/sql/`:
+1. **Fix the workflow SQL** in `agent_outputs/<project_slug>/workflows/sql/`:
    ```sql
    -- Before (wrong)
    SELECT SUM(revenue) as total FROM sales
@@ -903,7 +903,7 @@ If **revert**: switch all `insert_into:` back to `create_table:`, remove delete 
 
 2. **Re-deploy workflow:**
    ```bash
-   cd ./<project_name>/workflows
+   cd agent_outputs/<project_slug>/workflows
    tdx wf push
    tdx wf run <workflow-name>
    ```
@@ -925,7 +925,7 @@ If **revert**: switch all `insert_into:` back to `create_table:`, remove delete 
    - Verify metrics match expected values (spot-check)
    - Update dashboard queries to match corrected metric definition
 
-5. **Document in state.md:**
+5. **Document in project_state.md:**
    ```markdown
    ## RECOVERY: Metric definition fix
    

@@ -18,7 +18,7 @@ Should list your databases. If it fails with 401/403/not found, see [`references
 ---
 
 
-**Deliverable:** `./<project-name>/state.md` with approved requirements, confirmed data findings, Dashboard Complexity Score (0-6), and path decision
+**Deliverable:** `agent_outputs/<project_slug>/project_state.md` with approved requirements, confirmed data findings, Dashboard Complexity Score (0-6), and path decision
 **Location:** Single merged phase — runs before Phase 2 (Workflow, optional) and Phase 3 (Build Dashboard)
 
 ---
@@ -28,7 +28,7 @@ Should list your databases. If it fails with 401/403/not found, see [`references
 | Stage | Topic | Required? | Details |
 |---|---|---|---|
 | **Session Setup** | | | |
-| Setup-A | Project name | ✅ Always | Short lowercase with hyphens name; becomes the working directory `./<project-name>/` |
+| Setup-A | Project name | ✅ Always | Short lowercase with hyphens name; becomes the working directory `agent_outputs/<project_slug>/` |
 | Setup-B | Business goal / dashboard purpose | ✅ Always | One sentence — what decision does this dashboard support? |
 | Setup-C | Target platform | ✅ Always | Treasure Work / Treasure AI Studio — gates sharing constraints (rendering is always HTML Client in lite) |
 | Setup-D | Data source type | ✅ Always | Raw/Transactional vs Pre-aggregated vs Snapshot — determines whether Phase 2 (Workflow) can be skipped |
@@ -58,8 +58,8 @@ Should list your databases. If it fails with 401/403/not found, see [`references
 | **Scoring & Path Decision** | | ✅ Always | See [`steps-1p-1t.md`](references/steps-1p-1t.md), [`stage-b-path-routing.md`](references/stage-b-path-routing.md) |
 | 1p | Dashboard Complexity Scoring (0-6 model) | ✅ Always | 3 questions → path logic (score + data source) → Workflow vs Non-Workflow |
 | 1q | Workflow Configuration | 🔧 If score 4-6 | SINK DB, project name, run schedule — used by Phase 2 |
-| 1r | Agent/Skill Configuration | 🔧 Optional | Only if Phase 4 Track A/B is anticipated |
-| **Finalization** | Validate & get approval, write `state.md` | ✅ Always | See [`step-1u-finalization.md`](references/step-1u-finalization.md) |
+| 1r | Dashboard Agent Scope | ✅ Always | What the Phase 4 agent should handle beyond opening the dashboard |
+| **Finalization** | Validate & get approval, write `project_state.md` | ✅ Always | See [`step-1u-finalization.md`](references/step-1u-finalization.md) |
 
 ---
 
@@ -98,7 +98,7 @@ Then ask Setup-E (reference resources) as its own call. If the user provides a `
 
 ### ⚠️ Non-Skippable Questionnaire Gate (Rule P1-0)
 
-This walkthrough does not replace the mandatory-question rule in `../INSTRUCTIONS.md`. Use `AskUserQuestion` for Setup-A through Setup-E and every mandatory 1a–1o group. Record each answer (or a refusal reason) in `state.md` and the execution contract before moving to the next batch. Do not infer an answer from context.
+This walkthrough does not replace the mandatory-question rule in `../INSTRUCTIONS.md`. Use `AskUserQuestion` for Setup-A through Setup-E and every mandatory 1a–1o group. Record each answer (or a refusal reason) in `project_state.md` and the execution contract before moving to the next batch. Do not infer an answer from context.
 
 Before scoring or routing, confirm the three-level filter hierarchy from Rule P1-2b and complete the HTML Client data-size check in `html-client-data-limits.md`. The Phase 1 gate is incomplete until the execution-contract checklist is complete.
 
@@ -128,7 +128,7 @@ Before scoring or routing, confirm the three-level filter hierarchy from Rule P1
 | **Batch 4** | Temporal + sharing | Date range, timezone, refresh, sharing/access | ✅ Always | Related; timezone often forgotten |
 | **Batch 5** | Data discovery confirmation | Database/table confirmation, time column, metric/dimension validation results | ✅ Always | After running discovery queries — confirm what was found |
 | **Batch 6** | Dashboard Complexity Scoring | Q1, Q2, Q3 (can be 1 call with 3 questions) | ✅ Always | Drives path decision |
-| **Batch 7** | Path confirmation | Workflow vs Non-Workflow (only if score = 3) | ⚠️ If score = 3 | Final gate before writing `state.md` |
+| **Batch 7** | Path confirmation | Workflow vs Non-Workflow (only if score = 3) | ⚠️ If score = 3 | Final gate before writing `project_state.md` |
 
 ---
 
@@ -187,7 +187,7 @@ Before scoring or routing, confirm the three-level filter hierarchy from Rule P1
                  score 4-6 → Workflow (Phase 2, then Phase 3)
 
 ## Finalization — step-1u-finalization.md
-  Write ./<project-name>/state.md
+  Write agent_outputs/<project_slug>/project_state.md
   User approval → AskUserQuestion: "Does this capture your requirements and confirmed data findings?"
   Proceed to Phase 2 (if Workflow) or Phase 3 (if Non-Workflow)
 ```
@@ -209,7 +209,7 @@ Before scoring or routing, confirm the three-level filter hierarchy from Rule P1
 | Avoid re-querying the same values in later phases | [`confirmed-values-checkpoint.md`](references/confirmed-values-checkpoint.md) |
 | Understand Dashboard Complexity Scoring & path decision | [`steps-1p-1t.md`](references/steps-1p-1t.md), [`stage-b-path-routing.md`](references/stage-b-path-routing.md) |
 | Handle conflicts between Stage A assumptions and Stage B data reality | [`workflow-notes.md`](references/workflow-notes.md) |
-| Write `state.md` and get final approval | [`step-1u-finalization.md`](references/step-1u-finalization.md), [`exit-checklist.md`](references/exit-checklist.md) |
+| Write `project_state.md` and get final approval | [`step-1u-finalization.md`](references/step-1u-finalization.md), [`exit-checklist.md`](references/exit-checklist.md) |
 
 ---
 
@@ -229,13 +229,13 @@ Before scoring or routing, confirm the three-level filter hierarchy from Rule P1
 ## Phase 1 Workflow Notes
 
 ### Phase 1 is Iterative
-Users can revisit any step before approving. Minor changes proceed with a caveat noted in `state.md`; major changes (e.g. metric definition changes) should be re-confirmed before moving on.
+Users can revisit any step before approving. Minor changes proceed with a caveat noted in `project_state.md`; major changes (e.g. metric definition changes) should be re-confirmed before moving on.
 
 ### Stage A → Stage B Continuity
 Stage A gathers assumptions; Stage B validates them against real data in the same session. If Stage B finds a conflict (e.g. a metric Stage A assumed doesn't exist, or cardinality is much higher than expected):
 1. Identify the conflict explicitly
 2. Ask the user which is authoritative — the original ask, or the data reality
-3. Note the resolution in `state.md` under Data Discovery
+3. Note the resolution in `project_state.md` under Data Discovery
 4. Continue — no need to redo Stage A from scratch
 
 ### Handle Contradictions
@@ -243,7 +243,7 @@ When requirements conflict (e.g. "Real-time" + "Minimize cost"):
 1. Identify explicitly
 2. Ask: "Which is more important?"
 3. Propose a compromise if needed
-4. Note the trade-off decision in `state.md`
+4. Note the trade-off decision in `project_state.md`
 
 → **See [`steps-1a-1o.md`](references/steps-1a-1o.md)** for full iterative patterns and rollback scenarios
 

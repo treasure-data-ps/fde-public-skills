@@ -135,9 +135,9 @@ schedule:
 
 ```bash
 # Copy workflow templates into your project working directory
-mkdir -p ./<project_name>/workflows
+mkdir -p agent_outputs/<project_slug>/workflows
 
-cp -r <skill_dir>/project_templates/workflow_template/. ./<project_name>/workflows/
+cp -r <skill_dir>/project_templates/workflow_template/. agent_outputs/<project_slug>/workflows/
 ```
 
 ---
@@ -240,7 +240,7 @@ If you skip Phase 2, your Phase 3 queries will hit both databases on EVERY dashb
 
 ## Phase 2 Input Requirements (Read From Stage A & Stage B)
 
-**From Stage A** (via `state.md` Session Setup block — see `workflow-setup-configure.md` → "Phase 2 Entry Requirements"):
+**From Stage A** (via `project_state.md` Session Setup block — see `workflow-setup-configure.md` → "Phase 2 Entry Requirements"):
 
 - ✅ **Historical window** — How far back (days)? (from Stage A Step 1g)
 - ✅ **Refresh schedule** — When should workflow run? (from Stage A Step 1e+1f — daily 2 AM UTC typical)
@@ -248,7 +248,7 @@ If you skip Phase 2, your Phase 3 queries will hit both databases on EVERY dashb
 - ✅ **Workflow project name** — TD project identifier (from Stage A Step 1q — Workflow path only)
 - ✅ **Data volatility** — Incremental strategy: append-only / 1-day lookback / 7-day lookback (from Stage A Step 1q)
 
-**From Stage B** (via `state.md` Data Discovery block):
+**From Stage B** (via `project_state.md` Data Discovery block):
 
 - ✅ **Approved SQL queries** — 5-10 validated queries covering metrics, dimensions, trending (from Stage B Steps 2c-2d)
 - ✅ **Sample data validated** — Metric spot-checks confirmed accuracy (Phase 2 Step 2g will re-validate against SINK output)
@@ -294,9 +294,9 @@ If you skip Phase 2, your Phase 3 queries will hit both databases on EVERY dashb
 
 ## Next: Phase 3 (Build Interactive Dashboard)
 
-**Before proceeding:** Append Phase 2 outputs to `state.md`.
+**Before proceeding:** Append Phase 2 outputs to `project_state.md`.
 
-→ **See "Phase 2 Deliverables (End of Phase)" below** for the single `state.md` append template and end-of-phase checklist.
+→ **See "Phase 2 Deliverables (End of Phase)" below** for the single `project_state.md` append template and end-of-phase checklist.
 
 Phase 3 covers:
 - Build dashboard from SINK tables (queries now < 2 seconds instead of 5-10 seconds), rendered as a single portable HTML Client dashboard
@@ -322,7 +322,7 @@ All detailed guidance lives in: `./references/`
 Before starting Phase 2, confirm all Stage A/B deliverables:
 
 - ✅ Stage A/B complete: Requirements + Data discovery finished, confirmed directly with the user
-- ✅ `state.md` accessible locally — **read it at Phase 2 start** for SINK DB name, project name, schedule, metric definitions
+- ✅ `project_state.md` accessible locally — **read it at Phase 2 start** for SINK DB name, project name, schedule, metric definitions
 - ✅ Score 4–6 confirmed (Workflow path)
 - ✅ Dashboard plan reviewed and confirmed with the user
 - ✅ TD credentials with write access to SINK database
@@ -330,7 +330,7 @@ Before starting Phase 2, confirm all Stage A/B deliverables:
 
 **If `skip_workflow = true`** (data source is pre-aggregated — set in Stage A Step 1-pre-D): Skip this phase. Go directly to Phase 3.
 
-**If resuming Phase 2:** Read `./<project_name>/state.md` → find current step → jump there.
+**If resuming Phase 2:** Read `agent_outputs/<project_slug>/project_state.md` → find current step → jump there.
 
 ---
 
@@ -448,9 +448,9 @@ At end of Phase 2, you have:
 
 **→ Ready for Phase 3** — Dashboard renders from fast SINK tables
 
-**Document Update Rule: APPEND, never overwrite.** Read `state.md` first, append below the Stage B block — never touch prior content.
+**Document Update Rule: APPEND, never overwrite.** Read `project_state.md` first, append below the Stage B block — never touch prior content.
 
-Append to **`state.md`**:
+Append to **`project_state.md`**:
 
 ```markdown
 ## Phase 2: Workflow Deployment Complete (YYYY-MM-DD)
@@ -501,7 +501,7 @@ Append to **`state.md`**:
 ```
 
 **End-of-Phase Checklist:**
-- ✅ Templates copied to `./<project_name>/workflows/`
+- ✅ Templates copied to `agent_outputs/<project_slug>/workflows/`
 - ✅ `input_params.yaml` configured with Stage B metrics, source tables, exclusion filters
 - ✅ All SQL files updated with `td_time_range()` optimization
 - ✅ **User confirmed workflow file structure before push (AskUserQuestion)**
@@ -511,7 +511,7 @@ Append to **`state.md`**:
 - ✅ All sub-workflow sessions show SUCCESS
 - ✅ **Incremental strategy assessed (append / upsert / state / skipped)**
 - ✅ **If incremental applied: test run passed (row counts unchanged, latest date correct, duration reduced)**
-- ✅ `state.md` Phase 2 block updated locally
+- ✅ `project_state.md` Phase 2 block updated locally
 
 ---
 

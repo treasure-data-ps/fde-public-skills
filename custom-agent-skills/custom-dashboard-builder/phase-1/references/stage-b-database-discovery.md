@@ -17,11 +17,11 @@
 ## Step 2a: Discover & Select Database
 
 **What to do:**
-- Use `state.md` Session Setup block to narrow database search
+- Use `project_state.md` Session Setup block to narrow database search
 - Confirm database selection with the user
 
 **Stage A context (preferred path):**
-1. Read the **Session Setup** block in `state.md` from Stage A
+1. Read the **Session Setup** block in `project_state.md` from Stage A
    - If a database was named: confirm it exists, verify access → skip to Step 2b
    - If a domain was mentioned ("sales data", "CDP data"): filter databases by name pattern
    - If no hint given: list all databases (fallback)
@@ -260,7 +260,7 @@ If table has billions of rows or query timeout risk:
 
    **If the user hesitates:** "I can show both definitions in the dashboard for comparison." (Often resolves ambiguity.)
 
-   **Document the definition** in `state.md` (Stage B Data Discovery block) before proceeding
+   **Document the definition** in `project_state.md` (Stage B Data Discovery block) before proceeding
 
 3. **Get real sample values — and verify WHERE clause matches the metric definition:**
    - Metric: "Total Revenue" → Column: order_amount → Sample: $1,250,432 (last 90 days)
@@ -328,7 +328,7 @@ If table has billions of rows or query timeout risk:
   - Definition inferred and confirmed with the user if uncertain
 - **Recommended metrics list** (user-approved additions)
 - **Recommended exclusions list** (use case-based)
-- **Benchmark Values** — populate `state.md` Session Setup `Benchmark Values` field NOW with the real sample values discovered here (e.g. `"Revenue: $4.3M/month, AOV: $658, Open Rate: 46%"`). Do NOT leave it as a placeholder — Step 2f-4 (see `stage-b-path-routing.md`) will read this field when appending Stage B content.
+- **Benchmark Values** — populate `project_state.md` Session Setup `Benchmark Values` field NOW with the real sample values discovered here (e.g. `"Revenue: $4.3M/month, AOV: $658, Open Rate: 46%"`). Do NOT leave it as a placeholder — Step 2f-4 (see `stage-b-path-routing.md`) will read this field when appending Stage B content.
 
 ---
 
@@ -564,11 +564,11 @@ Filter: Region (region column exists in ALL tables)
 
 **When to run:** After Step 2d-filter filter scope map is complete.
 
-**What to do:** Group confirmed metrics and dimensions into proposed tabs. Use `proposed_tabs` from `state.md` if provided; otherwise infer from metric/dimension clusters. Apply the filter scope map from Step 2d-filter to each tab — tab-level and widget-level filters must already be assigned before this layout is presented.
+**What to do:** Group confirmed metrics and dimensions into proposed tabs. Use `proposed_tabs` from `project_state.md` if provided; otherwise infer from metric/dimension clusters. Apply the filter scope map from Step 2d-filter to each tab — tab-level and widget-level filters must already be assigned before this layout is presented.
 
 **Action:**
 
-1. **Read `proposed_tabs` from `state.md`** — if the user named tabs in Stage A, use those as the skeleton. Map each confirmed metric/dimension to the nearest tab.
+1. **Read `proposed_tabs` from `project_state.md`** — if the user named tabs in Stage A, use those as the skeleton. Map each confirmed metric/dimension to the nearest tab.
 
 2. **If `proposed_tabs = TBD`** — infer grouping from data clusters:
    - Group transaction metrics (revenue, orders, AOV) → likely a Sales/Revenue tab
@@ -781,7 +781,7 @@ GROUP BY 1;
 
 **SOX (Financial):** Audit trail required. Log: who viewed, when, what data was exported.
 
-### Recording in state.md
+### Recording in project_state.md
 
 ```markdown
 ## Compliance & PII

@@ -15,7 +15,7 @@ This document describes the technical structure of the [Dashboard Name] dashboar
 - **Type:** Interactive HTML dashboard (single portable file)
 - **Data Source:** `<SOURCE_DB>` / `<SINK_DB>` (if Phase 2 workflow)
 - **Update Frequency:** `<schedule>`
-- **Location:** `./<project-name>/dashboards/dashboard.html`
+- **Location:** `agent_outputs/<project_slug>/dashboards/dashboard.html`
 - **Size:** `<Xmb>` (estimated)
 
 ---
@@ -33,9 +33,9 @@ This document describes the technical structure of the [Dashboard Name] dashboar
 
 | Database | Table | Purpose | Built By | Schedule |
 |----------|-------|---------|----------|----------|
-| `<SINK_DB>` | `<sink_table>` | Pre-aggregated metrics | `./<project-name>/workflows/main.dig` | Daily 02:00 UTC |
+| `<SINK_DB>` | `<sink_table>` | Pre-aggregated metrics | `agent_outputs/<project_slug>/workflows/main.dig` | Daily 02:00 UTC |
 
-**Workflow Location:** `./<project-name>/workflows/main.dig`  
+**Workflow Location:** `agent_outputs/<project_slug>/workflows/main.dig`  
 **Incremental Strategy:** `<append-only / 1-day lookback / 7-day lookback>`
 
 ---
@@ -124,7 +124,7 @@ WHERE
 ### Manual Refresh (Non-Workflow Path)
 
 ```bash
-cd ./<project-name>/dashboards
+cd agent_outputs/<project_slug>/dashboards
 SOURCE_DB=<source_db> SINK_DB=<sink_db> node generate-data.js
 # Output: dashboard.html (ready to share)
 ```
@@ -134,7 +134,7 @@ SOURCE_DB=<source_db> SINK_DB=<sink_db> node generate-data.js
 Workflow runs automatically per schedule. Manual trigger:
 
 ```bash
-cd ./<project-name>/workflows
+cd agent_outputs/<project_slug>/workflows
 td workflow run <workflow-name> --project <project-name>
 ```
 
@@ -144,12 +144,11 @@ To re-deploy updated dashboard:
 
 ```bash
 # Phase 3 rebuild
-cd ./<project-name>/dashboards
+cd agent_outputs/<project_slug>/dashboards
 SOURCE_DB=<db> SINK_DB=<db> node generate-data.js
 
-# Or Phase 4 skill rebuild
-cd ~/.claude/skills/<skill-name>
-npm run build
+# Or through the dashboard agent (from the Work Folder root)
+# ask: "refresh the dashboard" — it runs the one-command refresh in .claude/skills/<project_slug>-dashboard-agent/SKILL.md
 ```
 
 ---

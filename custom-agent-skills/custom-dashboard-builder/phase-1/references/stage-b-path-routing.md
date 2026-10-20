@@ -1,6 +1,6 @@
-# Stage B: Path Confirmation & state.md Update (Step 2f)
+# Stage B: Path Confirmation & project_state.md Update (Step 2f)
 
-**CRITICAL CHECKPOINT:** Summarize Stage B inferences, update `state.md`, and confirm the path forward.
+**CRITICAL CHECKPOINT:** Summarize Stage B inferences, update `project_state.md`, and confirm the path forward.
 
 **⚠️ No git commits, no engineer gate, no customer clarification loop in this lite skill.** This is a single-session, self-serve flow — the user reviews and confirms directly, in-session.
 
@@ -10,12 +10,12 @@
 2f-1  Summarize Stage B findings (present to user)
 2f-2  Check for Stage A vs Stage B conflicts
 2f-3  Retrieve Stage A Dashboard Complexity Score
-2f-4  ★ UPDATE state.md locally (Stage B data discovery)   ← MANDATORY before path question
+2f-4  ★ UPDATE project_state.md locally (Stage B data discovery)   ← MANDATORY before path question
 2f-5  Evaluate path routing logic (score + data source)
 2f-8  ★ AskUserQuestion: confirm path (Phase 2 or Phase 3)
 2f-9  Final output checklist
-      → If Phase 2 (score 4-6, skip_workflow ≠ true): proceed to ../../phase-2/deploy-workflow-guide.md
-      → If Phase 3 (score 0-2, or skip_workflow = true): proceed directly to ../../phase-3/build-interactive-dashboard-guide.md
+      → If Phase 2 (score 4-6, skip_workflow ≠ true): proceed to ../../phase-2/SKILL.md
+      → If Phase 3 (score 0-2, or skip_workflow = true): proceed directly to ../../phase-3/SKILL.md
       → If Score 3: ask user to choose Phase 2 or Phase 3, then proceed accordingly
 ```
 
@@ -59,18 +59,18 @@ Any Stage A ↔ Stage B conflicts? No ✅
 
 | Scenario | Stage B Finding | Action |
 |----------|---|---|
-| Stage A: "daily refresh" | Stage B: Data updates weekly | ⚠️ **Conflict** — Document in `state.md`; clarify with user directly |
+| Stage A: "daily refresh" | Stage B: Data updates weekly | ⚠️ **Conflict** — Document in `project_state.md`; clarify with user directly |
 | Stage A: "6 regions" | Stage B: Data has 10 regions | ✅ **OK** (superset); proceed with full set |
 | Stage A: "metric X needed" | Stage B: Column doesn't exist | ⚠️ **BLOCKER** — Clarify with user; recommend alternative metric from extended search |
 | Stage A: "exclude cancelled" | Stage B: Can't identify cancelled orders | ⚠️ **BLOCKER** — Clarify with user which column identifies cancellations |
 
-**If conflicts found:** Resolve directly with the user in-session, then update `state.md` with the resolution before proceeding.
+**If conflicts found:** Resolve directly with the user in-session, then update `project_state.md` with the resolution before proceeding.
 
 ---
 
 ## Step 2f-3: Retrieve Stage A Dashboard Complexity Score
 
-- Read **`state.md`** for the Dashboard Complexity Score (Step 1p):
+- Read **`project_state.md`** for the Dashboard Complexity Score (Step 1p):
   - Q1: Viewing frequency (0-2 pts)
   - Q2: Historical data needs (0-2 pts)
   - Q3: Audience scope (0-2 pts)
@@ -78,11 +78,11 @@ Any Stage A ↔ Stage B conflicts? No ✅
 
 ---
 
-## Step 2f-4: UPDATE state.md (Stage B Data Discovery — CRITICAL)
+## Step 2f-4: UPDATE project_state.md (Stage B Data Discovery — CRITICAL)
 
-**This is the Stage B deliverable.** `state.md` was created in Stage A with the Session Setup block. Now append Stage B data discovery findings to it.
+**This is the Stage B deliverable.** `project_state.md` was created in Stage A with the Session Setup block. Now append Stage B data discovery findings to it.
 
-**APPEND to `state.md`** — do NOT rewrite the Session Setup block:
+**APPEND to `project_state.md`** — do NOT rewrite the Session Setup block:
 
 ```markdown
 ## Stage B: Data Discovery & Inferences
@@ -165,13 +165,13 @@ Status: Path confirmed, proceeding
 **⚠️ STOP — Step 2f-4 MUST be completed before reading this routing table.**
 
 Verify the checklist before proceeding:
-- [ ] **2f-4 done:** `state.md` updated with Stage B inferences
+- [ ] **2f-4 done:** `project_state.md` updated with Stage B inferences
 
 If unchecked: complete it first. Do NOT skip to routing.
 
 ---
 
-**Use Dashboard Complexity Score + `skip_workflow` flag (from `state.md`) to decide the path:**
+**Use Dashboard Complexity Score + `skip_workflow` flag (from `project_state.md`) to decide the path:**
 
 ```
 IF skip_workflow == true (data source is pre-aggregated):
@@ -265,7 +265,7 @@ Based on your data:
   • Data is fresh but slower to fetch
   • Refreshes only when you re-open dashboard (manual)
 
-You can always add a workflow later (Phase 4: Automate & Deploy)
+You can always add a workflow later (Phase 2)
 
 To proceed, please type exactly:
 YES, BUILD DASHBOARD NOW (Non-Workflow)
@@ -324,7 +324,7 @@ AskUserQuestion:
     - label: "Phase 2 — Set up workflow first"
       description: "Scheduled refresh via TD Workflow. Takes longer to set up."
     - label: "Not sure"
-      description: "I'll recommend Phase 3. You can add a workflow later in Phase 4 (Automate & Deploy)."
+      description: "I'll recommend Phase 3. You can add a workflow later (Phase 2)."
 ```
 
 **If user selects "Not sure":**
@@ -338,24 +338,24 @@ AskUserQuestion:
 **Required sequence — do these IN ORDER before routing to any next phase:**
 
 **Phase 3 path (score 0–3, or `skip_workflow = true`):**
-1. ✅ **2f-4 done** — `state.md` updated with Stage B inferences
+1. ✅ **2f-4 done** — `project_state.md` updated with Stage B inferences
 2. ✅ **2f-8 done** — path confirmed as Phase 3
-3. ✅ Proceed directly to `../../phase-3/build-interactive-dashboard-guide.md`
+3. ✅ Proceed directly to `../../phase-3/SKILL.md`
 
 **Phase 2 path (score 4–6):**
-1. ✅ **2f-4 done** — `state.md` updated with Stage B inferences
+1. ✅ **2f-4 done** — `project_state.md` updated with Stage B inferences
 2. ✅ **2f-8 done** — path confirmed as Phase 2
-3. ✅ Proceed to `../../phase-2/deploy-workflow-guide.md`, then to `../../phase-3/build-interactive-dashboard-guide.md`
+3. ✅ Proceed to `../../phase-2/SKILL.md`, then to `../../phase-3/SKILL.md`
 
 ---
 
 ## Next Phase Routing
 
 ### Route to Phase 2 (Workflow Path, Score 4-6, `skip_workflow ≠ true`)
-- Proceed to `../../phase-2/deploy-workflow-guide.md`
+- Proceed to `../../phase-2/SKILL.md`
 
 ### Route to Phase 3 (Non-Workflow Path, Score 0-2, or `skip_workflow = true`)
-- Proceed to `../../phase-3/build-interactive-dashboard-guide.md` immediately — no pause, same session
+- Proceed to `../../phase-3/SKILL.md` immediately — no pause, same session
 
 ---
 

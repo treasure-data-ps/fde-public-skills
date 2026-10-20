@@ -29,7 +29,7 @@ options:
 **If multiple tabs:** Ask follow-up:
 > "What would you name each tab? What metrics go on each?"
 
-**Capture in state.md:**
+**Capture in project_state.md:**
 ```yaml
 Dashboard Tabs:
   - Tab 1 Name: [name]
@@ -65,7 +65,7 @@ options:
     description: "Tab-specific filters I'll describe"
 ```
 
-**Capture in state.md:**
+**Capture in project_state.md:**
 ```yaml
 Global Filters:
   - [filter_name]: [type], applies to all tabs
@@ -102,7 +102,7 @@ options:
     description: "I'll describe the visualization"
 ```
 
-**Capture in state.md:**
+**Capture in project_state.md:**
 ```yaml
 Metrics & Visualizations:
   - Metric: [name]
@@ -188,7 +188,7 @@ options:
 | "Executive status report to email" | KPI | Self-contained, portable, no interaction needed |
 | "BI team needs multiple views" | Multi-Chart | Multiple visualizations tell the story |
 
-**Capture in state.md:**
+**Capture in project_state.md:**
 ```yaml
 HTML Template Selection:
   - Chosen Template: [KPI / Table / Multi-Chart]

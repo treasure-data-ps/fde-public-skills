@@ -13,7 +13,7 @@
 - [ ] **Database connectivity verified** — `tdx use {database}` succeeds, credentials valid
 - [ ] **Schema verification passed** — All metric columns have numeric data types (INT, BIGINT, DECIMAL, FLOAT)
 - [ ] **Metric nulls acceptable** — < 10% nulls in any metric column (or use COALESCE in Phase 2/3)
-- [ ] **Negative values acceptable** — No unexpected negatives (or documented reason in `state.md`)
+- [ ] **Negative values acceptable** — No unexpected negatives (or documented reason in `project_state.md`)
 - [ ] **Query returns rows** — After all Stage A filters + exclusion rules applied, row count > 0
 - [ ] **Data freshness acceptable** — MAX(date_col) is fresh for use case (daily/weekly/monthly)
 - [ ] **Dimension cardinality acceptable** — All dimensions < 1,000,000 unique values (or plan bucketing)
@@ -50,7 +50,7 @@
 - [ ] Additional KPIs/metrics discoverable from same tables identified
 - [ ] Recommendations presented to user with real sample values
 - [ ] User has approved/declined recommended metrics
-- [ ] Approved recommendations documented in `state.md`
+- [ ] Approved recommendations documented in `project_state.md`
 
 ### Dimensions Inferred & Validated
 - [ ] Each Stage A dimension has INFERRED business definition (from data patterns)
@@ -64,18 +64,18 @@
 - [ ] Additional dimensions/filters discoverable from extended search identified
 - [ ] Recommendations presented to user
 - [ ] User has approved/declined recommended dimensions
-- [ ] Approved recommendations documented in `state.md`
+- [ ] Approved recommendations documented in `project_state.md`
 
 ### Exclusion Rules Inferred & Recommended
 - [ ] Recommended exclusions based on use case identified
 - [ ] Exclusions presented to user with SQL validation
 - [ ] User has approved/declined recommended exclusions
-- [ ] All exclusion rules documented in `state.md`
+- [ ] All exclusion rules documented in `project_state.md`
 
 ### Metric Definition Ambiguities Resolved
 - [ ] Any ambiguous metrics clarified (revenue type, active window, churn definition, etc.)
 - [ ] Definition explicitly chosen or "show both versions" approved
-- [ ] Definition documented in `state.md`; if still uncertain, resolve with the user directly before proceeding
+- [ ] Definition documented in `project_state.md`; if still uncertain, resolve with the user directly before proceeding
 
 ### Snapshot vs Transactional Filter Scope Classified
 - [ ] Each confirmed table classified as **Behavior** (has business event datetime), **Attribute** (entity state — no time column), **Snapshot** (point-in-time, no time column), or **Aggregate** (pre-aggregated output)
@@ -88,8 +88,8 @@
 - [ ] Rendering engine recorded as `HTML Client` (fixed — no selection needed)
 - [ ] Performance baseline established (if large table) — Pattern A inlines data at build time, so very large record-level exports are a poor fit; flag and consider pre-aggregating harder in Phase 2
 
-### state.md Updated (Stage A created, Stage B appends)
-**Rule: `state.md` is CREATED in Stage A Step 1u with the Session Setup block. Stage B APPENDS a new Data Discovery block. Never overwrite prior content.**
+### project_state.md Updated (Stage A created, Stage B appends)
+**Rule: `project_state.md` is CREATED in Stage A Step 1u with the Session Setup block. Stage B APPENDS a new Data Discovery block. Never overwrite prior content.**
 - [ ] Session Setup block (Stage A) preserved — never edited
 - [ ] Stage B Data Discovery block APPENDED (not overwriting Stage A)
 - [ ] Database + tables documented
@@ -100,7 +100,7 @@
 - [ ] Data quality gate results documented
 - [ ] Path decision recorded
 - [ ] Dashboard Complexity Score retrieved from Stage A + recorded
-- [ ] Updated `state.md` with Stage B Data Discovery block appended
+- [ ] Updated `project_state.md` with Stage B Data Discovery block appended
 
 ### Stage A ↔ Stage B Alignment Verified
 - [ ] All Stage A requirements addressed:
@@ -114,7 +114,7 @@
 - [ ] Dashboard Complexity Score retrieved from Stage A (0-6)
 - [ ] Path routing decision made (Score + `skip_workflow` → Phase 2 or Phase 3)
 - [ ] Path confirmed with user via AskUserQuestion
-- [ ] Path decision recorded in `state.md`
+- [ ] Path decision recorded in `project_state.md`
 
 ---
 
@@ -126,10 +126,10 @@
 | Metric definition ambiguous | Clarify with user: choose ONE definition or approve "show both". Don't carry forward undefined. |
 | Metric definition not inferred | Go back to database query. Infer definition from actual data structure + patterns. Not acceptable to use Stage A estimate. |
 | Data gaps not documented | Document them NOW. Decide: (A) use alternative metric, (B) leave out, (C) ask the user. Don't carry forward. |
-| Recommended metrics not presented | Present recommendations with real sample values. Get user approval/decline. Document in `state.md`. |
-| `state.md` not created | Create NOW. This is your session memory + link to Phase 2/3. Mandatory. |
-| Conflicting Stage A/B items | Document conflict in `state.md`. Resolve with the user before routing. |
-| Pre-Phase 2/3 data quality check fails | Run `validation-queries.md` Checks 1-12. Fix critical issues (nulls, query timeout, fresh data, join cardinality) before proceeding to either Phase 2 or Phase 3. Document resolutions in `state.md`. |
+| Recommended metrics not presented | Present recommendations with real sample values. Get user approval/decline. Document in `project_state.md`. |
+| `project_state.md` not created | Create NOW. This is your session memory + link to Phase 2/3. Mandatory. |
+| Conflicting Stage A/B items | Document conflict in `project_state.md`. Resolve with the user before routing. |
+| Pre-Phase 2/3 data quality check fails | Run `validation-queries.md` Checks 1-12. Fix critical issues (nulls, query timeout, fresh data, join cardinality) before proceeding to either Phase 2 or Phase 3. Document resolutions in `project_state.md`. |
 
 ---
 
@@ -137,7 +137,7 @@
 
 After all gates pass:
 
-1. **Retrieve Dashboard Complexity Score** from Stage A (`state.md` Session Setup block)
+1. **Retrieve Dashboard Complexity Score** from Stage A (`project_state.md` Session Setup block)
    - Score 0–2 → Phase 3 (Non-Workflow) — proceed directly
    - Score 3 → Ask user: "Quick build (Phase 3) or set up scheduled refresh first (Phase 2)?"
    - Score 4–6 → Phase 2 (Workflow) then Phase 3
@@ -157,8 +157,8 @@ After all gates pass:
    ```
 
 3. **Route to next phase:**
-   - **Phase 2 (Workflow, Score 4-6):** proceed to `../../phase-2/deploy-workflow-guide.md`
-   - **Phase 3 (Non-Workflow, Score 0-2, or `skip_workflow = true`):** proceed immediately to `../../phase-3/build-interactive-dashboard-guide.md`
+   - **Phase 2 (Workflow, Score 4-6):** proceed to `../../phase-2/SKILL.md`
+   - **Phase 3 (Non-Workflow, Score 0-2, or `skip_workflow = true`):** proceed immediately to `../../phase-3/SKILL.md`
 
 ---
 
@@ -166,8 +166,8 @@ After all gates pass:
 
 If resuming this project in a future session:
 
-1. **For Phase 2:** Read `./<project_name>/state.md` — it has all Stage B inferences. Proceed to Phase 2 workflow setup.
-2. **For Phase 3:** Read `./<project_name>/state.md` — has inferred definitions + recommended additions. Proceed to Phase 3 dashboard build immediately.
+1. **For Phase 2:** Read `agent_outputs/<project_slug>/project_state.md` — it has all Stage B inferences. Proceed to Phase 2 workflow setup.
+2. **For Phase 3:** Read `agent_outputs/<project_slug>/project_state.md` — has inferred definitions + recommended additions. Proceed to Phase 3 dashboard build immediately.
 
 ---
 
@@ -175,11 +175,11 @@ If resuming this project in a future session:
 
 Before marking Stage B complete, verify these are complete:
 
-- [ ] `state.md` updated with Stage B Data Discovery block (all inferred definitions + recommendations)
-- [ ] Dashboard Complexity Score from Stage A documented in `state.md`
+- [ ] `project_state.md` updated with Stage B Data Discovery block (all inferred definitions + recommendations)
+- [ ] Dashboard Complexity Score from Stage A documented in `project_state.md`
 - [ ] Rendering confirmed as HTML Client (recorded in Stage A)
-- [ ] Path decision (Phase 2 or Phase 3) documented in `state.md`
-- [ ] Data quality gate results documented in `state.md` (query performance baseline, null %, cardinality checks, freshness status)
+- [ ] Path decision (Phase 2 or Phase 3) documented in `project_state.md`
+- [ ] Data quality gate results documented in `project_state.md` (query performance baseline, null %, cardinality checks, freshness status)
 
 ---
 

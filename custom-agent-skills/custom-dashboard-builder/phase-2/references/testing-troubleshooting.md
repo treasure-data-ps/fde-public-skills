@@ -23,7 +23,7 @@ Before handing off to Phase 3, verify all items:
 - [ ] **Date column types confirmed** — date columns are DATE not VARCHAR (VARCHAR breaks Phase 3 date range filters silently)
 - [ ] Spot-check metric vs Stage B validated values (must match exactly)
 - [ ] Cross-join table: dimension combinations have correct cardinality
-- [ ] **Column names locked in `state.md`** — exact names from `tdx describe` recorded as Phase 3 contract
+- [ ] **Column names locked in `project_state.md`** — exact names from `tdx describe` recorded as Phase 3 contract
 
 ### Workflow Execution Tests
 - [ ] Workflow pushed/uploaded successfully
@@ -473,7 +473,7 @@ tdx wf attempt <project_name> <session_id>
 Before handing off to Phase 3:
 
 - [ ] Workflow daily run time < 2 min
-- [ ] Cardinality audit completed with user approval (document BEFORE/AFTER analysis in state.md)
+- [ ] Cardinality audit completed with user approval (document BEFORE/AFTER analysis in project_state.md)
   - [ ] If SINK table ≤ 100K rows: proceed ✓
   - [ ] If SINK table 100K-500K rows: user approved performance trade-offs
   - [ ] If SINK table > 500K rows: explicit user approval + planned Phase 3 testing

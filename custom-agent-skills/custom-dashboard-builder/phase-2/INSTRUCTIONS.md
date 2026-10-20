@@ -23,7 +23,7 @@ Deploy a scheduled Treasure Data workflow that:
 **Deliverable:** 
 - SINK tables created and populated
 - Workflow deployed and validated
-- state.md appended with Phase 2 results
+- project_state.md appended with Phase 2 results
 
 ---
 
@@ -31,7 +31,7 @@ Deploy a scheduled Treasure Data workflow that:
 
 **Cannot execute Phase 2 without validating:**
 
-From `state.md` Phase 1 section, verify:
+From `project_state.md` Phase 1 section, verify:
 - ✅ Phase 1 marked ✅ Complete
 - ✅ Time column documented (is it still non-nullable?)
 - ✅ Join keys tested (cardinality check documented)
@@ -50,14 +50,14 @@ tdx databases | grep <SINK_DB>
 
 **If ANY validation FAILS:**
 → STOP: "Prerequisite validation failed: [reason]"
-→ User action: Go back to Phase 1, update state.md, or re-run validation
+→ User action: Go back to Phase 1, update project_state.md, or re-run validation
 
 ---
 
 ## Quick Checklist (Quick Reference)
 
 **Pre-Phase-2 Gate**
-- [ ] Phase 1 complete (state.md saved with Stage A/B)
+- [ ] Phase 1 complete (project_state.md saved with Stage A/B)
 - [ ] Dashboard Complexity Score 4-6 OR user chose Workflow at score 3
 - [ ] SINK database confirmed
 - [ ] Workflow project name decided
@@ -65,7 +65,7 @@ tdx databases | grep <SINK_DB>
 **Workflow Deployment Steps**
 - [ ] 2a: Copy workflow template
 - [ ] 2b: Configure input_params.yaml (databases, schedule, date range)
-- [ ] 2c: Build queries from state.md (verify metrics/dimensions)
+- [ ] 2c: Build queries from project_state.md (verify metrics/dimensions)
 - [ ] 2d: Configure datamodel (if applicable)
 - [ ] 2e: Review configuration, run --dry-run
 - [ ] 2f: Deploy workflow, verify SINK tables created
@@ -75,11 +75,11 @@ tdx databases | grep <SINK_DB>
 **Quality Gate (Before Phase 3)**
 - [ ] All Stage B metrics reproduced in SINK
 - [ ] Query performance acceptable (SINK < 1s)
-- [ ] SINK schema documented in state.md
+- [ ] SINK schema documented in project_state.md
 - [ ] No data validation errors
 
 **Handoff to Phase 3**
-- [ ] Update state.md: "Phase 2 — Complete"
+- [ ] Update project_state.md: "Phase 2 — Complete"
 - [ ] SINK table info documented (names, columns)
 - [ ] Ready for Phase 3: Build Dashboard from SINK
 
@@ -301,7 +301,7 @@ JOIN order_items oi ON o.order_id = oi.order_id;
    - ✅ DO query source at dashboard build time (Pattern: `querySrc()` function)
    - ✅ Or create separate date-only SINK for COUNT DISTINCT
 
-**Capture in state.md:**
+**Capture in project_state.md:**
 ```yaml
 ### Join Fan-Out Analysis
 
@@ -353,7 +353,7 @@ function querySrc() {
 
 **Rule:** If a KPI is COUNT DISTINCT and the SINK has 2+ dimensions, choose Option 1 or 2.
 
-**Document in state.md:**
+**Document in project_state.md:**
 ```yaml
 ### COUNT DISTINCT Handling
 
@@ -370,7 +370,7 @@ function querySrc() {
 
 **⚠️ REQUIRED: Before Phase 3, create a mapping table showing which SINK table feeds which dashboard widget.**
 
-**Create this as a Phase 2 deliverable in state.md:**
+**Create this as a Phase 2 deliverable in project_state.md:**
 
 ```yaml
 ### SINK → Dashboard Mapping
@@ -530,7 +530,7 @@ LIMIT 100;
 
 ### Rule P2-9: State.md Append
 
-Append Phase 2 results to state.md (created in Phase 1):
+Append Phase 2 results to project_state.md (created in Phase 1):
 
 ```yaml
 ---
@@ -584,8 +584,8 @@ Append Phase 2 results to state.md (created in Phase 1):
 
 ### Prerequisites from Phase 1
 - [ ] Dashboard Complexity Score ≥ 4 (or Score 3 and user chose Phase 2)
-- [ ] state.md exists from Phase 1
-- [ ] All Phase 1 requirements + data findings documented in state.md
+- [ ] project_state.md exists from Phase 1
+- [ ] All Phase 1 requirements + data findings documented in project_state.md
 
 ### TD Account Setup
 - [ ] `tdx auth show` returns valid profile
@@ -613,7 +613,7 @@ Is Dashboard Complexity Score ≥ 4 (or user approved override)?
     YES ↓  → Continue
     NO  ↓  → ERROR: Should not be in Phase 2
     ↓
-Verify prerequisites from Phase 1 in state.md
+Verify prerequisites from Phase 1 in project_state.md
     ↓
 Validate join cardinality (Rule P2-2)
     ↓
@@ -635,7 +635,7 @@ Run first test cycle (manual trigger)
     ↓
 Verify: SINK tables populated with expected data
     ↓
-Append Phase 2 results to state.md
+Append Phase 2 results to project_state.md
     ↓
 END Phase 2 → Jump to Phase 3
 ```
@@ -666,13 +666,13 @@ END Phase 2 → Jump to Phase 3
 
 **⚠️ CRITICAL: Before proceeding to Phase 3, verify:**
 
-- [ ] Phase 1 marked COMPLETE in state.md (Dashboard Complexity Score documented)
+- [ ] Phase 1 marked COMPLETE in project_state.md (Dashboard Complexity Score documented)
 - [ ] Dashboard Complexity Score is 4-6 (or user explicitly chose Phase 2)
-- [ ] All SINK tables created (listed in state.md)
+- [ ] All SINK tables created (listed in project_state.md)
 - [ ] Workflow deployed and first run completed successfully
 - [ ] Workflow runs without errors (check logs)
 - [ ] SINK tables populated with expected data
-- [ ] state.md appended with Phase 2 results:
+- [ ] project_state.md appended with Phase 2 results:
   - SINK table names (all listed)
   - Workflow name and schedule
   - First run results
@@ -685,7 +685,7 @@ END Phase 2 → Jump to Phase 3
 > Please complete or debug before moving forward."
 
 **Only after all items verified:**
-- Append "Phase 2 COMPLETE" to state.md
+- Append "Phase 2 COMPLETE" to project_state.md
 - Proceed to Phase 3
 
 ---

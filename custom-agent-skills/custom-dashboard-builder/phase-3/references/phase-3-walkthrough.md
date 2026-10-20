@@ -11,12 +11,12 @@
 - ✅ Phase 1 complete: database, tables, metrics, dimensions all validated with real sample values
 - ✅ Phase 2 complete (if Workflow path): SINK tables deployed and validated
 - ✅ Path confirmed: Non-Workflow (query source tables) OR Workflow (query SINK tables)
-- ✅ `state.md` accessible — **read it at Phase 3 start** for exclusion rules, filter specs, metrics list, benchmark values, and any Phase 1/2 appended findings
+- ✅ `project_state.md` accessible — **read it at Phase 3 start** for exclusion rules, filter specs, metrics list, benchmark values, and any Phase 1/2 appended findings
 - ✅ Platform access confirmed (tdx CLI authenticated)
 
-**If resuming Phase 3:** Read `state.md` → find last completed step → open `references/steps.md` and jump directly to the next step.
+**If resuming Phase 3:** Read `project_state.md` → find last completed step → open `references/steps.md` and jump directly to the next step.
 
-**Chart colors:** Use the TD palette for any Chart.js series — `["#B4E3E3", "#ABB3DB", "#D9BFDF", "#F8E1B0", "#8FD6D4", "#828DCA", "#C69ED0", "#F5D389", "#6AC8C6", "#5867B8"]` — unless the user specified brand colors during Phase 1 (check "Visual Preferences" in `state.md`).
+**Chart colors:** Use the TD palette for any Chart.js series — `["#B4E3E3", "#ABB3DB", "#D9BFDF", "#F8E1B0", "#8FD6D4", "#828DCA", "#C69ED0", "#F5D389", "#6AC8C6", "#5867B8"]` — unless the user specified brand colors during Phase 1 (check "Visual Preferences" in `project_state.md`).
 
 ---
 
@@ -106,7 +106,7 @@ const results = await Promise.all([q1, q2, q3, q4, q5, q6]);
 4j-4l: Document, Mobile (if required), Load UX (if needed)
   |
 Final: User Approval (Step 4i)
-  -> Approved -> Phase 4 (Automate & Deploy) or Phase 5 (Handoff Documentation), both optional
+  -> Approved -> Phase 4 (Dashboard Agent) -> Phase 5 (Evaluation)
   -> Changes -> loop back
 ```
 
@@ -124,16 +124,16 @@ Final: User Approval (Step 4i)
 Copy the standard template into your project:
 
 ```bash
-mkdir -p ./<project-name>/dashboards
+mkdir -p agent_outputs/<project_slug>/dashboards
 
 cp <skill_dir>/project_templates/dashboard_template/dashboard.template.html \
-   ./<project-name>/dashboards/dashboard-template.html
+   agent_outputs/<project_slug>/dashboards/dashboard.template.html
 
 cp <skill_dir>/project_templates/dashboard_template/generate-data.js \
-   ./<project-name>/dashboards/generate-data.js
+   agent_outputs/<project_slug>/dashboards/generate-data.js
 ```
 
-Then customize `generate-data.js` with the confirmed tables/columns from Phase 1/2, and update the `<h1>` title in `dashboard-template.html`. See `references/rendering/html-client/template-customization.md` for the full walkthrough.
+Then customize `generate-data.js` with the confirmed tables/columns from Phase 1/2, and update the `<h1>` title in `dashboard.template.html`. See `references/rendering/html-client/template-customization.md` for the full walkthrough.
 
 **All templates include Chart.js inline — no external dependencies, works offline.**
 
@@ -189,7 +189,7 @@ If KPI cards show booking channels and the trend chart also shows them:
 If Phase 1 Step 1d captured custom brand colors:
 1. Replace the TD_PALETTE array with user colors
 2. Assign dimensions to colors in the same order across all widgets
-3. Document the mapping in `state.md` (Phase 3 section)
+3. Document the mapping in `project_state.md` (Phase 3 section)
 
 
 
@@ -532,7 +532,7 @@ SINK_DB.fact_deduped (rows without duplicates)
 - ❌ WRONG: `SELECT COUNT(DISTINCT user_id) FROM kpi_daily` (users already pre-aggregated)
 - ✅ RIGHT: `SELECT user_count FROM kpi_daily` (use pre-computed column)
 
-**Check your workflow:** Look at `./<project-name>/workflows/queries/*.sql` to see which pattern was used.
+**Check your workflow:** Look at `agent_outputs/<project_slug>/workflows/queries/*.sql` to see which pattern was used.
 
 ---
 
@@ -717,7 +717,7 @@ Chart.js is inlined directly inside each template's HTML (no `<script src="...cd
   - [ ] Expected rows calculated for each S3 query
   - [ ] LIMIT set to ≥ 2× expected rows
   - [ ] Post-query check: no query returned exactly LIMIT (no truncation)
-  - [ ] Cardinality audit documented in state.md
+  - [ ] Cardinality audit documented in project_state.md
 
 - [ ] **Cross-Filter Pattern Applied (Item 4):**
   - [ ] Each breakdown chart excludes its own dimension from active filters
@@ -735,7 +735,7 @@ Chart.js is inlined directly inside each template's HTML (no `<script src="...cd
 - [ ] **Payload Budget Pre-Calculated (Item 7):**
   - [ ] Estimated row counts × 40 bytes/row for all S3 queries
   - [ ] Total projected payload < 2 MB
-  - [ ] Documented in state.md
+  - [ ] Documented in project_state.md
 
 - [ ] **Known Limitations Annotated (Item 8):**
   - [ ] Every limited widget has .widget-note (all-time only, non-date-filterable, approximation)
@@ -753,7 +753,7 @@ Chart.js is inlined directly inside each template's HTML (no `<script src="...cd
 
 - [ ] **Dimension Combination Handling (Item 11):**
   - [ ] If monthly+dim cardinality > 5K: options presented + chosen approach documented
-  - [ ] Trade-offs explained in state.md
+  - [ ] Trade-offs explained in project_state.md
 
 - [ ] **Overview Path Documented (Item 12):**
   - [ ] Explicit documentation: overview used for date-only path; separate paths when filters active
@@ -765,7 +765,7 @@ Chart.js is inlined directly inside each template's HTML (no `<script src="...cd
   - [ ] Verified: dateEnd - 30 days = same window as Phase 1
 
 - [ ] **Spot-Check Expected Values (Item 14):**
-  - [ ] Values read from state.md (not hardcoded literals)
+  - [ ] Values read from project_state.md (not hardcoded literals)
   - [ ] Or using all-time stable metrics (monotonically increasing)
 
 - [ ] **Hidden Tab Charts Render Correctly (Item 15):**
@@ -815,7 +815,7 @@ Chart.js is inlined directly inside each template's HTML (no `<script src="...cd
 - [ ] No console errors (F12 → Console)
 - [ ] **User approved** — feedback resolved
 - [ ] Mobile tested (if Phase 1 required)
-- [ ] `state.md` updated with Phase 3 block (append only)
+- [ ] `project_state.md` updated with Phase 3 block (append only)
 
 ---
 
@@ -844,9 +844,9 @@ At end of Phase 3, user receives:
 ✅ **Performance baseline established** (queries < 5 sec, load < 5 sec)
 ✅ **Mobile/responsive validated** (if Phase 1 required)
 ✅ **User satisfied** (approved or looped back to fix)
-✅ **Technical documentation** (parameters recorded in `state.md`)
+✅ **Technical documentation** (parameters recorded in `project_state.md`)
 
-**→ Ready for optional Phase 4 (automate & deploy) or Phase 5 (handoff documentation)**
+**→ Ready for Phase 4 (dashboard agent)**
 
 ---
 
@@ -862,9 +862,7 @@ At end of Phase 3, user receives:
 
 **How to use:**
 - **Desktop:** Double-click `dashboard.html` to open in browser
-- **Team share:** Email the file, recipient double-clicks to open
-- **Archive:** ZIP it with supporting docs (knowledge/, deployment-checklist.md)
-- **Version control:** Commit to Git as a binary artifact
+- **Share:** download the file from the Work Folder; the recipient opens it in a browser
 
 **NOT required:**
 - ❌ Web server (Nginx, Apache, Node.js)
@@ -878,20 +876,6 @@ At end of Phase 3, user receives:
 
 ## Next Phase
 
-### ➡ Route to Phase 4 (Optional)
-**Track A:** reusable skill extraction wanted → package the HTML Client artifacts
-**Track B:** AI agent scoped in Phase 1 → deploy Foundry agent
-**Next:** `../phase-4/automate-deploy-guide.md`
+### ➡ Route to Phase 4 (required)
+**Next:** `../phase-4/INSTRUCTIONS.md` — build and install the dashboard agent, then Phase 5 (evaluation).
 
-### ➡ Route to Phase 5 (Optional)
-**Condition:** User wants local handoff docs
-**Next:** `../phase-5/handoff-documentation-guide.md`
-
-### ➡ Close (if no Phase 4/5)
-Mark engagement complete, share the final `dashboard.html`.
-
----
-
-**Version:** 1.0.0
-**Last Updated:** 15 July 2026
-**Author:** FDE Team

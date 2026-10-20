@@ -1,10 +1,17 @@
-# Knowledge Base Template — SQL Templates & Workflow Reference
+<!--
+PURPOSE OF THIS FILE
+The dashboard's queries, parameterized, plus the workflow SQL (if Phase 2 ran) and source-table
+fallbacks. The dashboard agent reuses them for ad-hoc questions and as the pattern for new metrics.
 
-Fill in from Phase 3 queries (sql_templates.md) and Phase 2 deployment notes (workflow_reference.md), if Phase 2 was run.
+HOW TO USE
+Skeleton — never filled in place, never installed. Filled in Phase 4 from the approved generate-data.js and the workflow SQL, in the agent
+staging folder (references/sql-templates.md).
+Every agent build copies the engagement file into the agent's references/. Fill every [bracketed]
+field; delete sections that don't apply and this comment in the copy. Aggregates only — never raw
+customer records or PII.
+-->
 
----
-
-# SQL Templates — [CUSTOMER_NAME] Dashboard
+# {{project_name}} — SQL Templates
 
 Each query below is parameterized. Replace `{SINK_DB}` with the actual SINK database name when running manually.
 
@@ -61,9 +68,9 @@ ORDER BY month
 
 **Purpose:** Every engagement has one question customers will ask first — capture it here as a named, validated template so the agent answers it correctly on first try, without re-deriving the SQL.
 
-**Triggered by:** [The exact phrasing captured in state.md during Phase 1 — e.g. "biggest churn risk area", "which segment should we focus on", "what drove last month's revenue drop"]
+**Triggered by:** [The exact phrasing captured in project_state.md during Phase 1 — e.g. "biggest churn risk area", "which segment should we focus on", "what drove last month's revenue drop"]
 **Expected shape:** [N] rows, shape: `{ [dim_1], [dim_2], [metric] }`
-**Row count expectation:** [N] rows, sums to [confirmed total from state.md]
+**Row count expectation:** [N] rows, sums to [confirmed total from project_state.md]
 
 ```sql
 -- Customize: replace with the validated SQL for this project's #1 business question.
@@ -75,7 +82,7 @@ GROUP BY [dim_1], [dim_2]
 ORDER BY [metric_alias] DESC
 ```
 
-**Validation:** SUM([metric_alias]) across all rows = [confirmed total from state.md]
+**Validation:** SUM([metric_alias]) across all rows = [confirmed total from project_state.md]
 
 > **Why Template 5 matters:** This template anchors the agent's first real interaction with the user. Without it, the agent writes a fresh query on the fly — risking fan-out, wrong column names, or missing the exclusion clause. Populate this before the Track B push in Phase 4.
 
@@ -106,7 +113,7 @@ Copy each SQL task from the workflow `.dig` files here. Use this section when:
 - User wants to extend a metric and needs to see the original aggregation logic
 - Debugging a SINK value mismatch — compare source query result vs SINK
 
-**Source:** `./<project-name>/workflows/` (SQL is either a separate file under `queries/` or inline in the `.dig` file itself).
+**Source:** `agent_outputs/<project_slug>/workflows/` (SQL is either a separate file under `queries/` or inline in the `.dig` file itself).
 
 ---
 
@@ -162,7 +169,7 @@ tdx query -d {SOURCE_DB} "SELECT DISTINCT region, state, city FROM [source_geogr
 
 ---
 
-# Workflow Reference — [CUSTOMER_NAME] Dashboard
+# Workflow Reference — {{project_name}} Dashboard
 
 Use this when a user asks: "How often does this data update?", "Where is the workflow?", "Why did the data not refresh?"
 
@@ -212,9 +219,3 @@ Use this when a user asks: "How often does this data update?", "Where is the wor
 | Row count = 0 | Date range in input_params.yaml doesn't overlap source data | Update `start_date` / `end_date` in params, re-push, re-run |
 
 → For full troubleshooting: `../../../phase-2/references/testing-troubleshooting.md` (if Phase 2 was run) or `../../../phase-3/references/testing-troubleshooting.md`
-
----
-
-**Version:** 1.0.0
-**Last Updated:** 15 July 2026
-**Author:** FDE Team

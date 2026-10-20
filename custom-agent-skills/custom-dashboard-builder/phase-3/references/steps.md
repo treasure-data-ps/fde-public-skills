@@ -26,7 +26,7 @@ metadata:
 
 **Note:** Step 4a (confirm rendering engine) from the original build loop is a no-op in this lite skill — the rendering engine is always HTML Client, nothing to confirm. Numbering keeps the 4b start to avoid renumbering every cross-reference in this skill.
 
-**Resume gate:** If resuming mid-Phase 3, read `state.md` to find the last completed step, then jump directly to the next step. Do not restart from 4b.
+**Resume gate:** If resuming mid-Phase 3, read `project_state.md` to find the last completed step, then jump directly to the next step. Do not restart from 4b.
 
 ---
 
@@ -242,7 +242,7 @@ LIMIT 5000
 - Embed results as JSON, inlined directly into `dashboard.html`
 - Wire filter state in the page's JS to switch between pre-fetched data sets
 
-> ⚠️ **Critical rule: data is NEVER typed directly into `dashboard.html` or `dashboard-template.html`.** `generate-data.js` is the only sanctioned source of data — it queries TD via `tdx --json query` and injects the results inline, replacing `<!-- DATA_PLACEHOLDER -->` in the template.
+> ⚠️ **Critical rule: data is NEVER typed directly into `dashboard.html` or `dashboard.template.html`.** `generate-data.js` is the only sanctioned source of data — it queries TD via `tdx --json query` and injects the results inline, replacing `<!-- DATA_PLACEHOLDER -->` in the template.
 
 > ⚠️ **Filters must apply at the SQL WHERE clause — never client-side re-aggregation.**
 > Post-filtering client-side requires loading the entire fact table into the browser.
@@ -291,7 +291,7 @@ async function main() {
   const data = { overview, by_segment, dest_by_loyalty_tier };
   const dataBlock = `<script>var RAW = ${JSON.stringify(data)};<\/script>`;
 
-  const template = fs.readFileSync('dashboard-template.html', 'utf8');
+  const template = fs.readFileSync('dashboard.template.html', 'utf8');
   const html = template.replace('<!-- DATA_PLACEHOLDER -->', dataBlock);
   fs.writeFileSync('dashboard.html', html);
   console.log(`✅ dashboard.html written (${Buffer.byteLength(html, 'utf8')} bytes)`);
@@ -305,7 +305,7 @@ SOURCE_DB=<source_db> SINK_DB=<sink_db> node generate-data.js
 # ✅ dashboard.html written (142847 bytes)
 ```
 
-**Step 3 — Switch on filter state in the page's plain JS (embedded in `dashboard-template.html`):**
+**Step 3 — Switch on filter state in the page's plain JS (embedded in `dashboard.template.html`):**
 ```javascript
 // ✅ CORRECT — all data pre-fetched by generate-data.js, embedded as RAW constants
 function renderDestinations(filterValue) {
@@ -788,14 +788,14 @@ AskUserQuestion:
 "Can you add [metric]?"     → Loop back to Steps 4c/4d (re-query)
 "Change date range default" → Loop back to Step 4d (update query params)
 "Rename [chart title]"      → Loop back to Step 4e (re-render)
-"Perfect, looks great!"     → Proceed to Step 4j → Phase 4 or Phase 5
+"Perfect, looks great!"     → Proceed to Step 4j → Phase 4 (dashboard agent)
 ```
 
 ### Record User Feedback
 ```
 Categorize into:
   - "Fix for Phase 3" (blocking — must resolve before exit)
-  - "Nice to have" (after user satisfied — can defer to Phase 4/5)
+  - "Nice to have" (after user satisfied — the dashboard agent can add it later)
 
 If fixes needed:
   - Loop back to appropriate step
@@ -813,7 +813,7 @@ If fixes needed:
 **What to do:**
 - Record technical details for future reference and Phase 4/5 handoff
 
-**Document Template (write to `state.md` — append, do not rebuild):**
+**Document Template (write to `project_state.md` — append, do not rebuild):**
 
 ```markdown
 ## Phase 3: Dashboard Build Complete
@@ -841,7 +841,7 @@ If fixes needed:
 
 ### Dashboard Artifact
 - **Type:** HTML Client (single portable file)
-- **Location:** ./<project-name>/dashboards/dashboard.html
+- **Location:** agent_outputs/<project_slug>/dashboards/dashboard.html
 
 ### Exclusion Rules Applied
 - [rule 1 from Stage A]
@@ -862,7 +862,7 @@ If fixes needed:
 - Initial load: [X] sec
 
 ### Next Step
-[Phase 4 (Automate & Deploy) / Phase 5 (Handoff Documentation) / Close]
+[Phase 4 — Dashboard Agent]
 
 ### User Feedback (Step 4i)
 [Will be filled in after approval]
@@ -1009,9 +1009,9 @@ Flag for Phase 4/5: "Performance optimization needed"
 
 ---
 
-## Phase 3 Exit: Update state.md
+## Phase 3 Exit: Update project_state.md
 
-After user approves (Step 4i "Perfect, looks great!"), append to `state.md`:
+After user approves (Step 4i "Perfect, looks great!"), append to `project_state.md`:
 
 ```markdown
 ## Phase 3: Dashboard Build Complete
@@ -1023,10 +1023,10 @@ Validation: ✅ Accuracy | ✅ Filters | ✅ Performance | ✅ User approved [da
 Performance: Load [N]s | Queries [N]s | Filter response [N]ms
 
 **Status:** Phase 3 — Complete
-**Next Action:** Phase 4 (Automate & Deploy) OR Phase 5 (Handoff Documentation) OR close out
+**Next Action:** Phase 4 — build the dashboard agent
 ```
 
-Save `state.md` locally before routing to the next phase.
+Save `project_state.md` locally before routing to the next phase.
 
 ---
 
@@ -1042,9 +1042,9 @@ Save `state.md` locally before routing to the next phase.
 ✅ All filters tested — independently, in combination, edge cases  
 ✅ Performance baseline recorded — all queries < 5 sec  
 ✅ **User approved** (Step 4i: feedback collected and resolved)  
-✅ Technical parameters documented in `state.md` (Step 4j)  
+✅ Technical parameters documented in `project_state.md` (Step 4j)  
 ✅ Mobile tested (if required) (Step 4k)  
-✅ `state.md` updated (append only)  
+✅ `project_state.md` updated (append only)  
 
 ---
 

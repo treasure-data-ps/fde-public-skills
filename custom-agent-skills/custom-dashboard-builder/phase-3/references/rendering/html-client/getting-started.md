@@ -14,7 +14,7 @@ HTML Client = one `.html` file with data embedded at generation time. No server,
 <skill_dir>/project_templates/dashboard_template/   ← shipped with this skill
   dashboard.template.html       ← layout + rendering code (no data)
   generate-data.js               ← queries TD → injects data into HTML
-./<project-name>/dashboards/
+agent_outputs/<project_slug>/dashboards/
   dashboard.html                 ← generated output (template + data merged)
 ```
 
@@ -29,8 +29,8 @@ HTML Client = one `.html` file with data embedded at generation time. No server,
 The template ships with this skill. Copy it into the project:
 
 ```bash
-mkdir -p ./<project-name>/dashboards
-cp "<skill_dir>/project_templates/dashboard_template/dashboard.template.html" ./<project-name>/dashboards/dashboard-template.html
+mkdir -p agent_outputs/<project_slug>/dashboards
+cp "<skill_dir>/project_templates/dashboard_template/dashboard.template.html" agent_outputs/<project_slug>/dashboards/dashboard.template.html
 ```
 
 The template contains a `<!-- DATA_PLACEHOLDER -->` comment where `generate-data.js` will inject the data block. Leave this comment in place.
@@ -82,7 +82,7 @@ async function main() {
   const data = { overview, by_segment };
   const dataBlock = `<script>var RAW = ${JSON.stringify(data)};<\/script>`;
 
-  const template = fs.readFileSync('dashboard-template.html', 'utf8');
+  const template = fs.readFileSync('dashboard.template.html', 'utf8');
   const html = template.replace('<!-- DATA_PLACEHOLDER -->', dataBlock);
   fs.writeFileSync('dashboard.html', html);
 
@@ -135,7 +135,7 @@ If charts are flat at 0: the most common cause is string numbers — verify `num
 
 ## Step 5: Where the Dashboard Lives
 
-The generated `dashboard.html` is fully self-contained and stays in `./<project-name>/dashboards/` in the Work Folder. Open it from there; download it to share it like any other file. No server, upload or hosting step.
+The generated `dashboard.html` is fully self-contained and stays in `agent_outputs/<project_slug>/dashboards/` in the Work Folder. Open it from there; download it to share it like any other file. No server, upload or hosting step.
 
 ---
 
@@ -146,7 +146,7 @@ The generated `dashboard.html` is fully self-contained and stays in `./<project-
 | KPIs show NaN / $0 | String numbers from TD | Apply `num()` to all numeric fields |
 | `dashboard.html` not updated | Forgot to re-run `generate-data.js` | Run `node generate-data.js` again |
 | File > 2MB | Too many rows inlined | Switch to Pattern B or pre-aggregate |
-| Charts blank but no error | Missing key in `RAW` | Check `dashboard-template.html` for expected key names |
+| Charts blank but no error | Missing key in `RAW` | Check `dashboard.template.html` for expected key names |
 | `tdx: command not found` | tdx CLI not in PATH | Ensure tdx is installed and authenticated |
 
 ---

@@ -34,8 +34,8 @@ Load Order 1.1-1.5: ./phase-N/INSTRUCTIONS.md (phase-specific, includes checkpoi
 | **Phase 1** | `./phase-1/INSTRUCTIONS.md` | `./phase-1/SKILL.md` | Inline in SKILL.md (Section: "Pre-Flight Checklist") |
 | **Phase 2** | `./phase-2/INSTRUCTIONS.md` | `./phase-2/SKILL.md` | Inline in SKILL.md (Section: "Pre-Flight Checklist") |
 | **Phase 3** | `./phase-3/INSTRUCTIONS.md` | `./phase-3/SKILL.md` | Inline in SKILL.md (Section: "Pre-Flight Checklist") |
-| **Phase 4** | `./phase-4/INSTRUCTIONS.md` | `./phase-4/SKILL.md` | Inline in SKILL.md (Section: "Pre-Flight Checklist") |
-| **Phase 5** | `./phase-5/INSTRUCTIONS.md` | `./phase-5/SKILL.md` | Inline in SKILL.md (Section: "Pre-Flight Checklist") |
+| **Phase 4** | `./phase-4/INSTRUCTIONS.md` | `./references/agent-setup.md` | Quality gates in INSTRUCTIONS.md |
+| **Phase 5** | `./phase-5/INSTRUCTIONS.md` | `./references/eval-setup.md` | Quality gates in INSTRUCTIONS.md |
 | **Cross-Phase** | `./references/guardrails-lite.md` | (guardrails + universal rules) | Reference throughout all phases |
 
 ---
@@ -49,11 +49,12 @@ Load Order 1.1-1.5: ./phase-N/INSTRUCTIONS.md (phase-specific, includes checkpoi
 **Required Phases (auto-start, no approval needed):**
 - Phase 1 → Phase 2 or 3 (based on Dashboard Complexity Score)
 - Phase 2 → Phase 3 (automatic, no stop)
-- Phase 3 → Phase 4 (automatic offer)
+- Phase 3 → Phase 4 (dashboard agent — required)
+- Phase 4 → Phase 5 (evaluation — required)
 
-**Optional Phases (one immediate yes/no question, no "let me know"):**
-- Phase 4 Track A or B (ask once: "Track A (extract skill) or Track B (agent)? Or close?")
-- Phase 5 (ask once: "Create handoff docs? Or close?")
+**Optional steps (one immediate yes/no question, no "let me know"):**
+- Phase 2 when the score is 3 (ask once: "Workflow first, or build directly?")
+- Phase 5 handoff docs (ask once after the production bar is met: "Create handoff docs? Or close?")
 
 ### Script Format (REQUIRED for each auto-advance):
 
@@ -157,22 +158,22 @@ Ready for Phase [N+1]?
 ### Gate 3: State Validation (All Phases)
 
 **CANNOT start or continue any phase**
-**WITHOUT:** state.md passes integrity check
+**WITHOUT:** project_state.md passes integrity check
 
 **Check before each phase:**
-- [ ] state.md file exists (not lost/deleted)
+- [ ] project_state.md file exists (not lost/deleted)
 - [ ] Previous phases are appended (not overwritten)
 - [ ] "Next Action" pointer is present and clear
 - [ ] If re-read after compaction: checkpoint proof present
 
-**If state.md fails check:**
-> "state.md integrity check failed:
+**If project_state.md fails check:**
+> "project_state.md integrity check failed:
 > - File missing? Lost.
 > - Previous phases overwritten? Corrupted.
 > - Next action unclear? Can't determine where to resume.
 >
-> I cannot proceed without recovering state.md.
-> User, please share state.md contents or confirm if we should restart Phase N."
+> I cannot proceed without recovering project_state.md.
+> User, please share project_state.md contents or confirm if we should restart Phase N."
 
 ---
 
@@ -196,7 +197,7 @@ Ready for Phase [N+1]?
 - ✅ SINK tables (Phase 2)
 - ✅ Workflows / scheduled jobs (Phase 2)
 - ✅ Segments or parent segments (Phase 2)
-- ✅ Foundry agents or skills (Phase 4)
+- ✅ Installing the dashboard agent into `.claude/skills/` (Phase 4 — `YES, APPROVE AGENT INSTALL FOR <name>`)
 - ✅ External activations (any phase)
 
 **Approval format (COPY/PASTE and fill):**
@@ -226,47 +227,16 @@ Do you approve? (YES / NO / REVIEW DETAILS)
 
 ---
 
-### Rule 3: state.md Preservation (CRITICAL for phase continuity)
+### Rule 3: project_state.md Preservation (CRITICAL for phase continuity)
 
-- [ ] NEVER overwrite, modify, or lose `state.md`
-- [ ] Each phase APPENDS a new dated section — never replaces old sections
-- [ ] Always include a "Next action" pointer at bottom so users can resume
-- [ ] If state.md is missing or corrupted, STOP and ask user to recover it
+- [ ] NEVER overwrite, modify, or lose `project_state.md`
+- [ ] Each phase APPENDS a new dated section to the Phase Ledger — never replaces old sections
+- [ ] The header (Current phase, Next Action, Last updated) is rewritten at every update so users can resume
+- [ ] If project_state.md is missing or corrupted, STOP and ask user to recover it
 
-**state.md structure:**
-```yaml
-# Dashboard Project: [project-name]
+**project_state.md structure:** header (Solution, Current phase, Next Action, Last updated — rewritten) + Phase Ledger (append-only dated sections). Format: `./references/architecture-and-state.md`.
 
-## Phase 1 — Requirements & Data Discovery
-**Date:** [date]
-**Status:** ✅ Complete
-
-**Findings:**
-- Dashboard Complexity Score: X/6
-- Path Decision: [Workflow / Non-Workflow]
-- KPIs: [list]
-- Dimensions: [list]
-
----
-
-## Phase 2 — Workflow Deployment (if applicable)
-**Date:** [date]
-**Status:** ✅ Complete
-
-**Outputs:**
-- SINK tables created: [list]
-- Workflow deployed: [name]
-
----
-
-## Next Action
-Currently at end of Phase X. User should:
-1. Read ./phase-N/INSTRUCTIONS.md
-2. Verify Phase N pre-flight checklist
-3. Continue with Phase N
-```
-
-**Why:** state.md is the single source of truth for phase continuity. Loss of state.md = complete project restart.
+**Why:** project_state.md is the single source of truth for phase continuity. Loss of project_state.md = complete project restart.
 
 ---
 
@@ -357,15 +327,15 @@ JOIN (
 **After EVERY context compaction or phase transition:**
 
 1. **STOP and re-read this file** (`./INSTRUCTIONS.md`)
-2. Identify current phase from `state.md`
+2. Identify current phase from `project_state.md`
 3. Re-read `./phase-N/INSTRUCTIONS.md`
 4. Re-read `./references/guardrails-lite.md`
 5. Re-read `./references/execution-contract.md`
 6. Verify the inline checklist in the current phase's SKILL.md
-6. **Append re-read proof to state.md** (see template below)
+6. **Append re-read proof to project_state.md** (see template below)
 7. Continue with next action
 
-**Proof-of-read template (append to state.md):**
+**Proof-of-read template (append to project_state.md):**
 
 ```yaml
 ## Re-Read Checkpoints — [date/time]
@@ -384,7 +354,7 @@ JOIN (
 | I need to... | Do this |
 |---|---|
 | Start a new dashboard | 1. Read this file ✓ 2. Read `./phase-1/INSTRUCTIONS.md` 3. Read `./phase-1/SKILL.md` |
-| Resume existing project | 1. Read this file ✓ 2. Read `./<project-name>/state.md` 3. Jump to "Next Action" |
+| Resume existing project | 1. Read this file ✓ 2. Read `agent_outputs/<project_slug>/project_state.md` 3. Jump to "Next Action" |
 | Context was compacted | 1. **STOP** 2. Re-read this file ✓ 3. Re-read phase-N/INSTRUCTIONS.md 4. Re-read references/guardrails-lite.md 5. Continue |
 | Before Phase 2 deployment | 1. Re-read `./phase-2/INSTRUCTIONS.md` 2. Verify all 9 rules above 3. Get user approval 4. Proceed |
 | Before Phase 4 agent creation | 1. Re-read `./phase-4/INSTRUCTIONS.md` 2. Get user approval 3. Proceed |

@@ -1,369 +1,89 @@
-# FDE TAIS Dashboard Builder
+# FDE TAIS Dashboard Builder — User Guide
 
-Build custom dashboards from Treasure Data databases using a **self-serve 5-phase pipeline** that routes to either **non-workflow** (interactive, ad-hoc) or **workflow** (production, scheduled) paths. HTML Client is the only rendering engine — a single portable `dashboard.html`, no server required.
+Build a custom HTML dashboard on your Treasure Data data — and a dashboard agent that opens it, explains it and answers follow-up questions — step by step in a Treasure AI Studio Work Folder. The builder asks what the dashboard must show, checks every metric against your data, recommends the right architecture (direct queries, or a scheduled workflow that pre-aggregates the data), builds the dashboard with you, and turns it into a project skill that is tested before it is called production-ready.
 
+Everything stays in your Work Folder: no uploads, no hosting, no external services.
 
-## Trigger phrases
+## Getting started
 
-Use this skill when the user says or implies: **build/create/make a dashboard**, **analytics or KPI dashboard**, **HTML dashboard**, **Treasure Data/Treasure Insights dashboard**, **dashboard requirements/questionnaire**, **dashboard data discovery/validation**, **dashboard workflow/SINK tables**, **Sisense migration**, **convert a `.dash` file to HTML**, **resume/continue a dashboard**, **dashboard automation**, **reusable dashboard skill**, **dashboard AI companion**, or **dashboard handoff documentation**.
+1. Add the `fde-public-skills` marketplace in Treasure AI Studio and enable the `custom-agent-skills` plugin.
+2. Open (or create) a Work Folder for the project — e.g. *Automotive Dashboard*. All files are created there, which also makes troubleshooting easy.
+3. In a new chat, ask for a dashboard, e.g. *"I would like to create a custom automotive dashboard using fde-tais-dashboard-builder"*. Naming the skill is optional; use it if another skill picks up the request.
+4. Answer **new** (start from scratch) or **existing** (resume, or change a dashboard you built earlier).
 
-A query-only request or a general chart question without a dashboard engagement should not trigger this pipeline.
+The builder then shows the plan and walks through it phase by phase. Most questions offer options with a recommended default; you can always type your own answer.
 
-## The Pipeline: One Flow, Two Paths
+## The five phases
 
-All dashboards follow the same 5 phases. At the end of Phase 1 (Stage B), your requirements determine which path is best:
+### Phase 1 — Requirements + data discovery
 
-```
-Phase 1 (Stage A + B): Requirements Gathering & Targeted Data Discovery
-                    ↓ SCORING AT END OF STAGE B (0-6 rubric)
-                    │
-    ┌───────────────┴──────────────────────────────────────┐
-    │                                                        │
-    ↓ Score 0-2                ↓ Score 3 (Optional)          ↓ Score 4-6
-  Non-Workflow                Ask user                     Workflow
-  Phase 3: Build Dashboard    Phase 2 or Phase 3            Phase 2: Deploy Workflow
-                                                             Phase 3: Build Dashboard
-    ↓                                                          ↓
-  Phase 4 (optional):                                       Phase 4 (optional):
-  Automate Dashboard & Deploy Companion AI Agent             Automate Dashboard & Deploy Companion AI Agent
-    ↓                                                          ↓
-  Phase 5 (optional):                                       Phase 5 (optional):
-  Handoff Documentation                                     Handoff Documentation
-```
+A short questionnaire, then a check of your data:
 
-### Quick Comparison
+- Project name (the folder name), primary business goal
+- Existing resources — a Treasure Insights / Sisense `.dash` export, a data model or an existing workflow are read and used to prefill the answers
+- Data source type (raw or pre-aggregated), database and tables
+- Dashboard tabs, KPIs, filters and dimensions — if unsure, say "all of the above plus anything you find in the data"
+- Date range and timezone, primary audience, viewing frequency, historical tracking, usage (single user or teams)
+- What the dashboard agent should help with besides opening the dashboard (explain metrics, ad-hoc questions, add metrics, insights)
 
-**Non-Workflow Path** (Score 0-2):
-- Best for: Ad-hoc analysis, immediate needs
-- Data: Query source tables directly (live)
-- Cost: Pay-per-query (low if infrequent)
+The builder validates the tables and columns, recommends metrics and dimensions, and presents a **dashboard plan** (tabs, KPIs, filters, optional workflow) for your approval. A complexity score (0–6) recommends the path: build directly, or deploy a workflow first. It also drafts a **business context** (your terms, metric meaning, exclusion and compliance rules — inferred items flagged for review) and a **requirements doc** you can send to your stakeholders.
 
-**Workflow Path** (Score 4-6):
-- Automatic daily runs
-- Best for: Production dashboards, frequent access
-- Data: Pre-aggregated SINK tables (optimized)
-- Cost: Low (pre-aggregated daily)
+### Phase 2 — Workflow (optional)
 
-✅ **Integrated Dashboarding Agent**
-- Phase 4: Companion AI agent deployment for conversational metric analysis
-- Agent answers questions: "What's driving trends?", "Which dimensions perform best?"
+For frequently viewed or large dashboards: a scheduled workflow that pre-aggregates the metrics into SINK tables, pushed, run and validated against the plan. You confirm the SINK database, workflow project name and schedule.
 
----
+### Phase 3 — Dashboard
 
-## How to Start
+The dashboard is built as one HTML file with the data inlined (`dashboard.html`), from a template and a data script (`generate-data.js`). It is shown to you for approval; ask for any change — missing filters or KPIs, metric calculations, colors, tabs, or embedded insights and recommendations — until it meets your expectations.
 
-**→ Always begin with Phase 1 (Requirements + Data Discovery)**
+The data is inlined in the file, so very large data volumes affect file size and performance; the builder warns you and pre-aggregates where needed.
 
-### For New Engagements
+### Phase 4 — Dashboard agent
 
-1. **Read `SKILL.md`** (this is your entry point) → "How to Start" section
-2. **Execute Phase 1** (Stage A: requirements, Stage B: data discovery):
-   - `./phase-1/SKILL.md` → Output: `state.md` created + **path score (0-6)**
-3. **At end of Phase 1 Stage B, score determines your next file:**
-   - **Score 0-2 (Non-Workflow):** `./phase-3/SKILL.md` (skip Phase 2)
-   - **Score 3 (Optional):** Ask user: "Quick build or production workflow?" → route accordingly
-   - **Score 4-6 (Workflow):** `./phase-2/SKILL.md` first, then Phase 3
-4. **Phase 4-5:** Optional dashboard automation, companion AI agent deployment, and handoff documentation
+The approved dashboard becomes your project's **dashboard agent**, installed in the Work Folder as a skill (`.claude/skills/<project>-dashboard-agent/`) after you approve it. In any new chat in the folder you can then ask:
 
-### For Resuming Existing Engagements
+- *"Show me the automotive dashboard"* — refreshes the data and opens it
+- *"How is average order value calculated?"*, *"Why did bookings drop last month?"*
+- *"Which dealer had the most test drives this quarter?"* — questions beyond the dashboard
+- *"Add a cancellation-rate KPI to the overview tab"*
 
-1. Ask: "What's your project name?"
-2. Ask the user to paste their `./<project-name>/state.md` contents, then read it to recover project state
-3. Read it → Jump to current phase + next action
+It answers from what was captured during the build — business context, metrics catalog, data dictionary, SQL templates. Publish it from Studio (Develop → Share) to share it with other users.
 
----
+### Phase 5 — Evaluation → production-ready
 
-## Decision Tree
+The builder writes ten test prompts based on your dashboard and business context (metric definitions, follow-up questions, exclusion and compliance rules, adding a metric), runs them after your approval, scores each one and proposes fixes until at least nine pass and every compliance test passes. Then the agent is finalized. Optional handoff docs (architecture, usage guide, runbook, access & ownership) are written for sharing — review them before sending to make sure no Treasure Data internals are included.
 
-**Use this to choose your path:**
+## What gets created
 
 ```
-User asks: "I need a dashboard"
-    ↓
-Q1: Do you need the dashboard now?
-├─ YES → NON-WORKFLOW PATH
-├─ NOT SURE → Ask clarifying questions below
-│  ├─ "Will you regenerate this 10+ times?"
-│  │  ├─ YES → WORKFLOW PATH
-│  │  └─ NO → NON-WORKFLOW PATH
-│  ├─ "Do you need daily automated updates?"
-│  │  ├─ YES → WORKFLOW PATH
-│  │  └─ NO → NON-WORKFLOW PATH
-│  └─ "Will you want AI insights about the data?"
-│     ├─ YES → WORKFLOW PATH (with Phase 4 agent)
-│     └─ NO → NON-WORKFLOW PATH
-└─ NOT NOW (can wait) → WORKFLOW PATH
+<Work Folder>/
+├── agent_outputs/<project>/
+│   ├── project_state.md          ← where the project stands and every decision; ask "where are we?" to resume
+│   ├── business-context.md       ← your terms, metric meaning, rules (keep adding to it)
+│   ├── data-dictionary.md, metrics-catalog.md, sql-templates.md
+│   ├── requirements.md           ← questionnaire to share with stakeholders
+│   ├── workflows/                ← workflow files, if Phase 2 ran (.dig, input_params.yaml, sql/)
+│   ├── dashboards/               ← dashboard.template.html, generate-data.js, dashboard.html
+│   ├── eval.md                   ← test prompts and results
+│   └── docs/                     ← handoff docs, if requested
+└── .claude/skills/<project>-dashboard-agent/   ← the dashboard agent
 ```
 
----
+## Tips
 
-## Phase 1: Requirements Gathering & Data Discovery
+- If the conversation drifts, ask *"Where are we with the dashboard implementation?"* — the builder reads `project_state.md` and continues phase by phase. You can also ask why, where and how any step was done.
+- The builder may implement different dashboards differently for different use cases — the plan you approve in Phase 1 is what it follows.
+- At the end, ask *"What could the dashboard builder do better, based on this implementation?"* and share the answer with the plugin maintainers.
 
-**Deliverable:** `state.md` created + Stage B Scoring (0-6 model)
-**Both paths use this:** Non-Workflow and Workflow paths complete Phase 1 identically
+## For maintainers
 
-**Reference:**
-- **`./phase-1/SKILL.md`** — Full Phase 1 instructions and steps
-- **`./phase-1/INSTRUCTIONS.md`** — Phase 1 specific rules and quick checklist
-- **`./phase-1/references/phase-1-walkthrough.md`** — Stage A: KPIs, dimensions, filters, schedule, compliance. Stage B: database/table discovery, metrics validation, **path decision (0-6 score)**
-
----
-
-## Phase Summary Table
-
-| Phase | Input | Output | Path(s) | Reference |
-|-------|-------|--------|---------|-----------|
-| **1: Requirements + Data Discovery** | Business questions + table exploration | `state.md`, KPIs, dimensions, table catalog, **path decision (0-6 score)** | Both | `./phase-1/SKILL.md` |
-| **2: Deploy Dashboard Workflow** | Workflow config | SINK tables, schedule | Workflow only | `./phase-2/SKILL.md` |
-| **3: Build Dashboard + Validate** | Business context + tables | Accurate interactive `dashboard.html` | Both | `./phase-3/SKILL.md` |
-| **4: Automate & Deploy Agent** | Dashboard + tables | Dashboard skill + AI agent | Both (opt) | `./phase-4/SKILL.md` |
-| **5: Handoff Documentation** | Implementation notes | 4 local markdown files | Both (opt) | `./phase-5/SKILL.md` |
-
----
-
-## Quick Reference: Pick the Right File for Your Task
-
-| Your Question | Read This |
+| Path | Contents |
 |---|---|
-| "What do I need to build a dashboard?" | Start with Phase 1 in `SKILL.md` |
-| "How do I gather requirements?" | `./phase-1/SKILL.md` + `./phase-1/references/phase-1-walkthrough.md` (Stage A) |
-| "How do I discover the right tables?" | `./phase-1/references/phase-1-walkthrough.md` (Stage B) |
-| "Should I use Workflow or Non-Workflow?" | `./phase-1/references/stage-b-path-routing.md` (0-2 = Non-Workflow, 3 = Optional, 4-6 = Workflow) |
-| "How do I set up a workflow?" | `./phase-2/SKILL.md` + `./phase-2/references/phase-2-walkthrough.md` (Workflow path only) |
-| "How do I build the dashboard?" | `./phase-3/SKILL.md` + `./phase-3/references/phase-3-walkthrough.md` (both paths) |
-| "How do I validate my data?" | `./phase-3/references/phase-3-walkthrough.md` (Validation gates) |
-| "How do I test my dashboard?" | `./phase-3/references/testing-troubleshooting.md` |
-| "Can I automate this dashboard?" | `./phase-4/SKILL.md` + `./phase-4/references/track-a-automation.md` (Track A) |
-| "Can I add an AI agent?" | `./phase-4/references/track-b-ai-agent.md` (Track B) |
+| `SKILL.md` | Entry point: engagement routing and phase index |
+| `INSTRUCTIONS.md`, `references/execution-contract.md`, `references/guardrails-lite.md` | Master rules, non-skippable gates, cross-phase guardrails |
+| `phase-1/` … `phase-5/` | Phase instructions and step references |
+| `project_templates/` | `workflow_template/` (Phase 2), `dashboard_template/` (Phase 3), `agent_template/` (Phase 4) — copied, never edited in place |
+| `references/` | State pattern, agent setup, eval setup, requirements doc, docs setup, theme |
+| `tools/` | `dash_to_html.py` (`.dash` conversion), `insights-api-helper.py` (Treasure Insights schema) |
 
----
-
-## Solution Structure
-
-```
-fde-tais-dashboard-builder/
-├── SKILL.md              ← you are here — entry point and phase routing
-├── README.md              ← this file
-├── references/            ← cross-phase: execution contract, guardrails, state pattern, theme
-├── project_templates/
-│   ├── workflow_template/ ← Phase 2 workflow template (.dig, input_params.yaml, sql/) — copied, never edited in place
-│   └── dashboard_template/← Phase 3 dashboard.template.html + generate-data.js — copied, never edited in place
-├── tools/                 ← dash_to_html.py (.dash conversion), insights-api-helper.py (Treasure Insights schema)
-├── phase-1/               ← Phase 1: Requirements + Data Discovery (Stage A + Stage B, state.md created)
-├── phase-2/               ← Phase 2: Deploy Dashboard Workflow (template setup, configure, deploy, validate SINK tables) [Score 4-6 only]
-├── phase-3/                ← Phase 3: Build + Validate Interactive Dashboard (HTML Client only, 12-step build+validate loop)
-├── phase-4/                ← Phase 4: Automate Dashboard & Deploy companion AI Agent (Track A: skill extraction | Track B: Foundry AI agent) [Optional]
-└── phase-5/                 ← Phase 5: Handoff Documentation (4 local markdown files) [Optional]
-```
-
----
-
-## Non-Workflow Path (Score 0-2)
-
-**Entry point:** After Phase 1 Stage B, score 0-2
-**What to read:** `./phase-3/SKILL.md` → `./phase-3/references/phase-3-walkthrough.md`
-**Best for:** Ad-hoc analysis, immediate needs, exploratory work
-
-**Features:**
-- Query source tables directly (live data)
-- Rendering: HTML Client (single portable file — no engine choice needed)
-- Interactive filters and drill-downs
-- Ready to share/embed immediately
-- **Iterative refinement** — update colors, metrics, charts
-- **Optional: Save as reusable skill** for future reuse
-
----
-
-## Workflow Path (Score 4-6)
-
-**Entry point:** After Phase 1 Stage B, score 4-6
-**What to read (in order):**
-1. `./phase-2/SKILL.md` → `./phase-2/references/phase-2-walkthrough.md` — Deploy dashboard workflow
-2. `./phase-3/SKILL.md` → `./phase-3/references/phase-3-walkthrough.md` — Build Dashboard + Validate Loop
-
-**Best for:** Production dashboards, frequent access, historical tracking
-
-**Features:**
-- Custom workflow creation via `tdx wf`
-- Pre-aggregated SINK tables (optimized datamodel)
-- Scheduled daily/weekly runs
-- Fast dashboard queries (sub-second on pre-aggregated data)
-- Optional: Companion Foundry agent for conversational analysis
-- Operational runbook & monitoring
-
----
-
-## The Business Context File: Central Control
-
-**`state.md`** is the single source of truth for all dashboard implementation details, written under `./<project-name>/`. It controls SQL generation, validation, and feedback incorporation. It replaces the old `project_context.md` — same append-only pattern, local files only.
-
-### What It Is
-- **Business goals** — what the dashboard tracks
-- **KPIs** — exact metrics and their SQL calculations
-- **Dimensions** — slice-by attributes with cardinality
-- **Exclusion rules** — hard filters (e.g., exclude test accounts)
-- **Refresh schedule** — when/how often to update
-
-### How It Flows Through Phases
-```
-Phase 1: Gather requirements + discover tables
-    ↓
-Phase 1: Distill into state.md
-    ↓
-Phase 2: Workflow SQL reads state.md (if run)
-    ↓
-Phase 3: Dashboard queries + validation read state.md
-    ↓
-Phase 4: Skill/agent extraction reads state.md (if run)
-    ↓
-FEEDBACK arrives
-    ↓
-Update state.md
-    ↓
-Phase 2-3 regenerate with new context
-```
-
-**See `./phase-1/references/phase-1-walkthrough.md` for template and detailed guidance.**
-
----
-
-## Rendering
-
-HTML Client only — a single portable `dashboard.html` with data inlined at build time. No engine-choice question is ever asked; there's nothing to decide.
-
----
-
-## Prerequisites & Constraints
-
-### Non-Workflow Path Requirements
-- ✅ Treasure Data auth: `tdx auth` configured and active (`tdx use`)
-- ✅ Read access to databases/tables you want to dashboard
-- ✅ Basic SQL knowledge
-- ❌ NO workflow deployment needed
-
-### Workflow Path Requirements
-- ✅ Treasure Data `push-workflow` credentials configured
-- ✅ TD project with write access (for workflow deployment)
-- ✅ Read/write access to source + sink databases
-
-### Both Paths
-- ✅ Source databases/tables exist and contain current data
-- ✅ User can verify via `tdx databases` and `tdx describe`
-
----
-
-## Data Accuracy Requirement (CRITICAL)
-
-**EVERY DASHBOARD MUST USE REAL DATA FROM QUERIES, NOT SYNTHETIC DATA.**
-
-1. Query the database first → Get actual schema, dimensions, aggregates
-2. Never guess or assume → Query it
-3. Embed exact real numbers → Not rounded estimates
-4. Document the source → Database name + timestamp
-
-**Validation gate (all dashboards):**
-- [ ] Database connectivity verified
-- [ ] Tables/columns verified
-- [ ] Dimensions verified (SELECT DISTINCT)
-- [ ] Aggregates calculated (SELECT ... GROUP BY)
-- [ ] Results embedded (exact numbers, not synthetic)
-
-See `./phase-3/references/phase-3-walkthrough.md` (Quality gates section) for detailed validation procedures.
-
----
-
-## Security & Privacy (CRITICAL)
-
-⚠️ **STRICT RULES:**
-
-1. **Never read query output files yourself or hardcode real data into scripts**
-   - Query results may contain PII: emails, phone numbers, IDs, addresses
-   - AI reading these files exposes sensitive data
-   - **Solution**: All data flows through Node scripts (`generate-data.js`, `render.js`) only
-
-2. **All data must flow through rendering scripts, not AI context**
-   - Write query results to a local temp/output file
-   - Node scripts read these files via `parseTable()` functions
-   - Agent never reads the files directly
-
-3. **No sample/mock data with real values**
-   - Never copy real data into examples
-   - Use placeholders: `{email}`, `{id}`, `{count}`, etc.
-
-4. **No hardcoded key names or field lists**
-   - Derive column names dynamically from query results
-   - Don't assume structure
-
-5. **Minimize data in Agent context**
-   - Include only config and templates when saving skills
-   - Store actual data in separate `data.json` files (not in code)
-   - `render.js` loads `data.json` at runtime, not code generation time
-
----
-
-## Iterative Workflow: Create → Feedback → Iterate → Save
-
-### Non-Workflow Path Example
-
-```
-Step 1: Initial Dashboard
-User: "Show me revenue by region and product"
-→ Agent queries database → Renders dashboard
-
-Step 2: Get Feedback & Iterate
-User: "Add pie chart for segment, change default to 90 days"
-→ Agent updates config → Re-renders
-
-Step 3: Save as Reusable Skill (Optional)
-User: "Perfect! Can you save this?"
-→ Agent creates skill: dashboard-revenue-by-region
-→ Ready to regenerate anytime
-
-Step 4: Future Regeneration
-Next conversation: "Generate my revenue dashboard"
-→ Skill loads → Dashboard regenerates instantly ✅
-```
-
----
-
-## Key Reference Files
-
-| File | Purpose | Path |
-|------|---------|------|
-| **SKILL.md** | 5-phase workflow entry point | Root |
-| **phase-1-walkthrough.md** | Phase 1 requirements + data discovery (Stage A + B) | `./phase-1/references/` |
-| **phase-2-walkthrough.md** | Phase 2 workflow deployment (Workflow path only) | `./phase-2/references/` |
-| **phase-3-walkthrough.md** | Phase 3 dashboard build + validate (both paths) | `./phase-3/references/` |
-| **phase-3-data-patterns.md** | Data patterns, filters, cardinality, performance | `./phase-3/references/` |
-| **track-a-automation.md** | Phase 4 Track A: skill extraction & automation | `./phase-4/references/` |
-| **track-b-ai-agent.md** | Phase 4 Track B: Foundry AI agent deployment | `./phase-4/references/` |
-| **testing-troubleshooting.md** | Comprehensive dashboard testing checklist + troubleshooting guide | `./phase-3/references/` |
-| **guardrails-lite.md** | Cross-phase guardrails | `./references/` |
-| **treasure-data-theme.md** | Official Treasure AI 2026 brand colors & styling | `./references/` |
-
----
-
-## Multi-Database Support
-
-Dashboards can join data from multiple Treasure Data databases. Specify all required databases during Phase 1, and queries will join across them as needed.
-
----
-
-## Support & Questions
-
-- **On-demand dashboards?** → Read `SKILL.md` → Phase 1 → Score 0-2 → Phase 3
-- **Scheduled production dashboards?** → Read `SKILL.md` → Phase 1 → Score 4-6 → Phase 2 → Phase 3
-- **How to gather requirements?** → `./phase-1/SKILL.md` (Stage A)
-- **How to discover tables?** → `./phase-1/references/phase-1-walkthrough.md` (Stage B)
-- **Business context strategy?** → `./phase-1/references/phase-1-walkthrough.md`
-- **Workflow deployment?** → `./phase-2/SKILL.md` + `./phase-2/references/phase-2-walkthrough.md`
-- **Automation & AI agents?** → `./phase-4/SKILL.md` + `./phase-4/references/track-a-automation.md` or `track-b-ai-agent.md`
-- **Handoff documentation?** → `./phase-5/SKILL.md` + `./phase-5/references/phase-5-walkthrough.md`
-- **Data validation?** → `./phase-3/references/phase-3-walkthrough.md` (Quality gates section)
-- **Testing & troubleshooting?** → `./phase-3/references/testing-troubleshooting.md`
-
----
-
-**Version:** 1.0.0
-**Last Updated:** 23 July 2026
-**Author:** FDE Team
+Shared patterns used by Phases 4–5 live in `../shared/` (`customer_agent_pattern.md`, `eval_pattern.md`, `local_outputs.md`).

@@ -6,13 +6,13 @@ Before starting Stage B data discovery, verify:
 
 1. **Resume vs New Check**
    - If **new**: Proceed to Step 2a (fresh Stage B)
-   - If **resuming**: Read **state.md** (created in Stage A)
+   - If **resuming**: Read **project_state.md** (created in Stage A)
      - Verify "Current phase" = "Stage B"
      - Check "Last updated" date (verify freshness)
      - Read "Next Action" for explicit handoff
 
 2. **Verify Stage A Complete**
-   - [ ] `state.md` created and approved (Session Setup block written in Stage A)
+   - [ ] `project_state.md` created and approved (Session Setup block written in Stage A)
    - [ ] Dashboard Complexity Score (0-6) calculated and confirmed
    - [ ] `skip_workflow` flag set (`false` / `true` / `partial` / `tbd`) — if missing, go back to Stage A Setup
 
@@ -62,12 +62,12 @@ If Stage B discovers a table with:
 
 ### Resolution Process
 
-1. **APPEND conflict note** to `state.md` (new dated entry — never edit prior entries)
+1. **APPEND conflict note** to `project_state.md` (new dated entry — never edit prior entries)
 2. **Ask the user directly, in-session** if blocker (missing metric, unclear exclusion rule)
 3. **Propose workaround:**
    - "Metric X doesn't exist, but metric Y is similar — can we use that?"
    - "We can't identify 'cancelled' in this column; can you clarify which column defines status?"
-4. **Update state.md** if the user changes a Stage A answer
+4. **Update project_state.md** if the user changes a Stage A answer
 5. **Re-validate the Stage A score** if changes are significant
 
 ### When to Proceed Despite Minor Conflicts
@@ -93,7 +93,7 @@ IF last_update > 1 week ago:
 IF last_update > 30 days ago AND Stage A requires "daily refresh":
   → **Ask the user directly**
   → Data may not support the Stage A requirement
-  → Update state.md with staleness note
+  → Update project_state.md with staleness note
 ```
 
 ---
@@ -193,7 +193,7 @@ At end of Stage B (Step 2f complete):
 - [ ] Large table performance assessed (queries optimized)
 - [ ] Rendering confirmed as HTML Client (fixed, no selection needed)
 - [ ] **Path chosen and confirmed (Phase 2 OR Phase 3)**
-- [ ] Conflicts documented in `state.md` (if any)
+- [ ] Conflicts documented in `project_state.md` (if any)
 
 ---
 

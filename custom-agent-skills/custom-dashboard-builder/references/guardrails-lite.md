@@ -84,10 +84,10 @@ JOIN (
 Past incident: revenue inflated from $4.32M to $6.86M due to undetected fan-out on a 1-to-many orders join.
 
 ### ALWAYS use GROUP BY on exactly the dimensions approved in Phase 1, and ensure consistent filter behavior across all widgets
-**CRITICAL:** Every query in `generate-data.js` must GROUP BY the EXACT dimensions listed in Phase 1 `state.md` filters, configured as dashboard-level, tab-level, or both per the plan. When filters are applied, ALL affected widgets must show the same data combination — no partial updates or cache misses.
+**CRITICAL:** Every query in `generate-data.js` must GROUP BY the EXACT dimensions listed in Phase 1 `project_state.md` filters, configured as dashboard-level, tab-level, or both per the plan. When filters are applied, ALL affected widgets must show the same data combination — no partial updates or cache misses.
 
 **How it works:**
-1. Read Phase 1 `state.md` → extract filter dimensions + placement (dashboard-level/tab-level/both)
+1. Read Phase 1 `project_state.md` → extract filter dimensions + placement (dashboard-level/tab-level/both)
 2. Configure query grain per placement:
    - Dashboard-level filters: `GROUP BY` on ALL queries (global scope)
    - Tab-level filters: `GROUP BY` per-tab queries only (tab scope)
@@ -156,7 +156,7 @@ Incrementality (append-only, 1-day/7-day lookback) is an advanced optimization f
 - Phase 1 Stage A Step 1e: Ask "How far back do you need data?" ONLY to determine if Phase 2 is needed, not to choose incremental mode
 - Phase 2 deployment: Configure full-refresh by default (simple, predictable)
 - Only mention incrementality if: Data size > 500MB + deep history (2+ years) + user is technical
-- In state.md: If user is non-technical, never document incremental mode — just say "full refresh daily"
+- In project_state.md: If user is non-technical, never document incremental mode — just say "full refresh daily"
 
 **Why:** Incrementality adds edge cases (late-arriving data, corrections, re-runs). It's a performance optimization, not a feature. Exposing it to non-technical users causes confusion and misunderstandings.
 
@@ -167,19 +167,13 @@ When two valid definitions exist (e.g., unique openers vs total opens), don't fo
 
 ---
 
-## 5. Agent Prompts (Phase 4 Track B)
+## 5. Dashboard Agent (Phase 4)
 
-### ALWAYS put "Execute queries, don't describe them" as the FIRST rule in every agent system prompt
-LLM attention weights early instructions highest. If this rule is buried, agents describe what they would do instead of doing it. It must be line 1.
+### ALWAYS embed confirmed values in the knowledge files
+Schema alone is not enough. `metrics-catalog.md` must carry the spot-checked values (e.g. "Total customers (validated 2026-10-20): 1,000") as ground-truth anchors. Without them, the agent computes totals from fan-out data and returns wrong numbers.
 
-### ALWAYS embed confirmed values in knowledge bases
-Schema alone is not enough. KBs must include spot-checked values (e.g., "Total customers (confirmed): 1,000") as ground truth anchors. Without them, agents compute totals from fan-out data and return wrong numbers.
-
-### ALWAYS audit existing Foundry projects for stale schema before deploying
-Check whether a project already exists. If yes, pull it and diff the KB table names against the current schema. Past incident: stale KBs referenced a deprecated table name instead of the current one.
-
-### ALWAYS use `--reeval` when iterating on prompt fixes
-Re-run only the failing test with `tdx agent test --reeval --name <test_id>`. Don't re-run all tests on every prompt tweak. Past incident: running all 5 tests on every fix wasted 80% of iteration time.
+### ALWAYS keep the master copies in the engagement folder
+The four knowledge files and the dashboard template + script live in `agent_outputs/<project_slug>/`; every agent build copies them in. Never edit only the installed copy — the next rebuild would undo it.
 
 ---
 
@@ -209,16 +203,16 @@ These rules prevent phase-specific failures. Violating any causes rework or data
 
 **Why:** Invalid joins cause silent data duplication, inflated metrics, wrong customer segments. Past incident: revenue inflated from $4.3M to $6.9M due to undetected fan-out join.
 
-### state.md Preservation (Phase continuity critical)
-**RULE:** NEVER overwrite, modify, or lose `state.md` between phases.
+### project_state.md Preservation (Phase continuity critical)
+**RULE:** NEVER overwrite, modify, or lose `project_state.md` between phases.
 
 **Check before each phase:**
-- The file `./<project-name>/state.md` MUST exist and be readable
+- The file `agent_outputs/<project_slug>/project_state.md` MUST exist and be readable
 - Each phase APPENDS a new section — never replaces old sections
 - The "Next action" pointer MUST be present so users can resume
-- **If state.md is missing or corrupted, STOP and ask user to recover it**
+- **If project_state.md is missing or corrupted, STOP and ask user to recover it**
 
-**Why:** state.md is the single source of truth for phase continuity. Loss of state.md = complete project restart.
+**Why:** project_state.md is the single source of truth for phase continuity. Loss of project_state.md = complete project restart.
 
 ### Phase Sequencing Enforcement (Routing critical)
 **RULE:** Follow Dashboard Complexity Score routing strictly. Do NOT allow users to skip phases arbitrarily.
@@ -276,7 +270,7 @@ Physical objects that require approval:
 - ✅ SINK tables (Phase 2)
 - ✅ Workflows / scheduled jobs (Phase 2)
 - ✅ Segments or parent segments (Phase 2)
-- ✅ Foundry agents or skills (Phase 4)
+- ✅ Installing the dashboard agent into `.claude/skills/` (Phase 4)
 - ✅ External activations (any phase)
 
 **Approval workflow (NON-NEGOTIABLE):**
@@ -296,15 +290,15 @@ Physical objects that require approval:
    Do you approve? (YES / NO / REVIEW DETAILS)
    ```
 
-2. **BEFORE Phase 4 agent/skill creation:**
+2. **BEFORE the Phase 4 agent install:**
    ```
-   📋 Ready to create the following in Foundry:
-   
-   - Foundry Agent/Skill name: <name>
-   - Knowledge Base tables: <table_1>, <table_2>, ...
-   - Visibility: <internal/shared/public>
-   
-   Do you approve? (YES / NO / MAKE CHANGES)
+   📋 Ready to install the dashboard agent:
+
+   - Name: <project_slug>-dashboard-agent
+   - Path: .claude/skills/<project_slug>-dashboard-agent/
+   - Files: SKILL.md + 4 knowledge files + dashboard template + generate-data.js
+
+   To install, type exactly: YES, APPROVE AGENT INSTALL FOR <project_slug>-dashboard-agent
    ```
 
 3. **BEFORE any external activation (journey, segment push, etc.):**
@@ -344,7 +338,7 @@ Before starting any dashboarding session, verify:
 **Phase Checkpoints:**
 - [ ] I will validate time columns before Phase 2
 - [ ] I will validate join keys before Phase 2
-- [ ] I will preserve state.md between all phases
+- [ ] I will preserve project_state.md between all phases
 - [ ] I will enforce Dashboard Complexity Score routing strictly
 - [ ] I will NOT mix special case paths (.dash / API) with normal Phase 1 flow
 - [ ] I will verify TD account access before Phase 2
@@ -353,7 +347,7 @@ Before starting any dashboarding session, verify:
 **Approval Gates:**
 - [ ] I will get explicit user approval BEFORE creating any SINK tables (Phase 2)
 - [ ] I will get explicit user approval BEFORE creating any workflows (Phase 2)
-- [ ] I will get explicit user approval BEFORE creating any Foundry agents/skills (Phase 4)
+- [ ] I will get explicit user approval BEFORE installing the dashboard agent (Phase 4)
 - [ ] I will get explicit user approval BEFORE any external activations
 - [ ] I will present clear cost/scope details in every approval request
 
@@ -366,9 +360,9 @@ Use `./execution-contract.md` as the completion ledger. The following phase-tran
 
 - Phase 1: route to Phase 2 or Phase 3 from the canonical score/path decision; score 3 requires an explicit user choice.
 - Phase 2: after validated workflow output, proceed to Phase 3.
-- Phase 3: after all validation and explicit dashboard approval, present Track A, Track B, Phase 5, or close.
-- Phase 4: after the selected track completes, present Phase 5 or close.
-- Phase 5: after the four documents are reviewed and state is updated, close the engagement.
+- Phase 3: after all validation and explicit dashboard approval, proceed to Phase 4 (dashboard agent).
+- Phase 4: after the agent is installed and its build checks pass, proceed to Phase 5 (evaluation).
+- Phase 5: after the production bar is met, offer finalize, optional handoff docs and the feedback question, then close.
 
 Never stop at a phase boundary with a generic “let me know.” Present the concrete next options and wait only when the phase is optional or requires user approval.
 
@@ -378,10 +372,6 @@ Never stop at a phase boundary with a generic “let me know.” Present the con
 - Use `--limit` explicitly for dimensions and result sets that can exceed the CLI default.
 - Use `TD_TIME_RANGE()` or `td_interval()` for partition pruning where applicable.
 - Run independent data-generation queries with `Promise.all()`.
-
-## Packaging
-
-For Phase 4 packaging, use Python `zipfile` rather than assuming the shell `zip` command exists. After `generate-data.js` validation passes, show the complete Track A Step 4a-vi packaging instructions even if a zip was created earlier.
 
 ## Instruction failure protocol
 

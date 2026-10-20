@@ -22,7 +22,7 @@ HTML Client = **zero server dependency**. Data must be fully inlined in the HTML
 // generate-data.js
 const data = await runQueries();
 const dataBlock = `<script>var RAW = ${JSON.stringify(data)};</script>`;
-const html = fs.readFileSync('dashboard-template.html', 'utf8')
+const html = fs.readFileSync('dashboard.template.html', 'utf8')
                .replace('<!-- DATA_PLACEHOLDER -->', dataBlock);
 fs.writeFileSync('dashboard.html', html);
 ```

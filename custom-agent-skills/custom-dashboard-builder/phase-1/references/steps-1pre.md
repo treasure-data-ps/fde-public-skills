@@ -5,7 +5,7 @@
 
 Ask ALL 4 questions before collecting business requirements. These decisions gate the rest of Phase 1 and all downstream phases. **All 4 are mandatory — do not skip any.** If the user skips or ignores a question, re-ask before proceeding.
 
-- Project name names the working directory `./<project-name>/` where everything this skill produces is written
+- Project name names the working directory `agent_outputs/<project_slug>/` where everything this skill produces is written
 - Data source type may eliminate Phase 2 (Workflow)
 - Platform affects sharing guidance (rendering itself is always HTML Client)
 
@@ -18,7 +18,7 @@ Batch all 4 into a single AskUserQuestion call (max 4 questions per call):
 
 ## Step Setup-A: Project Name
 
-**Why first:** Everything this skill produces — `state.md`, workflow files, dashboard HTML, skill/agent artifacts — lives under `./<project-name>/`. Without it nothing can be written.
+**Why first:** Everything this skill produces — `project_state.md`, workflow files, dashboard HTML, skill/agent artifacts — lives under `agent_outputs/<project_slug>/`. Without it nothing can be written.
 
 **AskUserQuestion:**
 
@@ -29,7 +29,7 @@ AskUserQuestion:
   multiSelect: false
   options:
     - label: "I'll provide a custom project name"
-      description: "I'll type the exact name — becomes the working directory ./<project-name>/"
+      description: "I'll type the exact name — becomes the working directory agent_outputs/<project_slug>/"
     - label: "Generate from dashboard purpose"
       description: "I'll suggest one once I know what the dashboard is for"
     - label: "Other — I'll type it now"
@@ -68,7 +68,7 @@ AskUserQuestion:
       description: "I'll describe something different"
 ```
 
-**Output:** `business_goal` — stored in `state.md`.
+**Output:** `business_goal` — stored in `project_state.md`.
 
 ---
 
@@ -94,7 +94,7 @@ AskUserQuestion:
       description: "I'll describe where this will be used"
 ```
 
-**Output:** `target_platform` — stored in `state.md`. Informative only; does not change the rendering engine.
+**Output:** `target_platform` — stored in `project_state.md`. Informative only; does not change the rendering engine.
 
 ---
 
@@ -135,7 +135,7 @@ AskUserQuestion:
 | Mix | `skip_workflow = partial` | Decide per-metric during data discovery | Some metrics may skip, others may need Phase 2 |
 | Not sure | `skip_workflow = tbd` | Resolve during data discovery | Determined by actual table structure |
 
-**Output:** `data_source_type` + `skip_workflow` flag — stored in `state.md`.
+**Output:** `data_source_type` + `skip_workflow` flag — stored in `project_state.md`.
 
 ---
 
@@ -183,7 +183,7 @@ AskUserQuestion:
 | Other resource(s) ± above | Include as supporting context in Stage A/B questions; only "fast-track" if `.dash` or datamodel selected alone or together |
 | None | Proceed directly to Stage A (Steps 1a–1o in `./steps-1a-1o.md`) |
 
-**Output:** `reference_resources_provided` (list of selected types) + `has_dash` (bool) + `has_datamodel` (bool) + `has_workflow` (bool) + `resource_type` (enum: `dash_only` / `api_only` / `combined` / `other` / `none`) — stored in `state.md`.
+**Output:** `reference_resources_provided` (list of selected types) + `has_dash` (bool) + `has_datamodel` (bool) + `has_workflow` (bool) + `resource_type` (enum: `dash_only` / `api_only` / `combined` / `other` / `none`) — stored in `project_state.md`.
 
 **NOTE:** Dashboard structure questionnaire is now part of **Step 1c+1d** in the main Stage A flow (`./steps-1a-1o.md`). It captures tabs, visualizations, filters, drill-down, and performance needs upfront, before detailed metric/dimension discovery.
 
@@ -221,7 +221,7 @@ Combining them prevents stale export files from mismatching the live datamodel, 
 
 **Special note:** If the user also selected the datamodel in Setup-E, follow the "Combined Path" guidance in Step 2b below instead of running Steps 1–7 independently.
 
-**Lite-specific notes:** Local files only — everything below writes to `state.md` only. No live Sisense datamodel API fetch — the datamodel question in Step 3 is answered conversationally (paste JSON or describe relationships in text), not via a `curl` call to a TD reporting API. The converter script lives locally at `<skill_dir>/tools/dash_to_html.py` (repo-root `references/`) — there is no external repo dependency.
+**Lite-specific notes:** Local files only — everything below writes to `project_state.md` only. No live Sisense datamodel API fetch — the datamodel question in Step 3 is answered conversationally (paste JSON or describe relationships in text), not via a `curl` call to a TD reporting API. The converter script lives locally at `<skill_dir>/tools/dash_to_html.py` (repo-root `references/`) — there is no external repo dependency.
 
 ### Step 1: Run the Converter Immediately
 
@@ -300,7 +300,7 @@ AskUserQuestion:
 
 **This is a text-based capture step, not a live fetch.** Do not call any Sisense/TD reporting API here — that mechanism is out of scope for this lite skill.
 
-- **If the user pastes JSON/spec:** parse it directly for dataset/table names and join columns. Tag extracted relationships `[FROM USER-PROVIDED DATAMODEL]` in `state.md`.
+- **If the user pastes JSON/spec:** parse it directly for dataset/table names and join columns. Tag extracted relationships `[FROM USER-PROVIDED DATAMODEL]` in `project_state.md`.
 - **If the user describes relationships in text:** record them as stated. Tag `[FROM USER DESCRIPTION]`.
 - **If "infer from JAQL only":** no cross-table joins are assumed; each widget's SQL stands alone as resolved by the converter. Tag `[FROM JAQL ONLY — NO DATAMODEL]`.
 
@@ -316,7 +316,7 @@ Open `/tmp/dash-convert/template.html` (e.g. via `mcp__work__open_file`) so the 
 
 ### Step 5: Prefill Stage A Requirements + Stage B Data Discovery
 
-Instead of asking Stage A/B questions from scratch, derive them from the converter output and mark each as `[Derived from .dash]` in `state.md`:
+Instead of asking Stage A/B questions from scratch, derive them from the converter output and mark each as `[Derived from .dash]` in `project_state.md`:
 
 - **Metrics** ← each widget's `measure_cols` (aggregation + label)
 - **Dimensions** ← each widget's `dim_col` / `break_by`
@@ -373,9 +373,9 @@ AskUserQuestion:
 
 **Comments alone, without an explicit approve, do not clear this gate.** Run this check twice: once here (before rendering, against `widget_audit.json` alone) and once again in Phase 3 after `dashboard.html` is rendered (against the live rendered output).
 
-### Step 8: Write state.md and Continue
+### Step 8: Write project_state.md and Continue
 
-Write the Session Setup block (Setup-A–E) plus the `.dash`-derived Requirements and Data Discovery blocks (tagged `[Derived from .dash]`) to `state.md` in one pass, then proceed per Step 6's routing — never auto-continue past Step 7's gate without an explicit approval.
+Write the Session Setup block (Setup-A–E) plus the `.dash`-derived Requirements and Data Discovery blocks (tagged `[Derived from .dash]`) to `project_state.md` in one pass, then proceed per Step 6's routing — never auto-continue past Step 7's gate without an explicit approval.
 
 ---
 
@@ -519,9 +519,9 @@ IF migration_goal == "Replicate + improve" OR "Modernize":
   → Phase 3: builds fresh dashboard with approved metrics/dimensions
 ```
 
-### Step 7: Write state.md and Continue
+### Step 7: Write project_state.md and Continue
 
-Write Session Setup (Setup-A–E) plus the API-derived Requirements and Data Discovery blocks (tagged `[Derived from Treasure Insights API]`) to `state.md`, then proceed per Step 6's routing.
+Write Session Setup (Setup-A–E) plus the API-derived Requirements and Data Discovery blocks (tagged `[Derived from Treasure Insights API]`) to `project_state.md`, then proceed per Step 6's routing.
 
 ---
 
@@ -628,7 +628,7 @@ IF no workflow selected:
   → Use migration goal + Dashboard Complexity Score to decide Phase 2 vs skip
 ```
 
-**Step G: Write state.md**
+**Step G: Write project_state.md**
 
 Tag all prefilled values with their sources:
 
@@ -681,9 +681,9 @@ AskUserQuestion:
 
 ---
 
-## Output: What Gets Written to `state.md`
+## Output: What Gets Written to `project_state.md`
 
-After the Setup-A–D call completes, this becomes the first block of `./<project-name>/state.md`:
+After the Setup-A–D call completes, this becomes the first block of `agent_outputs/<project_slug>/project_state.md`:
 
 ```markdown
 ## Phase 1 — Session Setup

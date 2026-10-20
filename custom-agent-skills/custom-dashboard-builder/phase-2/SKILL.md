@@ -23,7 +23,7 @@ description: Dashboard builder sub-file — Phase 2 only. Deploy a scheduled wor
 
 ## Pre-Phase-2: Extract Configuration
 
-→ **Before Phase 2:** Read `./<project_name>/state.md` and extract 5 configuration fields. See `./references/phase-2-entry-requirements.md` for details.
+→ **Before Phase 2:** Read `agent_outputs/<project_slug>/project_state.md` and extract 5 configuration fields. See `./references/phase-2-entry-requirements.md` for details.
 
 ---
 

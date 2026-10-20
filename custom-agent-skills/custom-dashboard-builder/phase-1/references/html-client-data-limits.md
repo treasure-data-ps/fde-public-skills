@@ -279,7 +279,7 @@ BUT if you have:
 
 ## Step 4: Update Dashboard Plan with Data Validation
 
-**Add to Phase 1 state.md:**
+**Add to Phase 1 project_state.md:**
 
 ```yaml
 ### HTML Client Data Validation

@@ -4,7 +4,7 @@
 
 **Purpose:** Consolidate Stage A findings, get user approval, and prepare for Stage B (data discovery).
 
-**Important Note:** `state.md` is created at the end of Stage A Step 1u (after user approval). Stage B then APPENDS to it with data discovery findings.
+**Important Note:** `project_state.md` is created at the end of Stage A Step 1u (after user approval). Stage B then APPENDS to it with data discovery findings.
 
 ---
 
@@ -14,7 +14,7 @@ Before finalizing, check:
 
 - ✅ **`guardrails-lite.md` read** — (`../../references/guardrails-lite.md`) — must have been read at session start
 - ✅ All Setup steps answered (Setup-A through Setup-E)
-  - `project_name` captured (determines `./<project_name>/` working directory)
+  - `project_name` captured (determines `agent_outputs/<project_slug>/` working directory)
   - `business_goal` captured
   - `target_platform` captured (informative only — does not change rendering)
   - `data_source_type` captured and `skip_workflow` flag set
@@ -30,9 +30,9 @@ Before finalizing, check:
 - ✅ Dashboard Complexity Score Q1/Q2/Q3 individual values recorded; all 3 validation checks run (Q1 vs 1f, Q2 vs 1g, Q3 vs 1h) — conflicts resolved
 - ✅ Path confirmed by user (Workflow vs Non-Workflow)
 - ✅ If Workflow AND `skip_workflow ≠ true`: SINK DB, TD Project, Run Schedule captured
-- ✅ Agent YES/NO decision explicitly recorded (not left blank)
+- ✅ Agent scope recorded (Step 1r)
 - ✅ Stage A → Stage B bridging documented (flagged assumptions, data priorities, data quality concerns)
-- ✅ All Stage A requirements consistent — NO `<REQUIRED>` fields left blank in `state.md`
+- ✅ All Stage A requirements consistent — NO `<REQUIRED>` fields left blank in `project_state.md`
 - ✅ No contradictory requirements unresolved
   - Example: "Real-time" + "minimize cost" → Escalate: "Which is more important?"
   - Example: "10 years history" + "daily refresh" → Note: "Discuss archival strategy in Stage B"
@@ -78,7 +78,7 @@ Workflow (if applicable):
   SINK DB:            <sink_database>
   TD Project:         <td_project_name>
 
-Agent:                <yes | no>  →  <agent_name if yes>
+Dashboard agent:      <project_slug>-dashboard-agent — scope: <agent_scope>
 
 Dashboard Complexity Score:      Q1=<n> Q2=<n> Q3=<n>  Total=<n>/6
 Assumptions to validate in Stage B:
@@ -105,7 +105,7 @@ AskUserQuestion:
 
 **If changes needed:**
 1. Return to relevant Stage A step and re-gather/clarify
-2. Update `state.md` draft
+2. Update `project_state.md` draft
 3. Re-validate quality gates
 4. Re-show the updated summary code block
 5. Re-ask approval with the same AskUserQuestion
@@ -116,9 +116,9 @@ AskUserQuestion:
 
 ## Storage & Tracking
 
-### Write state.md
+### Write project_state.md
 
-After user approval, write `state.md` locally in `./<project_name>/`. This file is the cross-phase context for the project — every phase reads and appends to it.
+After user approval, write `project_state.md` locally in `agent_outputs/<project_slug>/`. This file is the cross-phase context for the project — every phase reads and appends to it.
 
 **No external template dependency** — write the block below directly (do not look for a template in any other repo):
 
@@ -145,7 +145,7 @@ After user approval, write `state.md` locally in `./<project_name>/`. This file 
 - Dashboard Complexity Score: Q1=<n> Q2=<n> Q3=<n> Total=<n>/6
 - Path: <Workflow | Non-Workflow>
 - Workflow Config (if applicable): SINK DB=<..>, TD Project=<..>, Schedule=<..>
-- Agent: <yes/no>, Name=<..>
+- Dashboard Agent: <project_slug>-dashboard-agent, Scope=<agent_scope>
 
 ## Stage B → Phase N (appended by later phases)
 ```
@@ -159,7 +159,7 @@ After user approval, write `state.md` locally in `./<project_name>/`. This file 
 - `Timezone` — ⚠️ CRITICAL; often forgotten when date range is collected
 - `Benchmark Values` — required for Phase 2/4 sanity checks
 - `Dashboard Theme` — required for Phase 3 render; even "td-default" must be explicitly set
-- `Agent Requirement` — must be one of: "no agent" | "yes" | "not sure yet" (never blank)
+- `Agent Scope` — at least one item (Step 1r)
 - Q1/Q2/Q3 individual values — must be separate numbers, not just the total score
 - `User-Confirmed Path` — recommended path is not enough; user confirmation must be recorded
 
@@ -168,7 +168,7 @@ After user approval, write `state.md` locally in `./<project_name>/`. This file 
 ## ⚠️ Common Mistakes to Avoid
 
 ### File & Folder Creation
-- ❌ **Creating multiple `state.md` files** — One file per project, append all phases to it
+- ❌ **Creating multiple `project_state.md` files** — One file per project, append all phases to it
 
 ### Documentation
 - ❌ **`<REQUIRED>` fields left blank** — Every `<REQUIRED>` field must be filled; don't proceed if any are blank
@@ -182,14 +182,14 @@ After user approval, write `state.md` locally in `./<project_name>/`. This file 
 
 ---
 
-## Write state.md (Stage A Complete)
+## Write project_state.md (Stage A Complete)
 
-After the user approves, write `state.md` locally in the working directory:
+After the user approves, write `project_state.md` locally in the working directory:
 
 ```bash
-mkdir -p ./<project_name>/
+mkdir -p agent_outputs/<project_slug>/
 # Write full Stage A output (Session Setup + all requirements from 1a–1u) to:
-# ./<project_name>/state.md
+# agent_outputs/<project_slug>/project_state.md
 ```
 
 Include all fields from the Session Setup block in `steps-1pre.md` plus the business requirements gathered in Steps 1a–1u.
@@ -203,11 +203,11 @@ Include all fields from the Session Setup block in `steps-1pre.md` plus the busi
 - ✅ Reference resources read and findings extracted
 - ✅ Rendering engine recorded as HTML Client (no choice needed)
 - ✅ Dashboard Complexity Score calculated (0-6) with path recommendation (Workflow vs Non-Workflow)
-- ✅ `state.md` created locally at `./<project_name>/state.md` with Session Setup block + all requirements
+- ✅ `project_state.md` created locally at `agent_outputs/<project_slug>/project_state.md` with Session Setup block + all requirements
 - ✅ User sign-off on all Stage A requirements
 - ✅ **Ready for Stage B (targeted data discovery)**
 
-**Important Note:** `state.md` is created in Stage A. Stage B appends data discovery findings to the same file. Each later phase adds to the same file.
+**Important Note:** `project_state.md` is created in Stage A. Stage B appends data discovery findings to the same file. Each later phase adds to the same file.
 
 ---
 
@@ -250,9 +250,7 @@ Include all fields from the Session Setup block in `steps-1pre.md` plus the busi
   - [ ] Treasure Data workflow project name confirmed
   - [ ] Aggregation run schedule selected
   - [ ] Refresh frequency confirmed
-- [ ] **Agent configuration (Step 1r — agent YES/NO must be recorded, not left blank):**
-  - [ ] Agent requirement decision recorded — one of: "no agent" | "yes" | "not sure"
-  - [ ] If agent = yes: agent name, capabilities captured
+- [ ] **Dashboard agent scope (Step 1r) recorded** — the agent itself is always built in Phase 4
 - [ ] **Stage A → Stage B bridging documented (Step 1s):**
   - [ ] Flagged assumptions listed (or "None")
   - [ ] Data discovery priorities listed (or "Standard discovery")
@@ -266,7 +264,7 @@ Include all fields from the Session Setup block in `steps-1pre.md` plus the busi
 - [ ] Dashboard Complexity Score calculated: 0-6 (Q1 + Q2 + Q3 values recorded)
 - [ ] Path recommendation confirmed (Workflow vs Non-Workflow) + user-approved
 - [ ] All Stage A requirements approved by user
-- [ ] **`state.md` filled — no `<REQUIRED>` fields left blank**
+- [ ] **`project_state.md` filled — no `<REQUIRED>` fields left blank**
 - [ ] Ready to move to Stage B (targeted data discovery)
 
 ---
@@ -287,7 +285,7 @@ Include all fields from the Session Setup block in `steps-1pre.md` plus the busi
    - Which Phase 1 decision is wrong? (metric definition, table, filter scope, etc.)
    - What's the impact? (whole dashboard broken, one metric affected, etc.)
 
-2. **Update state.md:**
+2. **Update project_state.md:**
    ```markdown
    ## RECOVERY: [Date] — Revisited Phase 1 decision
    

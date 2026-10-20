@@ -1,7 +1,7 @@
 ---
 name: fde-tais-dashboard-builder-phase-1
 description: |
-  Dashboard builder sub-file — Phase 1 only. Gather business requirements, validate against real data, calculate dashboard complexity (0-6), and route to Phase 2/3. Produces local state.md with requirements, data findings, and path decision.
+  Dashboard builder sub-file — Phase 1 only. Gather business requirements, validate against real data, calculate dashboard complexity (0-6), and route to Phase 2/3. Produces local project_state.md with requirements, data findings, and path decision.
 ---
 
 # Phase 1: Requirements & Data Discovery (FDE TAIS Dashboard Builder)
@@ -15,13 +15,13 @@ description: |
 > 6. `../references/guardrails-lite.md` (cross-phase guardrails)
 
 **Phase Goal:** Gather business requirements (Stage A), validate them against real data (Stage B), calculate the Dashboard Complexity Score (0–6), decide Workflow vs Non-Workflow path, and get user approval — all in one session, with local files only.
-**Deliverable:** A local `state.md` file at `./<project-name>/state.md` containing the approved requirements, confirmed data findings, Dashboard Complexity Score, and path decision.
+**Deliverable:** A local `project_state.md` file at `agent_outputs/<project_slug>/project_state.md` containing the approved requirements, confirmed data findings, Dashboard Complexity Score, and path decision.
 
 ---
 
 ## 🔑 Append-Only Pattern (Critical for All Phases)
 
-→ **state.md is append-only:** Each phase appends a new dated section at the bottom. See `../references/architecture-and-state.md` (The `state.md` Append-Only Pattern section) for details.
+→ **project_state.md is append-only:** Each phase appends a new dated section at the bottom. See `../references/architecture-and-state.md` (The `project_state.md` Append-Only Pattern section) for details.
 
 ---
 
@@ -29,9 +29,9 @@ description: |
 
 Before starting, confirm:
 
-- ✅ Engagement type: new project or resuming existing `./<project-name>/`
+- ✅ Engagement type: new project or resuming existing `agent_outputs/<project_slug>/`
 - ✅ TD account accessible for data discovery
-- ✅ If resuming: read `./<project-name>/state.md` and resume at "Next action" — don't re-ask answered questions
+- ✅ If resuming: read `agent_outputs/<project_slug>/project_state.md` and resume at "Next action" — don't re-ask answered questions
 
 ---
 
@@ -88,28 +88,39 @@ If the data source is pre-aggregated (`skip_phase_3` in the old numbering, i.e. 
 
 ---
 
-## Finalization: Write `state.md` and Get Approval
+## Finalization: Write `project_state.md`, Get Approval, Draft the Business Context
 
-1. **Ask for a project name** if not already collected (short, lowercase with hyphens — e.g. `acme-campaign-perf`). Use `./<project-name>/` as the working directory for everything this skill produces.
+1. **Project name** — if not already collected (Setup-A), ask for it: short, lowercase with hyphens (e.g. `acme-campaign-perf`). It is the `<project_slug>`; the dashboard agent will be `<project_slug>-dashboard-agent`.
 
-2. **Create the working directory and write `state.md`:**
+2. **Bootstrap and write `project_state.md`.** Bootstrap `agent_outputs/` once (`<skill_dir>/../shared/local_outputs.md` Step 1 — `agent_outputs/.gitignore` with `*`), then write the file with the header and the first ledger sections:
 
    ```bash
-   mkdir -p ./<project-name>
-   cat > ./<project-name>/state.md << 'EOF'
-   # <Project Slug> — Dashboard State
+   mkdir -p agent_outputs && { [ -f agent_outputs/.gitignore ] || printf '*\n' > agent_outputs/.gitignore; }
+   mkdir -p agent_outputs/<project_slug>
+   ```
+
+   ```markdown
+   # Project State — <Project Name>
+
+   **Solution:** dashboard-builder
+   - **Current phase:** <1 — requirements + discovery | 2 — workflow | 3 — dashboard | 4 — dashboard agent | 5 — evaluation | complete — agent live>
+   - **Next Action:** <one sentence>
+   - **Last updated:** <YYYY-MM-DD>
+
+   ---
+   ## Phase Ledger (append-only — never edit earlier sections)
 
    ## Phase 1 — Session Setup (<YYYY-MM-DD>)
    - Business goal: <one sentence>
-   - Platform: <Treasure Work / Treasure AI Studio>
    - Data source type: <Raw/Transactional / Pre-aggregated / Snapshot / Mixed>
 
    ## Phase 1 — Requirements
-   - Metrics: <list>
+   - Metrics: <list with formulas>
    - Dimensions: <list>
    - Filters: <list, with scope classification>
    - Date range / timezone: <...>
    - Exclusion rules: <SQL or description>
+   - Dashboard agent scope: <Step 1r list>
 
    ## Phase 1 — Data Discovery
    - Database.Table(s): <...>
@@ -119,24 +130,21 @@ If the data source is pre-aggregated (`skip_phase_3` in the old numbering, i.e. 
    - Data Quality Gate: <Pass/Fail summary>
 
    ## Phase 1 — Dashboard Complexity Score & Path
-   - Q1 (frequency): <0-2>
-   - Q2 (history): <0-2>
-   - Q3 (audience): <0-2>
-   - Total: <0-6>
+   - Q1 (frequency): <0-2> · Q2 (history): <0-2> · Q3 (audience): <0-2> · Total: <0-6>
    - Path decision: <Workflow / Non-Workflow> — <reasoning>
-
-   ## Next action
-   - <Phase 2 (Workflow) or Phase 3 (Build Dashboard) — be specific about what to run next>
-   EOF
    ```
+
+   The header (Current phase, Next Action, Last updated) is rewritten at every update; the ledger below it is append-only (`../references/architecture-and-state.md`).
 
 3. **Quality gate before approval:**
    - All core requirements (1a–1j, 1o) captured
-   - Data Discovery findings don't contradict Stage A requirements (if they do, resolve and note the trade-off in `state.md`)
+   - Data Discovery findings don't contradict Stage A requirements (if they do, resolve and note the trade-off in `project_state.md`)
    - Dashboard Complexity Score calculated and path decision made
    - Data Quality Gate checks pass (or failures are explicitly acknowledged)
 
 4. **Get user approval** via `AskUserQuestion`: "Does this capture your requirements and the confirmed data findings?"
+
+5. **Business context, data dictionary, requirements doc** — `./references/step-1v-business-context.md`: draft `business-context.md` (markers) and `data-dictionary.md`, one review question, write `requirements.md` and give its path. Do not wait for the customer's answers.
 
 → See `./references/step-1u-finalization.md` and `./references/exit-checklist.md` for the full validation checklist and error-handling guidance.
 
@@ -144,16 +152,17 @@ If the data source is pre-aggregated (`skip_phase_3` in the old numbering, i.e. 
 
 ## Phase 1 Deliverables (End of Phase 1)
 
-- ✅ Project name recorded — used for the working directory `./<project-name>/`
-- ✅ Platform + data source type confirmed
+- ✅ Project name recorded — `<project_slug>`, working directory `agent_outputs/<project_slug>/`
+- ✅ Data source type confirmed
 - ✅ Core requirements gathered (metrics, dimensions, filters, date range, sharing, exclusions)
 - ✅ Database/tables confirmed to exist; time column identified
 - ✅ Metrics and dimensions validated against live data
 - ✅ Filter scope classified (dashboard-level / tab-level / widget-level)
 - ✅ Data Quality Gate run (Checks 1–12)
 - ✅ Dashboard Complexity Score calculated (0–6) and path decision made
-- ✅ `./<project-name>/state.md` created with all of the above
+- ✅ `agent_outputs/<project_slug>/project_state.md` created with all of the above
 - ✅ User approved the plan
+- ✅ `business-context.md` (markers) and `data-dictionary.md` drafted and reviewed; `requirements.md` written and its path given (Step 1v)
 - ✅ Ready for Phase 2 (Workflow, if chosen) or Phase 3 (Build Dashboard)
 
 ---
@@ -171,6 +180,7 @@ If the data source is pre-aggregated (`skip_phase_3` in the old numbering, i.e. 
 | Avoiding redundant re-querying in later phases | `./references/confirmed-values-checkpoint.md` |
 | Conflict resolution, large-table performance | `./references/workflow-notes.md` |
 | Final validation + approval flow | `./references/step-1u-finalization.md`, `./references/exit-checklist.md` |
+| Business context, data dictionary, requirements doc | `./references/step-1v-business-context.md` |
 
 ---
 
@@ -178,12 +188,12 @@ If the data source is pre-aggregated (`skip_phase_3` in the old numbering, i.e. 
 
 ### ➡ Move to Phase 2 (Workflow — optional) or Phase 3 (Build Dashboard)
 
-**Condition:** Phase 1 requirements + data discovery approved, `state.md` created.
+**Condition:** Phase 1 requirements + data discovery approved, `project_state.md` created.
 
 **What happens next:**
 - If path decision = Workflow → go to Phase 2 to deploy a scheduled `.dig` workflow, then Phase 3
 - If path decision = Non-Workflow (or pre-aggregated data source) → skip straight to Phase 3
-- Phase 3 reads `./<project-name>/state.md` for confirmed metrics, dimensions, and data source details — no re-asking needed
+- Phase 3 reads `agent_outputs/<project_slug>/project_state.md` for confirmed metrics, dimensions, and data source details — no re-asking needed
 
 ---
 

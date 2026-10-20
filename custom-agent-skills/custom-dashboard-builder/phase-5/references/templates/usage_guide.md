@@ -14,12 +14,12 @@ The dashboard is a single HTML file — no installation required:
 
 **Option 1: Local File**
 ```
-Double-click: ./<project-name>/dashboards/dashboard.html
+Double-click: agent_outputs/<project_slug>/dashboards/dashboard.html
 ```
 
 **Option 2: Web Server**
 ```bash
-cd ./<project-name>/dashboards
+cd agent_outputs/<project_slug>/dashboards
 python3 -m http.server 8000
 # Open: http://localhost:8000/dashboard.html
 ```

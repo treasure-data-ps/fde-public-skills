@@ -40,8 +40,10 @@ var fs = require('fs');
 var path = require('path');
 
 var DB = process.env.SOURCE_DB || 'your_database';
-var TEMPLATE_PATH = path.join(__dirname, 'dashboard.template.html');
-var OUTPUT_PATH   = path.join(__dirname, 'dashboard.html');
+// Paths default to this script's folder; the installed dashboard agent overrides them so the generated
+// dashboard (customer data) is written to the engagement folder, never into the skill folder.
+var TEMPLATE_PATH = process.env.DASHBOARD_TEMPLATE || path.join(__dirname, 'dashboard.template.html');
+var OUTPUT_PATH   = process.env.DASHBOARD_OUTPUT || path.join(__dirname, 'dashboard.html');
 var DATA_PATH     = path.join(__dirname, 'data.json');   // Pattern B only
 
 // ─── OPTIMIZATION: Query helper with user-controlled row limits ───────────────
@@ -53,7 +55,7 @@ var DATA_PATH     = path.join(__dirname, 'data.json');   // Pattern B only
 // 5. Ask user if they want to use full data instead of truncated results
 function query(sql, limitRows) {
   // Default 10K row limit for safety; user can override via environment variable
-  var limit = process.env.DASHBOARD_ROW_LIMIT || (limitRows === undefined) ? 10000 : limitRows;
+  var limit = process.env.DASHBOARD_ROW_LIMIT || (limitRows === undefined ? 10000 : limitRows);
   var sqlFile = '/tmp/dash_query_' + Date.now() + Math.random().toString(36).slice(2) + '.sql';
   var outFile = '/tmp/dash_result_' + Date.now() + Math.random().toString(36).slice(2) + '.json';
   
@@ -249,7 +251,7 @@ function main() {
 
     fs.writeFileSync(OUTPUT_PATH, html, 'utf8');
     console.log('Written: ' + OUTPUT_PATH + ' (' + (Buffer.byteLength(html, 'utf8') / 1024).toFixed(0) + ' KB)');
-    console.log('Open: open dashboard.html');
+    console.log('Open: open "' + OUTPUT_PATH + '"');
   }
 }
 

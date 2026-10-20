@@ -9,7 +9,7 @@
 
 ## Quick Reference
 
-**Location:** `./<project-name>/dashboards/dashboard.html`  
+**Location:** `agent_outputs/<project_slug>/dashboards/dashboard.html`  
 **Data Source:** `<SOURCE_DB>` / `<SINK_DB>` (if Phase 2)  
 **Update Method:** [Manual / Automatic workflow]  
 **Backup:** Keep copy in `<backup-location>`
@@ -44,7 +44,7 @@
 Use this when data needs immediate update:
 
 ```bash
-cd ./<project-name>/dashboards
+cd agent_outputs/<project_slug>/dashboards
 
 # Set environment variables
 export SOURCE_DB=<database_name>
@@ -82,7 +82,7 @@ td workflow run logs <run-id>
 ### Manual Trigger (If Needed)
 
 ```bash
-cd ./<project-name>/workflows
+cd agent_outputs/<project_slug>/workflows
 
 # Run workflow immediately
 td workflow run <workflow-name> --project <project-name>
@@ -141,7 +141,7 @@ WHERE date >= '<date>'
 
 ```bash
 # Regenerate
-cd ./<project-name>/dashboards
+cd agent_outputs/<project_slug>/dashboards
 SOURCE_DB=<db> SINK_DB=<db> node generate-data.js
 
 # Or restore backup
@@ -213,7 +213,7 @@ Possible causes:
 
 **Non-Workflow (Manual Build):**
 ```bash
-cd ./<project-name>/dashboards
+cd agent_outputs/<project_slug>/dashboards
 SOURCE_DB=<db> SINK_DB=<db> node generate-data.js
 # New version saved to dashboard.html
 # Backup old version first!
@@ -221,20 +221,15 @@ SOURCE_DB=<db> SINK_DB=<db> node generate-data.js
 
 **Workflow Path:**
 ```bash
-cd ./<project-name>/workflows
+cd agent_outputs/<project_slug>/workflows
 # Edit workflow SQL or config if needed
 td push  # Deploy updated workflow
 # Workflow will run on next scheduled time
 ```
 
-### Deploy Phase 4 Skill Update
+### Update the Dashboard Agent
 
-If Track A skill exists:
-```bash
-cd ~/.claude/skills/<skill-name>
-npm run build
-# Skill updated for next use
-```
+After changing a master copy in `agent_outputs/<project_slug>/` (knowledge files, `dashboards/dashboard.template.html`, `dashboards/generate-data.js`), rebuild and reinstall the agent with the dashboard builder (Phase 4 rebuild) — never edit only `.claude/skills/<project_slug>-dashboard-agent/`.
 
 ---
 
@@ -244,22 +239,22 @@ npm run build
 
 ```bash
 # Add to cron or scheduled task
-cp ./<project-name>/dashboards/dashboard.html \
-   ./<project-name>/dashboards/backups/dashboard.$(date +%Y%m%d).html
+cp agent_outputs/<project_slug>/dashboards/dashboard.html \
+   agent_outputs/<project_slug>/dashboards/backups/dashboard.$(date +%Y%m%d).html
 
 # Keep last 30 days of backups
-find ./<project-name>/dashboards/backups -mtime +30 -delete
+find agent_outputs/<project_slug>/dashboards/backups -mtime +30 -delete
 ```
 
 ### Recovery
 
 ```bash
 # List backups
-ls -la ./<project-name>/dashboards/backups/
+ls -la agent_outputs/<project_slug>/dashboards/backups/
 
 # Restore specific date
-cp ./<project-name>/dashboards/backups/dashboard.20260801.html \
-   ./<project-name>/dashboards/dashboard.html
+cp agent_outputs/<project_slug>/dashboards/backups/dashboard.20260801.html \
+   agent_outputs/<project_slug>/dashboards/dashboard.html
 ```
 
 ---
@@ -282,7 +277,7 @@ cp ./<project-name>/dashboards/backups/dashboard.20260801.html \
 time (SOURCE_DB=<db> SINK_DB=<db> node generate-data.js)
 
 # Check file size
-ls -lh ./<project-name>/dashboards/dashboard.html
+ls -lh agent_outputs/<project_slug>/dashboards/dashboard.html
 
 # Check row counts
 # Edit generate-data.js to add console.log statements

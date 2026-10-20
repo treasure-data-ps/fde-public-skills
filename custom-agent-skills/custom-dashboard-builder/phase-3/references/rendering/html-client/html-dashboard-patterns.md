@@ -4,7 +4,7 @@
 
 > **Theme Reference:** See `../../../../references/treasure-data-theme.md` for the complete Treasure Data theme specification (CSS variables, chart palette, component styling, custom brand color override). This document references that theme.
 
-**Chart colors:** Use the TD palette for any Chart.js series — `["#B4E3E3", "#ABB3DB", "#D9BFDF", "#F8E1B0", "#8FD6D4", "#828DCA", "#C69ED0", "#F5D389", "#6AC8C6", "#5867B8"]` — unless the user specified brand colors during Phase 1 (check "Visual Preferences" in `state.md`).
+**Chart colors:** Use the TD palette for any Chart.js series — `["#B4E3E3", "#ABB3DB", "#D9BFDF", "#F8E1B0", "#8FD6D4", "#828DCA", "#C69ED0", "#F5D389", "#6AC8C6", "#5867B8"]` — unless the user specified brand colors during Phase 1 (check "Visual Preferences" in `project_state.md`).
 
 ---
 
@@ -93,7 +93,7 @@ After compact JSON: 0.9MB (61% total reduction)
 // generate-data.js (excerpt)
 const data = await runQueries();
 const dataBlock = `<script>var RAW = ${JSON.stringify(data, null, 0)};<\/script>`;
-const html = fs.readFileSync('dashboard-template.html', 'utf8')
+const html = fs.readFileSync('dashboard.template.html', 'utf8')
                .replace('<!-- DATA_PLACEHOLDER -->', dataBlock);
 fs.writeFileSync('dashboard.html', html);
 ```
@@ -127,7 +127,7 @@ The HTML fetches at runtime:
 ```
 
 ❌ Does NOT work by double-click (CORS blocks file:// fetches in Chrome/Firefox)
-❌ Requires a web server or same directory — distribute as zip with both files
+❌ Breaks as soon as the file is downloaded on its own — not used by this skill
 ✅ Supports unlimited data size
 
 ---

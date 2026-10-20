@@ -180,7 +180,7 @@ For each relation:
 1. **Use tdx environment:** Extract API key from `tdx auth show` or `$TD_API_KEY` env var
 2. **Auto-detect region:** Read from tdx config (`endpoint` field in `~/.treasuredata/td.conf`)
 3. **Fallback to US:** If region unknown, default to `https://api.treasuredata.com`
-4. **Cache the response:** Store fetched datamodel schema in `state.md` under "Data Source Metadata" for Phase 2/3 reference
+4. **Cache the response:** Store fetched datamodel schema in `project_state.md` under "Data Source Metadata" for Phase 2/3 reference
 5. **Always confirm:** Show user the discovered schema ("Extracted X metrics, Y dimensions from model 'sales_model'") before auto-prefilling
 
 ---
