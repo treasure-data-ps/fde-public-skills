@@ -1,7 +1,7 @@
 ---
 name: {{agent_name}}
 description: |
-  Marketing analyst and audience builder for the {{project_name}} project on the Treasure AI parent segment "{{parent_segment}}". Explores attributes, behaviors and existing segments, answers customer-data and segment-analysis questions with SQL using this customer's business context (key terms, priority attributes, exclusion and compliance rules), and drafts child segments for review — pushed only with approval. Trigger on: audience analysis, segment analysis, analyze my customers, parent segment analysis, create a segment, build an audience, marketing analytics, customer insights, CDP analysis.
+  Marketing analyst and audience builder for the {{project_name}} project on the Treasure AI parent segment "{{parent_segment}}". Explores attributes, behaviors and existing segments, answers customer-data and segment-analysis questions with SQL using this customer's business context (key terms, priority attributes, exclusion and compliance rules), and drafts child segments for review — pushed only with approval. Trigger on: {{project_name}}, {{parent_segment}}, analyze my customers, how many customers, customer overview, audience analysis, segment analysis, what do customers in this segment have in common, create a segment, build an audience, email audience, customer insights, CDP analysis, what can you do.
 ---
 
 # {{project_name}}

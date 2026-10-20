@@ -1,7 +1,7 @@
 ---
 name: {{agent_name}}
 description: |
-  Classifier (propensity scoring) insights agent for the {{project_name}} project — predicts {{use_case}}. Reads the AI Signals classifier output in `{{sink_database}}` (classifier_run_log, classifier_train_run_log, classifier_feature_importance, classifier_shap_directional, classifier_roc_curve, classifier_target_correlations, {{pred_table}}, {{pred_table}}_latest) to answer questions about model performance, the decision threshold, feature drivers (SHAP), score distribution, who scores high and why, drift and run-to-run changes, and how the model was built. Trigger on: classifier insights, propensity scores, model performance, feature importance, SHAP, score distribution, "show me classifier dashboard", "open classifier dashboard", "classifier dashboard", "generate classifier dashboard", "propensity dashboard".
+  Propensity model agent for the {{project_name}} project — predicts {{use_case}}. Answers questions about how good the model is, what drives the score, who scores high and why, how many customers would be flagged at a cut-off, score distribution, overfitting and drift, and explains how the AI Signals classifier works, how the project's workflow runs and what was decided during setup; opens the classifier dashboard. Trigger on: {{project_name}}, propensity scores, {{use_case}}, how good is the model, what drives the score, why does this customer score high, high-scoring customers, score threshold, feature importance, SHAP, how does the model work, how does our classifier workflow work, how was the model set up, what can you do, show me the classifier dashboard, open the classifier dashboard.
 ---
 
 # Classifier Insights Agent

@@ -29,7 +29,7 @@ Five phases: data exploration → requirements doc → first workflow run → ha
 
 | Skill | Sets up | Project agent |
 |---|---|---|
-| `fde-custom-audience-agent` | An audience and segment-analysis agent on one parent segment, evaluated with ten test prompts | `audience-agent` |
+| `fde-custom-audience-agent` | An audience and segment-analysis agent on any parent segment (one agent per parent segment), evaluated with ten test prompts | `audience-agent` |
 | `fde-custom-dashboard-builder` | A custom HTML dashboard (new, or from a `.dash` export, HTML file or screenshot), with a workflow only when the data needs one | `<project>-dashboard` |
 
 Agent names get a project prefix when you choose one (e.g. `loyalty-rfm-agent`), so several people can build their own side by side.

@@ -1,7 +1,7 @@
 ---
 name: fde-nba-scores
 description: |
-  Sets up NBA (Next Best Action) engagement scores on Treasure Data: a workflow that unions customer activity and writes per-profile next best time, channel and campaign scores plus engagement flags for Parent Segment attributes, then builds the project's NBA agent and dashboard. Use it to set up, configure, change, re-run or resume the NBA workflow and to build or rebuild the NBA agent. Trigger on: set up NBA, next best action setup, engagement scores setup, NBA workflow, configure NBA, NBA configuration, rebuild the NBA agent, resume NBA setup, NBA runbook. Questions about the scores and flags go to the installed project agent.
+  Sets up NBA (Next Best Action) engagement scores on Treasure Data: a workflow that unions customer activity and writes per-profile next best time, channel and campaign scores plus engagement flags for Parent Segment attributes, then builds the project's NBA agent and dashboard. Use it to start, set up, configure, change, re-run or resume an NBA project and to build or rebuild its agent. Trigger on: set up NBA, start an NBA project, new NBA setup, best time and channel to contact each customer, personalize send time and channel, next best action setup, engagement scores setup, NBA workflow, configure NBA, rebuild the NBA agent, resume NBA setup, NBA runbook. Once the project's NBA agent is installed, questions about the scores and flags go to it.
 ---
 
 # NBA Engagement Scores

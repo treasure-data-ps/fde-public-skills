@@ -1,7 +1,7 @@
 ---
 name: fde-nbp
 description: |
-  Sets up NBP (Next Best Product) recommendations on Treasure Data: a workflow that reads item-level purchase or interaction data, trains the AI Signals NBP model (ALS, similar-to-latest or popular) and writes the top products and categories per user for Parent Segment attributes, then builds the project's NBP agent and dashboard. Use it to set up, configure, change, re-run or resume the NBP workflow and to build or rebuild the NBP agent. Trigger on: set up NBP, next best product setup, product recommendation setup, NBP workflow, configure NBP, NBP configuration, rebuild the NBP agent, resume NBP setup, NBP runbook, NBP output tables. Questions about the recommendations themselves go to the installed project agent.
+  Sets up NBP (Next Best Product) recommendations on Treasure Data: a workflow that reads item-level purchase or interaction data, trains the AI Signals NBP model (ALS, similar-to-latest or popular) and writes the top products and categories per user for Parent Segment attributes, then builds the project's NBP agent and dashboard. Use it to start, set up, configure, change, re-run or resume an NBP project and to build or rebuild its agent. Trigger on: set up NBP, start an NBP project, new NBP setup, recommend products to each customer, personalized product recommendations, cross-sell and upsell recommendations setup, next best product setup, NBP workflow, configure NBP, rebuild the NBP agent, resume NBP setup, NBP runbook, NBP output tables. Once the project's NBP agent is installed, questions about the recommendations go to it.
 ---
 
 # NBP (Next Best Product)

@@ -1,7 +1,7 @@
 ---
 name: fde-mta
 description: |
-  Sets up MTA (Multi-Touch Attribution) on Treasure Data: a workflow that builds customer journeys from marketing touchpoints and conversions, runs the standard attribution models and the AI Signals Markov and Shapley models, then builds the project's MTA agent and dashboard. Use it to set up, configure, change, re-run or resume the MTA workflow and to build or rebuild the MTA agent. Trigger on: set up MTA, multi-touch attribution setup, attribution workflow, configure MTA, MTA configuration, rebuild the MTA agent, resume MTA setup, MTA runbook, MTA output tables. Questions about channel contribution and journeys go to the installed project agent.
+  Sets up MTA (Multi-Touch Attribution) on Treasure Data: a workflow that builds customer journeys from marketing touchpoints and conversions, runs the standard attribution models and the AI Signals Markov and Shapley models, then builds the project's MTA agent and dashboard. Use it to start, set up, configure, change, re-run or resume an MTA project and to build or rebuild its agent. Trigger on: set up MTA, start an MTA project, new MTA setup, measure which channels drive conversions, marketing attribution setup, multi-touch attribution setup, attribution workflow, configure MTA, rebuild the MTA agent, resume MTA setup, MTA runbook, MTA output tables. Once the project's MTA agent is installed, questions about channel contribution and journeys go to it.
 ---
 
 # MTA (Multi-Touch Attribution)

@@ -1,7 +1,7 @@
 ---
 name: {{agent_name}}
 description: |
-  NBA (Next Best Action) Engagement Scores insights agent for the {{project_name}} project. Reads the three NBA dashboard tables in `{{sink_database}}` (nba_dash_stats_summary, nba_dash_model_metrics, nba_dash_source_tables) to answer questions about the latest run, score distributions, run-to-run comparisons, source-data volumes, and how each NBA score (Next Best Channel, Next Best Time, Next Best Campaign, cart-abandon, new-visitor) is determined. Trigger on: NBA insights, NBA analysis, "show me nba dashboard", "open nba dashboard", "get nba dashboard", "nba dashboard", "generate nba dashboard", "load nba dashboard", "nba scores dashboard", "nba summary dashboard", "view nba dashboard".
+  Engagement scores (NBA) agent for the {{project_name}} project. Answers questions about each customer's next best channel, time and campaign, cart-abandon and new-visitor flags, score distributions, source-data volumes and changes between runs, and explains how each score is determined, how the project's workflow runs and what was decided during setup; opens the NBA dashboard. Trigger on: {{project_name}}, next best channel, best time to send, next best campaign, cart abandoners, new visitors, engagement scores, how is the next best channel determined, how does our NBA workflow work, how was NBA set up, what can you do, show me the NBA dashboard, open the NBA dashboard.
 ---
 
 # NBA Insights Agent

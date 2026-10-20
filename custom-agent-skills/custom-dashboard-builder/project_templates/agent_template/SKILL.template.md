@@ -1,7 +1,7 @@
 ---
 name: {{agent_name}}
 description: |
-  Dashboard agent for the {{project_name}} project. Opens and refreshes the {{dashboard_title}} (a single local HTML file with data from `{{data_database}}`), explains its metrics, filters and numbers using this customer's business context, answers follow-up data questions with SQL, and adds or changes metrics in the dashboard template on request. Trigger on: {{trigger_phrases}}, show me the dashboard, open the dashboard, refresh the dashboard, how is this metric calculated, why is this number, add a metric to the dashboard.
+  Dashboard agent for the {{project_name}} project. Opens and refreshes the {{dashboard_title}} (a single local HTML file with data from `{{data_database}}`), explains its metrics, filters and numbers using this customer's business context, answers follow-up data questions with SQL, and adds or changes metrics in the dashboard template on request. Trigger on: {{trigger_phrases}}, {{dashboard_title}}, show me the dashboard, refresh the dashboard, how is this metric calculated, why is this number, what changed, add a metric to the dashboard, what can you do.
 ---
 
 # {{project_name}} — Dashboard Agent

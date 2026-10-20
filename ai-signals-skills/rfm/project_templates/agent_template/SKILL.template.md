@@ -1,7 +1,7 @@
 ---
 name: {{agent_name}}
 description: |
-  RFM customer segmentation insights agent for the {{project_name}} project. Queries the RFM output and stats tables in `{{sink_database}}` (rfm_output_table, rfm_stats, rfm_stats_histogram, rfm_stats_model_params, rfm_stats_daily_agg, rfm_combined_user_events) to answer questions about customer segments, high-value and at-risk customers, engagement patterns, monetary distributions, segment trends across runs, and how the RFM scores are determined. Trigger on: RFM segmentation, RFM insights, high-value customers, at-risk customers, "show me rfm dashboard", "open rfm dashboard", "get rfm dashboard", "rfm dashboard", "generate rfm dashboard", "load rfm dashboard", "rfm summary dashboard", "view rfm dashboard".
+  RFM segmentation agent for the {{project_name}} project. Answers questions about its customer segments — who the champions, loyal and at-risk customers are, segment sizes and value, recency, frequency and spend patterns, changes between runs — and explains how the AI Signals RFM model scores customers, how the project's workflow runs and what was decided during setup; opens the RFM dashboard. Trigger on: {{project_name}}, RFM segments, customer segments, who are our champions, at-risk customers, high-value customers, segment sizes, how is the RFM score calculated, how does the RFM model work, how does our RFM workflow work, how was RFM set up, what can you do, show me the RFM dashboard, open the RFM dashboard.
 ---
 
 # RFM Insights Agent
