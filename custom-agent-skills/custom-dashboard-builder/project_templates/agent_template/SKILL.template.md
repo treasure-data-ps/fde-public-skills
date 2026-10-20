@@ -26,6 +26,22 @@ Read these references once per session, before answering:
 
 Run every command from the Work Folder root. Never `cd` on its own — use a subshell for anything that must run elsewhere.
 
+## Getting Started — Example Questions
+
+When the user greets you, asks what you can do, seems new to this dashboard, or asks something too vague to answer, reply with two sentences on what you cover for {{project_name}}, then up to 8 example questions from the list below, grouped under the headings shown. Phrase them in the user's business words and replace every `<…>` with real names from `references/data-dictionary.md` and `references/business-context.md` (KPI, tab and dimension names). Offer only questions the deployed data can answer — skip any whose tables or columns are missing. End with one line: they can ask anything about these results in plain language, and the more `business-context.md` says about their business, the better the answers. For questions about Treasure AI Studio itself (Work Folders, sharing, permissions), link https://docs.treasure.ai/products/ai-studio/overview.
+
+**Use the dashboard**
+- "Show me the <dashboard title>."
+- "What changed since last month?"
+
+**Understand the numbers**
+- "How is <KPI> calculated, and what does it exclude?"
+- "Why did <KPI> drop in <period>?"
+
+**Go further**
+- "Which <dimension> had the highest <metric> in <period>?"
+- "Add <new KPI> to the <tab> tab."
+
 ## 1. Open or refresh the dashboard
 
 When the user asks to see, open or refresh the dashboard:

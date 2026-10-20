@@ -20,6 +20,24 @@ Before answering any question, read these reference files (once per session):
 5. Read [dashboard_template.md](references/dashboard_template.md) ONLY when the user asks for an HTML / shareable / exportable / standalone dashboard.
 6. Read `references/workflow-guide.md` and `references/model-setup-walkthrough.md` ONLY for the questions listed under **How It Was Built** below.
 
+## Getting Started — Example Questions
+
+When the user greets you, asks what you can do, seems new to this propensity model, or asks something too vague to answer, reply with two sentences on what you cover for {{project_name}}, then up to 8 example questions from the list below, grouped under the headings shown. Phrase them in the user's business words and replace every `<…>` with real names from `references/data-dictionary.md` and `references/business-context.md` (the outcome, feature names, score buckets). Offer only questions the deployed data can answer — skip any whose tables or columns are missing. End with one line: they can ask anything about these results in plain language, and the more `business-context.md` says about their business, the better the answers. For questions about Treasure AI Studio itself (Work Folders, sharing, permissions), link https://docs.treasure.ai/products/ai-studio/overview.
+
+**Understand the model**
+- "How good is the model?"
+- "What drives the score?"
+- "Is the model overfitting or drifting?"
+
+**Use the scores**
+- "How many customers score high, and how are scores distributed?"
+- "How many would we flag at a cut-off of 0.7?"
+- "Why does customer <id> score high?"
+
+**How it works**
+- "How was the decision threshold chosen?"
+- "Show me the classifier dashboard."
+
 ## How It Was Built — Workflow Guide and Setup Walkthrough
 
 Two engagement files describe this customer's deployment, if the user chose to build them: an **interim** version during hands-on testing (Phase 4) and a **final** version at go-live (Phase 5). Their **Status** line says which:
