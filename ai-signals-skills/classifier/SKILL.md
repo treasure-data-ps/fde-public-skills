@@ -1,26 +1,30 @@
 ---
 name: fde-classifier
 description: |
-  Binary Classification (Classify) workflow for Treasure Data. Configures workflows that train and score binary classification models using Logistic Regression, XGBoost, or CatBoost with Optuna hyperparameter tuning, SHAP explainability, and parallel artifact writes. Supports any binary prediction use case — lead scoring, churn prediction, conversion propensity, fraud detection, campaign response, and more. Trigger on: classifier, classification, classify, lead scoring, lead score, churn prediction, churn model, conversion model, propensity model, binary classification, binary model, XGBoost, CatBoost, logistic regression, scoring model, predict churn, predict conversion, fraud detection, predict response, binary prediction, SHAP, feature importance.
+  Binary Classification (Propensity Scoring) for Treasure Data. Sets up a workflow that builds a project-specific feature table (population, features before a cut-off, 0/1 label after it), trains the AI Signals classifier (XGBoost or CatBoost with Optuna tuning, threshold selection and SHAP explanations), scores every profile, lead or account and writes the scores for use as Parent Segment attributes, then builds a customer-specific classifier insights agent and dashboard. Supports any binary use case — lead scoring, churn prediction, conversion propensity, campaign response, upsell, renewal, fraud. Trigger on: classifier, classification, classify, propensity, propensity model, propensity scoring, lead scoring, lead score, churn prediction, churn model, conversion model, binary classification, binary model, XGBoost, CatBoost, scoring model, predict churn, predict conversion, predict response, binary prediction, SHAP, classifier workflow setup, classifier configuration, classifier runbook.
 ---
 
-# Binary Classification (Classify)
+# Classifier (Propensity Scoring)
 
-Generic binary classification workflow that trains and scores models to predict whether something will or will not happen. Supports Logistic Regression, XGBoost, and CatBoost with automated hyperparameter tuning, threshold optimization, SHAP explainability, and drift detection.
+Trains and scores a binary classification model with the AI Signals classifier — the probability that each entity converts, churns, responds or does whatever the use case defines — from a project-specific feature table, and writes one score per entity that is added to a Parent Segment for Audience Studio segmentation and activation.
 
 ## How to Start
 
-Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, and when to read each shared pattern file. Follow that flow. This file provides the Classifier-specific context you need at each phase.
+Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, the name gates and when to read each shared pattern. Follow that flow. Read each referenced file once per conversation: when this skill is invoked again later in the same conversation, the playbook and any reference files already read are still in context — don't read them again; in a new session, read `project_state.md` to pick up. This file provides the Classifier-specific context for each phase.
+
+**AI Signals model questions:** when the user asks how the classifier trains, tunes, picks the threshold or explains scores, or wants to try another model type or API parameter values, or change the model's input or output tables, read `references/ai-signals-guide.md` first, and end the answer with the public documentation link at its top. It is not needed for the standard setup steps (Phases 1–3) — `references/workflow-setup.md` covers those.
+
+**Exceptions to the standard flow** (`../shared/solution_standard.md` §5): Phase 1 starts by asking the use case, the outcome and where the label lives; Phase 3 writes the project's feature SQL (`sql/input_features.sql`) in the workflow copy — the one template file besides the config that every Classifier deployment edits.
 
 ## Phase Summary
 
-| Phase | What happens |
-|---|---|
-| Phase 1 | Data exploration — discover feature tables, confirm schema, identify target variable, check class balance |
-| Phase 2 | Bootstrap `agent_outputs/` + `project_state.md` + Requirements Doc |
-| Phase 3 | Push minimal workflow, validate training output tables |
-| Phase 4 | Re-configure workflow from filled requirements, re-validate |
-| Phase 5 | Parent Segment update + example audiences, then customer-facing documentation set |
+| Phase | Stage | What happens |
+|---|---|---|
+| Phase 1 | DEV | Use case and outcome first; data exploration — list and classify tables, confirm the population, label and feature sources, check the label balance; draft `business-context.md` and review it with the user |
+| Phase 2 | DEV | `requirements.md`, ending with the open business-context questions — then continue without waiting |
+| Phase 3 | DEV | Copy the workflow template, write the feature SQL and the config from Phase 1, push, train, score, validate; ask which hands-on kit to build |
+| Phase 4 | DEV | Hands-on kit (customer agent, dashboard, interim workflow guide + setup walkthrough); apply the customer's requirements, re-push, re-run, re-validate, refresh the kit |
+| Phase 5 | PROD — only when you say the model is ready | Parent Segment attributes + example audiences, documentation set, finalize the customer agent, offer the final guides |
 
 ---
 
@@ -28,202 +32,104 @@ Read `../shared/playbook.md` — it defines the entry point (new vs. resume), th
 
 ### Phase 1: Data Exploration
 
-Use `tdx-skills:tdx-basic` to explore the customer's TD databases. Follow these steps:
+Use `tdx-skills:tdx-basic` (and `tdx-skills:parent-segment-analysis` for a Parent Segment). Do not search by table-name patterns.
 
-**Step 1 — Identify the use case, target variable, and where the label lives.**
+1. **Use case first** (the Classifier exception) — one `AskUserQuestion` batch:
+   - "What should the model predict?" — options from the common use cases: lead conversion, churn, campaign response, upsell / renewal (Other: describe).
+   - "What is one scored entity?" — profile / customer, lead, account.
+   - "Where is the data?" — "A Parent Segment (Recommended if one exists)" / "Source databases only". Ask for the Parent Segment or database names next.
+   Then, in plain words, note whether the outcome is likely a stored column (a status, a flag) or must be derived (an order after a date, no activity for N days) — the label rule is settled in step 5.
+2. **List every table** in each database named: `tdx tables "<database>.*"`. For a Parent Segment, bootstrap `agent_outputs/` first (`../shared/local_outputs.md` Step 1), then `tdx ps desc "<name>" -o agent_outputs/<project_slug>/ps_schema.json` gives its output database.
+3. **Classify each table** from one column query covering all databases — not a `tdx describe` per table:
+   `SELECT table_schema, table_name, column_name, data_type FROM information_schema.columns WHERE table_schema IN ('<db1>', '<db2>') ORDER BY 1, 2, ordinal_position`
 
-Unlike the other ML solutions, the Classifier asks these questions *before* exploring: the target decides which tables and features matter and how the label is derived. Ask with the `AskUserQuestion` tool (pre-populated options from the table below, plus "Other") — never as a plain text list.
+   | Bucket | Criteria |
+   |---|---|
+   | Population (candidate) | One row per entity with the ID — profiles, leads, accounts, subscriptions; a Parent Segment `customers` table |
+   | Label source | Holds the outcome or the data to derive it — orders, conversions, cancellations, statuses; may also be a feature source |
+   | Feature source | Behavior with an ID and a timestamp (events, orders, email, web, support) or stable profile attributes |
+   | System / output | Workflow outputs, ML results, aggregates of other tables. Not a source |
 
-Ask the user:
+4. **Pick** the population table and ID, the label rule (table, event or status, window — **First push:** 90 days for conversion / response, 180 for churn by inactivity) and 2–4 feature sources with the strongest signal (`references/workflow-setup.md` §1).
+5. **Confirm with `AskUserQuestion`** — first show a markdown table: population (table, ID, eligibility), label rule and window, each feature source (table, what it records, ID, time column), with a one-line reason each; then ask one short question ("Confirm as listed" / "Change the label rule" / "Change the sources"). Do not put the table inside the question. Do not skip this.
+6. **Run the discovery queries** in `references/workflow-setup.md` §1 yourself, all in one shell command (no subagents): source profile, label balance at one cut-off, ID overlap. Do not investigate caveats further — record them (step 7). If the label has only one class or very few positives, tell the user before continuing.
+7. **Record** in `project_state.md`: use case, entity, population table and ID, label rule and window, positive rate, feature sources with their ID and event-time column (and the evidence), join-key differences, first/last event date, candidate features, leakage suspects (post-outcome columns).
+8. **Business context** — playbook Phase 1 "Business context draft and review": copy `project_templates/agent_template/references/business-context.template.md`, answer what steps 1–7 showed (e.g. what the outcome means as an event in the data, who is in the population, the statuses seen, test accounts noticed), review it with the user, continue to Phase 2.
 
-> What binary outcome are you trying to predict?
-
-Common patterns:
-
-| Category | Use Case | Target Variable Example |
-|----------|----------|------------------------|
-| Sales & Revenue | Lead scoring / conversion prediction | `converted` (1 = won deal) |
-| Sales & Revenue | Upsell / cross-sell propensity | `upsold` (1 = purchased upgrade) |
-| Customer Retention | Churn prediction | `churned` (1 = cancelled) |
-| Customer Retention | Subscription renewal | `renewed` (1 = renewed) |
-| Marketing | Campaign response prediction | `responded` (1 = clicked/converted) |
-| Product & Engagement | Trial-to-paid conversion | `converted_to_paid` (1 = subscribed) |
-| Risk & Compliance | Fraud detection | `is_fraud` (1 = fraudulent) |
-| Operations | Support ticket escalation | `escalated` (1 = needed escalation) |
-
-Then ask: **Does an existing column already represent this outcome as a 0/1 value, or does it need to be derived?**
-
-- If an existing column already represents it (e.g., a `churned` flag, a `status = 'cancelled'` field), record the table and column name.
-- If it needs to be derived (e.g., "churned" isn't a stored flag but must be calculated from inactivity, or "converted" must be derived by joining a lead table to an orders table with a date cutoff), record the derivation logic in plain language now — the exact query will be built once the relevant tables are found in Steps 3–5. Do not assume the label already exists as a column; many use cases require a calculated label.
-
-**Step 2 — Check for an existing Parent Segment.**
-
-Ask the user:
-
-> Is there an existing Parent Segment for this customer that you'd like to use as a source of features?
-
-Use the `AskUserQuestion` tool with options: "Yes — use an existing Parent Segment (Recommended if one exists)", "No — explore raw database tables only". If yes, ask for the Parent Segment name.
-
-If a Parent Segment is provided:
-- Run `tdx ps desc "<Parent Segment Name>" -o <customer_slug>_ps_schema.json` to get its output database schema (see `tdx-skills:parent-segment-analysis`).
-- Read the schema file. The `customers` table columns are candidate features that are **already aggregated and joined to the canonical ID** — no additional feature engineering or data prep SQL is needed to use these as model inputs. This is a meaningfully faster path than raw table feature engineering.
-- The `behavior_*` tables are candidate raw feature sources if the customer wants more granular signals than what's already aggregated into the Parent Segment. Disregard any behavior tables that come back empty (not yet generated) — do not treat this as a blocker.
-- Note the Parent Segment's join key (e.g., `cdp_customer_id`, `td_canonical_id`) as a candidate for `user_id_col`. If the schema exposes more than one plausible join key column, do not guess — ask the user which one to use (see Step 5 for reconciling this across multiple source tables).
-- Present the `customers` table attribute list to the user (name, type) so they can flag which ones are relevant to this use case before moving on.
-
-**Step 3 — Ask about additional raw tables, regardless of the Parent Segment answer.**
-
-Whether or not a Parent Segment was provided, ask:
-
-> Are there any other tables — in the same database or a different one — that should be considered as additional feature sources? (e.g., a support-ticket system in a separate database, a marketing database not yet joined to the Parent Segment)
-
-The Parent Segment's `customers` table will not contain every signal a customer wants (e.g., a newly integrated data source, or a database that was never joined into ID Unification). Support **any number of additional databases** — do not assume all raw tables live in a single database.
-
-For each database the user names (the Parent Segment's own output database, plus any additional ones):
-- Run `tdx databases` if the user is unsure of exact names.
-- Run `tdx tables "<database>.*"` to get the full table list for that database.
-
-If no Parent Segment applies and the customer doesn't have one set up yet, this step becomes the primary discovery path — ask for at least one database to explore.
-
-**Step 4 — Classify each table.**
-For every table found in Step 3 (across all databases), run `tdx describe` to inspect its schema. Classify it into one of four buckets:
-
-| Bucket | Criteria |
-|---|---|
-| **Feature source table** | Contains behavioral, transactional, or attribute data that can be engineered into predictive features. One row per event/record with a user ID + timestamp. |
-| **Label / outcome table** | Contains the target variable (conversion, churn, purchase) or the data needed to derive it, per Step 1. May be the same table as a feature source. |
-| **Profile / dimension table** | One row per customer with static attributes (demographics, segments, tiers). Can provide features but not behavioral signals. |
-| **System / output table** | Workflow output, audit logs, ML result tables. Not a source table. |
-
-**Step 5 — For each candidate feature source table, note down:**
-- Full table name (including database — tables may come from different databases)
-- User ID / join key column name. **The join key is not guaranteed to be the same column across every source table.** If a table's ID column doesn't match the join key confirmed in Step 2 (or the Parent Segment isn't in use), ask the user which column to use as the join key for that specific table, and whether a lookup/join table is needed to reconcile it back to the canonical ID.
-- Timestamp column name
-- Approximate row count and date range
-- Key columns that could become features (counts, amounts, statuses, categories)
-
-**Step 6 — Locate or construct the target variable.**
-
-Using the label location/derivation logic captured in Step 1:
-- If the label is an existing column, confirm its exact `database.table.column` now that the table has been discovered in Steps 3–5.
-- If the label needs to be derived, write the derivation query now (e.g., a churn flag from `CASE WHEN days_since_last_order > 180 THEN 1 ELSE 0 END`, or a conversion flag from joining a leads table to an orders table). Present the derivation logic to the user for confirmation before using it in the class balance check below.
-
-**Step 7 — Check class balance for the target variable.**
-
-```sql
-SELECT
-  <target_variable_column_or_expression>,
-  COUNT(*) AS cnt,
-  ROUND(COUNT(*) * 100.0 / SUM(COUNT(*)) OVER (), 2) AS pct
-FROM <database_name>.<label_table>
-GROUP BY 1
-ORDER BY 1;
-```
-
-Replace `<target_variable_column_or_expression>`, `<database_name>`, and `<label_table>` with the actual values or derivation expression confirmed in Step 6.
-
-**Pass criteria:**
-- Both classes (0 and 1) have rows
-- Minority class is at least 1% of total (if < 1%, the workflow's `class_balance_strategy: 'balanced'` may not be sufficient — flag to the user)
-- If heavily imbalanced (>95:5), recommend `optuna_metric: 'auc_pr'` and `xgb_eval_metric: 'aucpr'`
-
-**Step 8 — Present findings to the user before proceeding.**
-Show a unified table of ALL candidates — Parent Segment attributes (if applicable) AND raw feature source tables — with a `Source Type` column (`Parent Segment attribute` / `Raw table — needs feature engineering`), the join key used for each, your recommendation (include / exclude), and a one-line reason for each. Use the `AskUserQuestion` tool — never as a plain text list.
-
-**Solution slug for `agent_outputs/`:** `classifier`
+**Solution slug:** `classifier` — all engagement files live in `agent_outputs/<project_slug>/` (`classifier` by default, `<prefix>-classifier` with a project prefix — `../shared/local_outputs.md` Step 2). A use-case prefix (`churn`, `leads`) is recommended — several classifiers often live in one account.
 
 ### Phase 2: Requirements Doc
 
-Before writing anything, bootstrap `agent_outputs/` per `../shared/local_outputs.md` and create `agent_outputs/<customer_slug>/classifier/project_state.md` per `../shared/project_state.md`.
+- Title: `<Project Name> Requirements`
+- File: `agent_outputs/<project_slug>/requirements.md`
+- Body: `references/requirements_doc.md` (pre-fill from Phase 1)
 
-This phase has two parts — a live interview that unblocks Phase 3, and a customer-shareable artifact that feeds Phase 4.
+Tell the user its path in one line (playbook Phase 2 step 5) and continue to Phase 3.
 
-**Part A — Live interview (synchronous).**
-Run Steps 3a–3i in `workflow-setup/references/requirements_doc.md` with the user now, using `AskUserQuestion`. This gathers enough to configure a real (not blindly-defaulted) minimal workflow in Phase 3 — use Phase 1 findings plus these answers.
+### Phase 3: Minimal Workflow
 
-Key questions the live interview must answer: use case description, target variable name/definition and whether it exists or needs deriving, user ID column and any per-table join key exceptions, Parent Segment (if any) and its join key, feature source tables across all databases in use, training time window, prediction time window, model type preference (XGBoost recommended), precision/recall tradeoff preference, output database name, columns to exclude from features.
+1. Read `../shared/push_pattern_td_workflows.md` and `references/workflow-setup.md`.
+2. Copy `project_templates/workflow_template/` to `agent_outputs/<project_slug>/workflow/` and read its `README.md` and `sql/README.md`.
+3. **Name checks** — sink database (default `td_agents`; it must hold no `classifier_*` tables — the artifact names are fixed, so one sink database holds one classifier project; if taken, use `classifier_<project_prefix>`) and workflow project (default `classifier_ais`; it must not exist yet), both in one command. Set `model_name` to a project-specific name (`<project_prefix>_<model_type>` with `-` → `_`, or the template default without a prefix) — model names are unique per account. The first run creates the database if missing.
+4. **Write the feature SQL** — rewrite `workflow/sql/input_features.sql` from the Phase 1 findings, following `references/workflow-setup.md` §1 (output contract in `workflow/sql/README.md`): population, label after the cut-off, 5–15 safe features before it. This is the one template file you write; do not review the other `.dig` files.
+5. **Edit `workflow/config.yml`** in place: `sink_database`, `model_name`, `target_column`, `user_id_column`, `columns_to_drop`, the feature windows (`label_window_days`, `feature_lookback_days`, `reference_date` for data that ends in the past) and `ml_batch_api_endpoint` for the account's region; template values for the training parameters (`references/workflow-setup.md` §2). Leave the schedule and failure email in `workflow/classify.dig` commented unless the user asks for them. Do not validate the config locally — the template is pre-validated.
+6. **Approve, push, run** — `../shared/push_pattern_td_workflows.md` Step 5: show the config, the feature SQL and both names, ask once to push, run and validate (Recommended); then push, tell the user the run takes several minutes (training with the tuning search is the longest step), run `classify`, monitor. No secret setup: the AI Signals API key is provided by the AI Signals architecture — never ask the user to set `td.apikey`.
+7. Validate with `references/workflow-setup.md` §4. If `data_prep` fails, fix the SQL and re-run; if check 2 suggests leakage (AUC above ~98, one dominant feature), remove the feature and re-run before continuing.
+8. Update `project_state.md` (names, model name, feature SQL summary, assumed defaults, validation results).
+9. **Hands-on kit question** — playbook Phase 3 step 4: summarize the run, then ask whether to build the agent, dashboard and both guides (Recommended), the agent and dashboard only, or nothing yet. Continue with Phase 4 Part A.
 
-**Part B — Customer-shareable doc (asynchronous).**
-Doc title: `Classification Requirements Gathering - <Customer>`
-File: `agent_outputs/<customer_slug>/classifier/requirements.md`
+### Phase 4: Hands-on Testing and Customer Requirements
 
-Write this doc per `../shared/playbook.md` (Phase 2), using the canonical template structure in `workflow-setup/references/requirements_doc.md` Step 7 as the section-to-answer mapping. Unlike a blank customer-fillable form, **pre-fill every section with what was learned in Part A and Phase 1** — this saves the customer from re-answering things already discovered, and focuses their attention on judgment calls only they can make (business context, feature relevance, edge cases). Give the user the file path to share with the customer and update `project_state.md`. This is the doc Phase 4 reads back.
+**Part A — Hands-on kit** (per the Phase 3 answer, or whenever the user asks):
 
-### Phase 3: Push Minimal Workflow
+1. **Agent** `<project_slug>-agent` (asked only if taken) — build and install it: `../shared/customer_agent_pattern.md` Steps 1–3 + `references/agent-setup.md`.
+2. Generate the dashboard and run the build checks in `references/agent-setup.md`.
+3. If the guides were chosen: fill `workflow-guide.md` and `model-setup-walkthrough.md` as **interim** guides (`../shared/customer_agent_pattern.md` Step 4) and reinstall the agent.
+4. Tell the user what was built and that testers can use the agent and dashboard in new chats in this folder; show the **agent files** table from `references/agent-setup.md` and a starter prompt; update `project_state.md`.
 
-**Workflow template:** `project_templates/classify/`
-**Working copy:** `agent_outputs/<customer_slug>/classifier/workflow/classify/`
-**Config file:** `config.yml` (inside the working copy)
+**Part B — Customer requirements** (when `requirements.md` comes back; repeat as testing needs):
 
-For the minimal push, populate `config.yml` with what you know from Phase 1 (database, user ID column, target variable, model type). Use Phase 2 answers if already available; otherwise use safe defaults.
+1. Read `project_state.md`, then the filled `requirements.md`.
+2. Map the answers with the table at the end of `references/requirements_doc.md`; choose values with `references/workflow-setup.md` §2 and the objective table in `references/ai-signals-guide.md` §5.
+3. Present the planned changes (SQL and config); wait for approval.
+4. Edit `sql/input_features.sql` and `config.yml` (and `classify.dig` for schedule / alert email) in `workflow/`, re-push, re-run, re-validate (§4). Compare the new run with the previous one in `project_state.md`.
+5. Merge the business answers into `business-context.md` (playbook Phase 4 Part B step 4).
+6. Refresh the kit if it exists: rebuild the agent if the sink database, predictions table, use case or business rules changed; regenerate the dashboard; refresh the interim guides. Add the round to **Phase 4 iterations** in `project_state.md` and offer another round — not Phase 5 (playbook Phase 4, DEV → PROD).
 
-Read `workflow-setup/references/workflow_setup_guide.md` for full setup instructions.
-Read `workflow-setup/references/yaml_structure.md` for the parameter reference.
-Read `workflow-setup/references/parameter_guide.md` for non-technical parameter explanations.
-Use `workflow-setup/references/input_params_template.yml` as the starting point — write the result to `config.yml` in the working copy (the deployed config file is `config.yml`, not `input_params.yml`).
+### Phase 5: Parent Segment, Documentation, Final Agent
 
-**Before any push command:** Read `../shared/push_pattern_td_workflows.md` for the template copy step, the mandatory project name confirmation gate, and push mechanics, and `workflow-setup/references/deploy_instructions.md` for the Classifier-specific steps (including the required `apikey` secret). Do not run `tdx wf push` or `tdx wf upload` until this file has been read and the project name confirmed with the user via `AskUserQuestion`.
+Only after the user says the model is ready and confirms the move (playbook Phase 4, DEV → PROD).
 
-After the workflow run finishes, validate output tables following instructions in `workflow-setup/references/eval.md`.
-
-After validation, update `project_state.md`: Phase 3 complete, workflow project name, push date.
-
-### Phase 4: Update Workflow with Customer Requirements
-
-After reading the filled requirements doc, present a summary of the parameter changes you plan to make before touching any files. Key areas that typically change between Phase 3 and Phase 4:
-
-- Target variable name and definition (customer may have a more precise label)
-- `columns_to_drop` list (add non-feature columns discovered during data prep)
-- `fbeta_beta` and `threshold_strategy` (based on customer's precision/recall preference)
-- `model_type` (if customer prefers a different model)
-- Training/prediction time windows (`look_back_months_training`, `train_end_months_from_now`, `look_back_months_prediction`)
-- `n_trials` (increase for production runs)
-- Data prep SQL (the main customization point — feature engineering queries)
-
-Read `workflow-setup/references/workflow_setup_guide.md` for update mechanics. Edit `config.yml` in the working copy, then re-push from there.
-Re-run the workflow and re-validate output tables (same checks as Phase 3).
-
-### Phase 5: Parent Segment & Customer Documentation
-
-**Step 1 — Parent Segment attributes + example audiences.**
-Read `../shared/parent_segment_update.md` for the process (approval gates, push mechanics, `attributes:` placement rules).
-Read `prod-docs/references/parent_segment.md` for the Classifier-specific "what" — which attribute columns (`predicted_proba`, `predicted_label`, `score_bucket`) and which example segments to create based on the use case (lead scoring, churn, campaign response). Do not read this file until the user has approved the plan in Step 1 of `parent_segment_update.md`.
-
-**Step 2+ — Documentation files.**
-Read `../shared/customer_docs_pattern.md` for the doc set. Write all files to `agent_outputs/<customer_slug>/classifier/docs/`.
-
-Classifier-specific content for each doc is in `prod-docs/references/`:
-
-| Doc file | Reference file |
-|---|---|
-| `docs/architecture.md` | `prod-docs/references/runbook.md` (architecture section) |
-| `docs/runbook.md` | `prod-docs/references/runbook.md` |
-| `docs/behavior.md` (customer-facing overview) | `prod-docs/references/customer_docs.md` |
-| `docs/eval_results.md` | `workflow-setup/references/eval.md` results from the final run |
-| `docs/access_ownership.md` (technical handoff) | `prod-docs/references/technical_handoff.md` |
+1. **Parent Segment** — `../shared/parent_segment_update.md` for the process; `references/parent_segment.md` for the attributes and example audiences — read it only after the user approves the plan.
+2. **Documentation** — `../shared/customer_docs_pattern.md` + `references/docs-setup.md` → `docs/`.
+3. **Confirm the business context** — playbook Phase 5 step 3.
+4. **Finalize the agent** — `../shared/customer_agent_pattern.md` Step 5 + `references/agent-setup.md` (Finalize). If Phase 4 Part A was skipped, build the agent first (Steps 1–3).
+5. **Final guides question** — ask whether to update `workflow-guide.md` and `model-setup-walkthrough.md` with the final production setup (Recommended), or create them if they were never built; on yes, `../shared/customer_agent_pattern.md` Step 4 (final) and reinstall.
+6. Update `project_state.md` → "complete — engagement live".
 
 ---
 
-## Quick Reference
-
-- **Workflow template**: `project_templates/classify/` (read-only; copy to `agent_outputs/<customer_slug>/classifier/workflow/classify/`)
-- **Default TD workflow project name**: `classify`
-- **Entry points**: `train.dig`, `predict.dig`
-- **Config file**: `config.yml` (inside the working copy)
-- **Key training outputs**: `{tp}run_log`, `{tp}feature_importance`, `{tp}shap_directional`, `{tp}test_predictions` in the sink database
-- **Key prediction outputs**: `{tp}predictions`, `{tp}prediction_shap`, `{tp}prediction_run_log` in the sink database
-- **Models**: Logistic Regression, XGBoost, CatBoost (with Optuna tuning)
-- **Solution slug**: `classifier`
-
-## Companion skill (separate entry point)
-
-Registered as its own skill — it triggers directly from user prompts, no need to route through this file:
-
-- **`fde-classifier-insights-agent`** — query the classification output tables to answer model performance, feature importance, SHAP explanation, score distribution, and setup/configuration questions, or generate the standalone Classification Summary Dashboard. Follow this companion skill whenever the user asks for dashboards or analytical deep dives after workflow setup.
-
 ## How It Works
 
-1. **Data Prep**: Customer-specific SQL creates feature tables from raw behavioral/transactional data
-2. **Train**: Load features + binary target → stratified split → preprocess → Optuna tuning → fit model → threshold selection → evaluate → SHAP → write artifacts
-3. **Predict**: Load trained model → load new data → preprocess identically → score → per-row SHAP (positives only) → PSI drift check → write outputs
-4. **Explain**: SHAP values explain every prediction — which features pushed the score up or down, globally and per-record
+1. **Data prep** — the project's feature SQL builds one row per entity: features from the `feature_lookback_days` before a cut-off, and a 0/1 label from the `label_window_days` after it. Training uses a cut-off `label_window_days` before the run date; scoring uses the run date.
+2. **Train** — `train.dig` sends the training table to the AI Signals ml-batch-api (`classifier_train`): stratified split, Optuna search, threshold chosen on out-of-fold predictions, test-split evaluation, SHAP, refit on all rows; the model is stored under `model_name`, the diagnostics go to the `classifier_*` tables.
+3. **Predict** — `predict.dig` scores the prediction table with the stored model (`classifier_predict`): `score`, `predicted_label`, `score_bucket`, appended to `pred_output_table`; the latest batch is copied to `<pred_output_table>_latest`, one row per entity — the Parent Segment attribute table.
+4. **Explain** — the customer agent and dashboard read the run logs, SHAP tables and scores.
+
+API parameters, objectives, outputs and troubleshooting: `references/ai-signals-guide.md`.
+
+## Quick Reference
+
+- **Solution slug:** `classifier`
+- **Short name (project names):** `Classifier` — e.g. `Churn Classifier`
+- **Workflow template:** `project_templates/workflow_template/` → working copy `agent_outputs/<project_slug>/workflow/`
+- **Agent template:** `project_templates/agent_template/` → `.claude/skills/<agent-name>/`
+- **Default workflow project name:** `classifier_ais`
+- **Entry point:** `classify.dig` (train, then predict); `train.dig` and `predict.dig` also run on their own
+- **Config file:** `config.yml`
+- **Project code:** `sql/input_features.sql` — rewritten for every project
+- **Model:** AI Signals classifier only (`classifier_train` / `classifier_predict`), `xgboost` or `catboost`
+- **Key outputs:** `<pred_output_table>_latest` (default `classifier_predictions_latest`, Parent Segment attributes); `pred_output_table` (scores per run); `classifier_*` training tables (fixed names)
+- **Agent name:** `<project_slug>-agent` — `classifier-agent` by default
+- **Secrets:** none to set — `${secret:td.apikey}` in `train.dig` / `predict.dig` is provided by the AI Signals architecture
+- **API endpoint:** `ml_batch_api_endpoint` in the config — US by default; other regions in the template README and `references/ai-signals-guide.md`

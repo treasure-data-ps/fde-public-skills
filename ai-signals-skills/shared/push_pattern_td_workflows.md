@@ -44,7 +44,7 @@ Read `<workdir>/README.md` before editing anything — it explains the workflow 
 
 ## Step 2: Inspect the Project Structure
 
-You should NOT need to edit anything in `queries/`, `sql/`, `python/` or `python_files/` for a standard deployment — the template's `README.md` lists the customization points. All customizations are controlled by `<Workflow Config file>` (and the alert email in the entry-point `.dig`, if the customer wants failure notifications — the template ships with the placeholder `your-team@example.com`).
+You should NOT need to edit anything in `queries/`, `sql/`, `python/` or `python_files/` for a standard deployment — the template's `README.md` lists the customization points. (Exception: the Classifier's `sql/input_features.sql` is project code, written in Phase 3 — see its `SKILL.md`.) All customizations are controlled by `<Workflow Config file>` (and the alert email in the entry-point `.dig`, if the customer wants failure notifications — the template ships with the placeholder `your-team@example.com`).
 
 ## Step 3: Write the Config
 

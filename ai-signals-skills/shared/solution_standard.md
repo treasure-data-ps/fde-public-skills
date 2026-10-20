@@ -94,6 +94,7 @@ Every deviation from §4 must be listed here and stated in the solution's `SKILL
 |---|---|---|
 | `mta` | Phase 5 has no Parent Segment step | Attribution outputs are tables, not profile attributes |
 | `classifier` | Phase 1 Step 1 asks the use case, target variable and where the label lives before exploring | The target decides which tables and features matter and how the label is derived |
+| `classifier` | Phase 3 writes the project's feature SQL (`workflow_template/sql/input_features.sql`) in the working copy, besides the config | A classifier's input is project-specific (population, features, label); the template ships an example structure and the output contract (`sql/README.md`) |
 
 ## 6. Conformance checklist
 
