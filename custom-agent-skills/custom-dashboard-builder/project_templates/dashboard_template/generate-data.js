@@ -1,258 +1,161 @@
-/**
- * generate-data.js — Optimized HTML Dashboard Data Generation
- *
- * ⚠️  BUILD TIME: This script runs on YOUR machine, queries TD, and produces dashboard.html
- * It is NEVER sent to the customer — only the output HTML file is shared.
- *
- * OPTIMIZATION GOALS FOR EMBEDDED DATA:
- * 1. Minimize payload size (gzip-compress to 60-70 KB)
- * 2. Pre-aggregate by filter dimensions (100-500 rows, not 10,000+)
- * 3. Use LIMIT wisely (safety: 10,000 default; override per query if needed)
- * 4. Select only columns dashboard renders (no unused fields)
- * 5. Coerce numeric strings to numbers (TD returns strings; JSON is verbose)
- * 6. Short field names in output (dashboard.html searches for exact keys)
- *
- * PAYLOAD SIZE OPTIMIZATION CHECKLIST:
- * ☐ All queries include WHERE + LIMIT
- * ☐ No fetching unused columns
- * ☐ GROUP BY filter dimensions only (not raw cardinality)
- * ☐ SUBSTR for date truncation (month/week, not full ISO-8601)
- * ☐ Numeric coercion: 3.14159 vs "3.14159" (JSON output ~40% smaller with numbers)
- * ☐ Tiered budget: < 500 KB ideal (fast load, easiest to share); up to 2 MB acceptable; beyond 2 MB, switch to Pattern B
- *
- * Pattern A (< 2 MB): Inline data via <!-- DATA_PLACEHOLDER --> (default)
- * Pattern B (> 2 MB): Separate data.json + fetch at runtime (not used in lite)
- *
- * Usage:
- *   SOURCE_DB=your_db node generate-data.js
- *   open dashboard.html
- *
- * Requirements:
- *   - tdx CLI installed and authenticated
- *   - dashboard.template.html contains <!-- DATA_PLACEHOLDER --> before </body>
- *   - node (any recent version, no npm install needed)
- */
-
+#!/usr/bin/env node
 'use strict';
+/**
+ * Dashboard data builder (HTML Client).
+ *
+ * Runs the dashboard queries against Treasure Data in parallel (tdx), checks every result, and writes a
+ * single self-contained dashboard.html: the template + vendored Chart.js + `var RAW = {...}`.
+ * Query results never pass through the chat — this script is the only path from TD to the HTML.
+ *
+ * Run from the Work Folder root:   node <dir>/generate-data.js
+ * Overrides (all optional):        SOURCE_DB, SINK_DB, DASHBOARD_TEMPLATE, DASHBOARD_OUTPUT, DASHBOARD_CHARTJS
+ *
+ * The project copy is edited in three places only: CONFIG, QUERIES and LAYOUT (see dashboard.template.html
+ * for the RAW / LAYOUT contract). Everything below them is the shared engine — leave it unchanged.
+ */
+const { execFile } = require('child_process');
+const fs = require('fs');
+const os = require('os');
+const path = require('path');
 
-var execSync = require('child_process').execSync;
-var fs = require('fs');
-var path = require('path');
+// ── CONFIG (project values — no placeholders may remain) ──────────────────────────────────────────
+const CONFIG = {
+  title: 'Dashboard title',
+  subtitle: 'What this dashboard shows',
+  timezone: 'UTC',
+  currency: '$',
+  databases: {
+    source: process.env.SOURCE_DB || '<source_database>',
+    sink: process.env.SINK_DB || process.env.SOURCE_DB || '<sink_database>', // = source on the direct path
+  },
+};
 
-var DB = process.env.SOURCE_DB || 'your_database';
-// Paths default to this script's folder; the installed dashboard agent overrides them so the generated
-// dashboard (customer data) is written to the engagement folder, never into the skill folder.
-var TEMPLATE_PATH = process.env.DASHBOARD_TEMPLATE || path.join(__dirname, 'dashboard.template.html');
-var OUTPUT_PATH   = process.env.DASHBOARD_OUTPUT || path.join(__dirname, 'dashboard.html');
-var DATA_PATH     = path.join(__dirname, 'data.json');   // Pattern B only
+// ── QUERIES ───────────────────────────────────────────────────────────────────────────────────────
+// name → { db: 'source' | 'sink', sql, limit, columns: [required columns], numeric: [columns to coerce] }
+// Every query is aggregated (never raw events), selects only the columns the layout reads, applies the
+// confirmed exclusions, and has a LIMIT above the expected row count — reaching it fails the build.
+// `meta` is required: data_start / data_end as ISO date strings.
+const QUERIES = {
+  meta: {
+    db: 'source', limit: 1, columns: ['data_start', 'data_end'], numeric: [],
+    sql: `SELECT TD_TIME_FORMAT(MIN(time), 'yyyy-MM-dd', 'UTC') AS data_start,
+                 TD_TIME_FORMAT(MAX(time), 'yyyy-MM-dd', 'UTC') AS data_end
+          FROM <table>`,
+  },
+  daily: {
+    db: 'source', limit: 50000, columns: ['date', 'region', 'orders', 'revenue'], numeric: ['orders', 'revenue'],
+    sql: `SELECT TD_TIME_FORMAT(time, 'yyyy-MM-dd', 'UTC') AS date, COALESCE(region, 'Unknown') AS region,
+                 COUNT(order_id) AS orders, SUM(amount) AS revenue
+          FROM <table>
+          WHERE TD_TIME_RANGE(time, '2024-01-01', NULL, 'UTC') AND status <> 'cancelled'
+          GROUP BY 1, 2`,
+  },
+};
 
-// ─── OPTIMIZATION: Query helper with user-controlled row limits ───────────────
-// RULES:
-// 1. All queries MUST include WHERE + LIMIT (prevents 100K row OOM)
-// 2. Default limit: 10,000 rows (generates ~500KB JSON); user can override
-// 3. Pre-aggregate by filter dimensions → typically 50-200 rows (<50KB)
-// 4. Warn if rows > 1000 (likely to exceed 100KB)
-// 5. Ask user if they want to use full data instead of truncated results
-function query(sql, limitRows) {
-  // Default 10K row limit for safety; user can override via environment variable
-  var limit = process.env.DASHBOARD_ROW_LIMIT || (limitRows === undefined ? 10000 : limitRows);
-  var sqlFile = '/tmp/dash_query_' + Date.now() + Math.random().toString(36).slice(2) + '.sql';
-  var outFile = '/tmp/dash_result_' + Date.now() + Math.random().toString(36).slice(2) + '.json';
-  
-  // Add LIMIT if not present (safety check)
-  if (sql.toUpperCase().indexOf('LIMIT') === -1) {
-    console.warn('⚠️  QUERY: No LIMIT found. Using limit=' + limit + ' rows.');
-    console.warn('   → To use full data, set: export DASHBOARD_ROW_LIMIT=999999');
-    sql = sql + ' LIMIT ' + limit;
-  }
-  
-  fs.writeFileSync(sqlFile, sql, 'utf8');
-  execSync(
-    'tdx --json query -d "' + DB + '" -f "' + sqlFile + '" --output "' + outFile + '" 2>/dev/null',
-    { encoding: 'utf8', timeout: 60000 }
-  );
-  
-  var result = JSON.parse(fs.readFileSync(outFile, 'utf8'));
-  
-  // Warn if result is truncated or large
-  if (result.length >= limit && limit < 999999) {
-    console.warn('⚠️  TRUNCATION: Query returned ' + result.length + ' rows (at limit=' + limit + ').');
-    console.warn('   → Dashboard may show incomplete data.');
-    console.warn('   → To use ALL rows, set: export DASHBOARD_ROW_LIMIT=999999');
-  } else if (result.length > 1000) {
-    console.warn('⚠️  SIZE WARNING: Query returned ' + result.length + ' rows (~' + 
-                 Math.round(result.length * 0.1) + 'KB). Consider pre-aggregation to reduce payload.');
-  }
-  
-  return result;
-}
-
-// ─── OPTIMIZATION: Numeric normalization (smaller JSON payload) ──────────────
-// TD returns numeric columns as strings. Coercing to numbers saves ~30-40% JSON size.
-// Example: {"revenue": "1234.56"} → {"revenue": 1234.56} (11 bytes → 8 bytes per value)
-function num(v, decimals) {
-  var d = (decimals === undefined) ? 2 : decimals;
-  return Math.round(parseFloat(v || 0) * Math.pow(10, d)) / Math.pow(10, d);
-}
-
-
-
-// ─── OPTIMIZATION: Final payload size calculation ──────────────────────────────
-function reportSize(data) {
-  var json = JSON.stringify(data);
-  var sizeKB = (json.length / 1024).toFixed(1);
-  // Rough gzip estimate: typically 70-85% reduction for JSON
-  var compressedKB = (json.length * 0.15 / 1024).toFixed(1);
-  console.log('📊 Payload size: ' + sizeKB + ' KB (uncompressed) → ~' + compressedKB + ' KB (gzip)');
-}
-
-
-// ─── OPTIMIZATION: Query Examples ────────────────────────────────────────────
-// CUSTOMIZE: replace table names and column names with your actual schema.
-// Run `tdx describe <db>.<table>` first to confirm column names.
-//
-// All examples follow optimization rules:
-// 1. Pre-aggregate by filter dimensions (100-500 rows, not raw 10K+)
-// 2. SUBSTR for date truncation (month = 7 chars, full ISO = 19 chars)
-// 3. WHERE clause with reasonable time window (last 90 days, not all-time)
-// 4. LIMIT enforced (default 10,000 rows; override only if validated)
-// 5. Short output column names (ch=channel, ty=type, r=revenue, n=count)
-// 6. SUM/COUNT/AVG only (no unused string fields)
-//
-// Pattern A (pre-aggregated): READ-ONLY dashboards, no user filters
-//   → KPI cards correct on load but CANNOT update when filters change
-//   → Optimal: 100-200 rows / <20 KB JSON
-// Pattern B (row-level embed): dashboards WITH user filters
-//   → embed full SINK rows (~1K aggregated rows / ~100 KB safe), re-aggregate on every filter
-//   → Tradeoff: larger payload, but filters work client-side
-// ⚠️ Common mistake: Pattern A with filter UI → KPIs silently ignore all filters
-
-function main() {
-  console.log('📊 Generating optimized embedded data...');
-  console.log('   Rules: pre-aggregate by filter dimensions, keep full precision, enforce LIMIT');
-  console.log('');
-  console.log('ℹ️  Multi-tab dashboards: embed separate datasets per tab (see "Multi-Level Filters" in guides)');
-
-  // ── KPI totals ──────────────────────────────────────────────────────────────
-  // Customize: replace table and column names
-  var kpiRows = query(
-    'SELECT' +
-    '  SUM(revenue_amount)  AS total_revenue,' +
-    '  COUNT(*)             AS order_count,' +
-    '  AVG(revenue_amount)  AS avg_order_value' +
-    ' FROM your_table_name' +   // <-- replace
-    ' LIMIT 1'
-  );
-  var kpi = kpiRows[0] || {};
-
-  // ── Dimension breakdown ─────────────────────────────────────────────────────
-  // Customize: replace dimension_column and table name
-  var breakdownRows = query(
-    'SELECT dimension_column, SUM(revenue_amount) AS revenue, COUNT(*) AS cnt' +  // <-- replace dimension_column
-    ' FROM your_table_name' +   // <-- replace
-    ' GROUP BY 1 ORDER BY revenue DESC LIMIT 20'
-  ).map(function(r) {
-    return { label: r.dimension_column, revenue: num(r.revenue, 0), cnt: num(r.cnt, 0) };
-  });
-
-  // ── Time series (skip if table has no date column) ──────────────────────────
-  // Customize: replace date_column and table name; remove block if no date column
-  // ⚠️  If Workflow path: SINK tables store dates as VARCHAR (e.g., '2025-03-15')
-  //    Use SUBSTR(date_column, 1, 7) NOT DATE_FORMAT(date_column, '%Y-%m') — DATE_FORMAT fails on VARCHAR
-  //    Example: SUBSTR(date_column, 1, 7) → '2025-03'
-  var trendRows = query(
-    // Non-Workflow (source table with native DATE):
-    // "SELECT DATE_FORMAT(date_column, '%Y-%m') AS month, SUM(revenue_amount) AS revenue" +
-    // Workflow (SINK table with VARCHAR):
-    "SELECT SUBSTR(date_column, 1, 7) AS month, SUM(revenue_amount) AS revenue" +  // <-- replace date_column, table, aggregation
-    ' FROM your_table_name' +   // <-- replace with SINK table name
-    ' GROUP BY 1 ORDER BY 1 LIMIT 24'
-  ).map(function(r) {
-    return { month: r.month, revenue: num(r.revenue, 0) };
-  });
-
-  console.log('Row counts: kpi=' + kpiRows.length + ' breakdown=' + breakdownRows.length + ' trend=' + trendRows.length);
-
-  // ── Assemble RAW payload ────────────────────────────────────────────────────
-  // ──────────────────────────────────────────────────────────────────────────────
-  // Size report (for optimization feedback during development)
-  // ──────────────────────────────────────────────────────────────────────────────
-  console.log('');
-  console.log('📈 Query results:');
-  console.log('   KPIs: ' + kpiRows.length + ' row');
-  console.log('   Breakdown: ' + breakdownRows.length + ' rows');
-  console.log('   Trend: ' + trendRows.length + ' rows');
-  
-  var RAW = {
-    // Shape expected by kpi-dashboard.html
+// ── LAYOUT (tabs, KPIs, charts, tables, filters — contract in dashboard.template.html) ───────────────
+const LAYOUT = {
+  date_field: 'date',
+  filters: [{ key: 'region', label: 'Region', field: 'region', scope: 'global' }],
+  tabs: [{
+    id: 'overview', label: 'Overview',
     kpis: [
-      { label: 'Total Revenue',    value: num(kpi.total_revenue, 0),   format: 'currency' },
-      { label: 'Orders',           value: num(kpi.order_count, 0),     format: 'number'   },
-      { label: 'Avg Order Value',  value: num(kpi.avg_order_value, 2), format: 'currency' },
-      { label: 'Record Count',     value: num(kpi.order_count, 0),     format: 'number'   }
+      { label: 'Revenue', dataset: 'daily', agg: 'sum', field: 'revenue', format: 'currency', info: 'SUM(amount), cancelled orders excluded' },
+      { label: 'Orders', dataset: 'daily', agg: 'sum', field: 'orders', format: 'number', info: 'COUNT(order_id), cancelled orders excluded' },
+      { label: 'Avg order value', dataset: 'daily', agg: 'ratio', num: 'revenue', den: 'orders', format: 'currency', info: 'Revenue / Orders' },
     ],
-    summary: {
-      source:  DB + '.your_table_name',   // <-- replace
-      period:  'All time',
-      records: num(kpi.order_count, 0),
-      updated: new Date().toLocaleString()
-    },
-    // Shape expected by multi-chart-dashboard.html
-    by_region:    breakdownRows,
-    trend:        trendRows.map(function(r) { return { label: r.month, sales: r.revenue, orders: 0 }; }),
-    distribution: breakdownRows.slice(0, 5).map(function(r) { return { label: r.label, value: r.revenue }; }),
-    top_items:    breakdownRows.slice(0, 5).map(function(r) { return { label: r.label, revenue: r.revenue }; }),
-    // Shape expected by table-dashboard.html
-    rows: []  // populate with a row-level query if needed
-  };
+    charts: [
+      { type: 'line', title: 'Revenue by day', dataset: 'daily', x: 'date', series: [{ label: 'Revenue', agg: 'sum', field: 'revenue' }] },
+      { type: 'hbar', title: 'Revenue by region', dataset: 'daily', x: 'region', top: 10, series: [{ label: 'Revenue', agg: 'sum', field: 'revenue' }] },
+    ],
+    tables: [],
+  }],
+};
 
-  // ── Size check ──────────────────────────────────────────────────────────────
-  var json = JSON.stringify(RAW);
-  var sizeBytes = Buffer.byteLength(json, 'utf8');
-  console.log('Payload size: ' + (sizeBytes / 1024).toFixed(1) + ' KB');
+// ── ENGINE (shared — do not edit in project copies) ──────────────────────────────────────────────
+const TEMPLATE = process.env.DASHBOARD_TEMPLATE || path.join(__dirname, 'dashboard.template.html');
+const OUTPUT = process.env.DASHBOARD_OUTPUT || path.join(__dirname, 'dashboard.html');
+const CHARTJS = process.env.DASHBOARD_CHARTJS || path.join(__dirname, 'chart.umd.min.js');
+const MAX_BYTES = 2 * 1024 * 1024; // RAW hard stop; < 500 KB is the target
 
-  if (sizeBytes > 2 * 1024 * 1024) {
-    var sizeKB = (sizeBytes / 1024).toFixed(0);
-    console.error('');
-    console.error('❌ Payload too large: ' + sizeKB + ' KB (limit: 2,000 KB)');
-    console.error('dashboard.html cannot be self-contained at this size.');
-    console.error('Reduce the payload before re-running:');
-    console.error('');
-    console.error('  1. Pre-aggregate by filter dimensions:');
-    console.error('     GROUP BY region, channel, date_month');
-    console.error('     → Reduces 10,000 rows to 100-200 rows (95% reduction)');
-    console.error('');
-    console.error('  2. Narrow the time window:');
-    console.error('     WHERE date >= CURRENT_DATE - 90  (not all-time)');
-    console.error('');
-    console.error('  3. Drop unused columns:');
-    console.error('     SELECT only columns the dashboard renders');
-    console.error('');
-    console.error('  4. Coerce numeric strings to numbers in generate-data.js:');
-    console.error('     num(row.revenue)  instead of  row.revenue');
-    console.error('');
-    process.exit(1);
-  } else {
-    // ── Pattern A: inject inline into template ────────────────────────────────
-    var template = fs.readFileSync(TEMPLATE_PATH, 'utf8');
-    if (template.indexOf('<!-- DATA_PLACEHOLDER -->') === -1) {
-      console.error('ERROR: dashboard.template.html missing <!-- DATA_PLACEHOLDER -->');
-      process.exit(1);
-    }
-    var dataBlock = '<script>var RAW = ' + json + ';<\/script>';
-    var html = template.replace('<!-- DATA_PLACEHOLDER -->', dataBlock);
+function fail(msg) { console.error('ERROR: ' + msg); process.exit(1); }
 
-    // Optional: inject render.js inline (avoids external script dependency in delivered file)
-    // Add <!-- RENDER_JS_PLACEHOLDER --> to template where render.js should be inlined.
-    if (html.indexOf('<!-- RENDER_JS_PLACEHOLDER -->') !== -1) {
-      var renderJs = fs.readFileSync(path.join(__dirname, 'render.js'), 'utf8');
-      html = html.replace('<!-- RENDER_JS_PLACEHOLDER -->', '<script>' + renderJs + '<\/script>');
-    }
-
-    fs.writeFileSync(OUTPUT_PATH, html, 'utf8');
-    console.log('Written: ' + OUTPUT_PATH + ' (' + (Buffer.byteLength(html, 'utf8') / 1024).toFixed(0) + ' KB)');
-    console.log('Open: open "' + OUTPUT_PATH + '"');
-  }
+function checkConfig() {
+  const text = JSON.stringify({ CONFIG, QUERIES });
+  const left = text.match(/<(source_database|sink_database|table)>/g);
+  if (left) fail('placeholders left in CONFIG/QUERIES: ' + [...new Set(left)].join(', '));
 }
 
-main();
+function runQuery(name, q) {
+  const db = CONFIG.databases[q.db];
+  if (!db) return Promise.reject(new Error(`${name}: unknown db '${q.db}'`));
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'dash-'));
+  const sqlFile = path.join(dir, 'q.sql'), outFile = path.join(dir, 'out.json');
+  const sql = /\blimit\s+\d+\s*$/i.test(q.sql.trim()) ? q.sql : `${q.sql.trim()}\nLIMIT ${q.limit}`;
+  fs.writeFileSync(sqlFile, sql);
+  const started = Date.now();
+  return new Promise((resolve, reject) => {
+    execFile('tdx', ['--json', 'query', '-d', db, '-f', sqlFile, '--output', outFile],
+      { maxBuffer: 64 * 1024 * 1024, timeout: 300000 }, (err, _stdout, stderr) => {
+        try {
+          if (err) throw new Error(`${name}: tdx failed — ${String(stderr || err.message).split('\n').slice(-3).join(' ').trim()}`);
+          const rows = JSON.parse(fs.readFileSync(outFile, 'utf8'));
+          if (!Array.isArray(rows)) throw new Error(`${name}: unexpected output`);
+          if (rows.length >= q.limit) throw new Error(`${name}: ${rows.length} rows reached LIMIT ${q.limit} — results would be truncated; aggregate further or raise the limit`);
+          if (rows.length) {
+            const missing = q.columns.filter((c) => !(c in rows[0]));
+            if (missing.length) throw new Error(`${name}: missing columns ${missing.join(', ')}`);
+          }
+          rows.forEach((r) => q.numeric.forEach((c) => {
+            if (r[c] === null || r[c] === '') { r[c] = null; return; }
+            const n = Number(r[c]);
+            r[c] = Number.isFinite(n) ? Math.round(n * 1e6) / 1e6 : null; // keeps ratio precision, drops float noise
+          }));
+          console.log(`  ${name}: ${rows.length} rows (${Date.now() - started} ms)`);
+          resolve(rows);
+        } catch (e) { reject(e); } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+      });
+  });
+}
+
+function checkLayout(datasets) {
+  const known = new Set(Object.keys(datasets));
+  const refs = [];
+  LAYOUT.tabs.forEach((t) => [...(t.kpis || []), ...(t.charts || []), ...(t.tables || [])].forEach((w) => refs.push(w.dataset)));
+  const bad = refs.filter((d) => !known.has(d));
+  if (bad.length) fail('LAYOUT references unknown datasets: ' + [...new Set(bad)].join(', '));
+}
+
+async function main() {
+  checkConfig();
+  for (const f of [TEMPLATE, CHARTJS]) if (!fs.existsSync(f)) fail('not found: ' + f);
+  console.log(`Querying ${Object.keys(QUERIES).length} datasets in parallel...`);
+  const names = Object.keys(QUERIES);
+  const results = await Promise.all(names.map((n) => runQuery(n, QUERIES[n]))).catch((e) => fail(e.message));
+  const datasets = {};
+  names.forEach((n, i) => { if (n !== 'meta') datasets[n] = results[i]; });
+  checkLayout(datasets);
+  const meta = results[names.indexOf('meta')][0] || {};
+  const RAW = {
+    meta: { title: CONFIG.title, subtitle: CONFIG.subtitle, timezone: CONFIG.timezone, currency: CONFIG.currency,
+      data_start: meta.data_start, data_end: meta.data_end, generated_at: new Date().toISOString().slice(0, 16).replace('T', ' ') + ' UTC' },
+    datasets, layout: LAYOUT,
+  };
+  // Escape '<' so customer strings like "</script>" or "<!--" cannot break the page.
+  const json = JSON.stringify(RAW).replace(/</g, '\\u003c');
+  const bytes = Buffer.byteLength(json, 'utf8');
+  if (bytes > MAX_BYTES) fail(`data payload ${(bytes / 1048576).toFixed(2)} MB > 2 MB — drop high-cardinality filters, coarsen the time grain, shorten history, or keep top-N`);
+  const template = fs.readFileSync(TEMPLATE, 'utf8');
+  for (const marker of ['<!-- DATA_PLACEHOLDER -->', '<!-- CHARTJS_PLACEHOLDER -->']) {
+    if (template.split(marker).length !== 2) fail('template must contain ' + marker + ' exactly once');
+  }
+  const chartjs = fs.readFileSync(CHARTJS, 'utf8').replace(/<\/script/gi, '<\\/script');
+  // Replacer functions: '$&' or '$1' inside data must not be treated as replacement patterns.
+  const html = template
+    .replace('<!-- CHARTJS_PLACEHOLDER -->', () => `<script>${chartjs}</script>`)
+    .replace('<!-- DATA_PLACEHOLDER -->', () => `<script>var RAW = ${json};</script>`);
+  fs.mkdirSync(path.dirname(OUTPUT), { recursive: true });
+  fs.writeFileSync(OUTPUT, html, 'utf8');
+  console.log(`Written: ${OUTPUT} (data ${(bytes / 1024).toFixed(0)} KB, file ${(Buffer.byteLength(html) / 1024).toFixed(0)} KB)`);
+}
+
+main().catch((e) => fail(e.message));

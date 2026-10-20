@@ -1,13 +1,13 @@
 <!--
 PURPOSE OF THIS FILE
-Schema facts for the tables the dashboard reads (SINK tables if Phase 2 ran, source tables
+Schema facts for the tables the dashboard reads (SINK tables if a workflow ran, source tables
 always), so the dashboard agent picks the right table, column and time field without re-exploring.
 Business meaning belongs in business-context.md; formulas in metrics-catalog.md.
 
 HOW TO USE
-Skeleton — never filled in place, never installed. Copied at the end of Phase 1 (Step 1v) to
+Skeleton — never filled in place, never installed. Written by the builder (Step 4) to
   agent_outputs/<project_slug>/data-dictionary.md
-and completed in Phase 2 (SINK tables) and Phase 3 (columns the dashboard reads).
+from discovery, the SINK tables (if any) and the columns the dashboard reads.
 Every agent build copies the engagement file into the agent's references/. Fill every [bracketed]
 field; delete sections that don't apply and this comment in the copy. Aggregates only — never raw
 customer records or PII.
@@ -18,7 +18,7 @@ customer records or PII.
 ## SINK Database
 
 **Database:** `[sink_db_name — or 'none (Non-Workflow path)']`  
-**Created by:** [workflow_project_name] (Phase 2)  
+**Created by:** [workflow_project_name]  
 **Refresh schedule:** [daily/weekly — e.g., "Daily at 2 AM UTC"]  
 **Source database:** `[source_db_name]`
 

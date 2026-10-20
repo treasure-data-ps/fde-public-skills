@@ -31,15 +31,14 @@ Run every command from the Work Folder root. Never `cd` on its own — use a sub
 When the user asks to see, open or refresh the dashboard:
 
 ```bash
-DASHBOARD_TEMPLATE=".claude/skills/{{agent_name}}/references/dashboard.template.html" \
-DASHBOARD_OUTPUT="{{engagement_dir}}/dashboards/dashboard.html" \
-SOURCE_DB={{source_database}} SINK_DB={{sink_database}} \
-node ".claude/skills/{{agent_name}}/references/generate-data.js"
+DASHBOARD_OUTPUT="{{engagement_dir}}/dashboards/dashboard.html" node ".claude/skills/{{agent_name}}/references/generate-data.js"
 ```
+
+(The script, the template and Chart.js sit next to each other in `references/`; databases and queries are already set in the script.)
 
 Then open `{{engagement_dir}}/dashboards/dashboard.html` (`preview_document`, `mcp__work__open_file`, or `open`). Summarize in 2–3 lines: data date range, the headline KPIs, anything notable. The script inlines all data — never type data into the HTML, and never read the raw query output into the chat.
 
-If the script fails: SINK tables missing → say the workflow has not run (`tdx wf sessions <project>` in `project_state.md`); a column error → the source schema changed — say which column and offer to update the queries (section 4).
+If the script fails, it says why: a placeholder left, a missing column (the schema changed — offer to update the query, section 4), a query that reached its LIMIT (aggregate further), a payload over 2 MB (reduce, section 4), or a missing SINK table (the workflow has not run — `tdx wf sessions <project>`).
 
 ## 2. Explain metrics and numbers
 
@@ -61,15 +60,15 @@ Questions the dashboard does not show but the same data can answer:
 
 ## 4. Add or change a metric
 
-When the user asks to add a KPI, chart, filter or breakdown, or to change a definition:
+When the user asks to add a KPI, chart, filter, table or tab, or to change a definition:
 
-1. Confirm the definition in business words and check every column exists (`data-dictionary.md`, `DESCRIBE` / `SHOW COLUMNS`). Show the query and its result for the current period before changing any file.
-2. Edit the **master copies** in `{{engagement_dir}}/dashboards/` — the query in `generate-data.js`, the widget in `dashboard.template.html` (keep the `<!-- DATA_PLACEHOLDER -->` comment, the layout and the theme) — then preview from them and open the result:
+1. Confirm the definition in business words and check every column exists (`data-dictionary.md`, `SHOW COLUMNS FROM <table>`). Show the query and its result for the current period before changing any file.
+2. Edit only the **master copy** `{{engagement_dir}}/dashboards/generate-data.js` — add or change a dataset in `QUERIES` (aggregated, explicit `LIMIT`, exclusions applied) and the widget in `LAYOUT` (KPIs, charts, tables, filters, tabs — contract at the top of `dashboard.template.html`). Ratios use `agg: 'ratio'` with numerator and denominator columns; distinct counts only at their display grain. The HTML template itself does not change. Preview and open:
    ```bash
-   SOURCE_DB={{source_database}} SINK_DB={{sink_database}} node "{{engagement_dir}}/dashboards/generate-data.js"
+   node "{{engagement_dir}}/dashboards/generate-data.js"
    ```
-3. After the user approves: add the metric to `{{engagement_dir}}/metrics-catalog.md` and the query to `{{engagement_dir}}/sql-templates.md`, then copy the four changed files into `.claude/skills/{{agent_name}}/references/`. Record the change (date, metric, reason) in `{{engagement_dir}}/project_state.md`.
-4. A metric that needs new pre-aggregated SINK tables needs a workflow change — say so and stop; that is done with the dashboard builder (Phase 2).
+3. After the user approves: add the metric to `{{engagement_dir}}/metrics-catalog.md` and the query to `{{engagement_dir}}/sql-templates.md`, copy `generate-data.js`, `metrics-catalog.md` and `sql-templates.md` into `.claude/skills/{{agent_name}}/references/`, and record the change (date, metric, reason) in `{{engagement_dir}}/project_state.md`.
+4. A metric that needs a new pre-aggregated SINK table needs a workflow change — say so and stop; ask the dashboard builder to update the workflow.
 
 ## 5. Insights and trends
 

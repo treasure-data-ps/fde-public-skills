@@ -5,8 +5,8 @@ exclusions, validated value and where it appears. The dashboard agent reads it t
 and to add new metrics consistently.
 
 HOW TO USE
-Skeleton — never filled in place, never installed. Filled in Phase 4 from the approved Phase 3 queries (generate-data.js) and the
-Phase 1 metric formulas, in the agent staging folder (references/metrics-catalog.md).
+Skeleton — never filled in place, never installed. Written by the builder (Step 4) to agent_outputs/<project_slug>/metrics-catalog.md from the
+confirmed formulas, generate-data.js and the spot-checks.
 Every agent build copies the engagement file into the agent's references/. Fill every [bracketed]
 field; delete sections that don't apply and this comment in the copy. Aggregates only — never raw
 customer records or PII.

@@ -7,16 +7,16 @@ non-negotiable. The agent reads it every session and applies it over generic int
 Table and column facts belong in data-dictionary.md; formulas and SQL in metrics-catalog.md.
 
 HOW TO USE
-Skeleton — never filled in place, never installed. Copied at the end of Phase 1 (Step 1v) to
+Skeleton — never filled in place, never installed. Written by the builder (Step 4) to
   agent_outputs/<project_slug>/business-context.md
 Open questions go to the customer through requirements.md; answers are merged back; the file is
-confirmed in Phase 5. Every agent build copies the engagement file into the agent's references/.
+confirmed later by the user or customer. Every agent build copies the engagement file into the agent's references/.
 
 AUTHORING RULES (for the engagement copy)
 - Replace each question with a terse answer bullet once known. Reader is the agent: concrete and
   imperative, with real column names and values in backticks.
   "Revenue excludes refunds (`order_status = 'refunded'`)", "Call the West region 'Pacific'".
-- User-confirmed Phase 1 answers are plain facts. Mark inferences from the data
+- What the user said at intake is a plain fact. Mark inferences from the data
   `[INFERRED — please confirm]`; keep unanswered questions as `- [NEEDS YOUR INPUT] <question>`.
   Remove a marker once answered or confirmed. Use only these two markers.
 - Business knowledge only — no notes on how the setup is run (those go in project_state.md).

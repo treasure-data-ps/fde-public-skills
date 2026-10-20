@@ -1,11 +1,11 @@
 <!--
 PURPOSE OF THIS FILE
-The dashboard's queries, parameterized, plus the workflow SQL (if Phase 2 ran) and source-table
+The dashboard's queries, parameterized, plus the workflow SQL (if a workflow ran) and source-table
 fallbacks. The dashboard agent reuses them for ad-hoc questions and as the pattern for new metrics.
 
 HOW TO USE
-Skeleton — never filled in place, never installed. Filled in Phase 4 from the approved generate-data.js and the workflow SQL, in the agent
-staging folder (references/sql-templates.md).
+Skeleton — never filled in place, never installed. Written by the builder (Step 4) to agent_outputs/<project_slug>/sql-templates.md from
+generate-data.js and the workflow SQL.
 Every agent build copies the engagement file into the agent's references/. Fill every [bracketed]
 field; delete sections that don't apply and this comment in the copy. Aggregates only — never raw
 customer records or PII.
@@ -38,7 +38,7 @@ FROM {SINK_DB}.fact_bookings
 -- Exclusions: [describe what is excluded and why]
 ```
 
-**Validated value (Phase 1/3 spot-check):** total_bookings = [N], total_revenue = $[N]
+**Validated value (spot-check):** total_bookings = [N], total_revenue = $[N]
 
 ---
 
@@ -64,27 +64,27 @@ ORDER BY month
 
 ---
 
-## Template 5 (Project-Specific): [Most-Asked Question from Phase 1 Stage A]
+## Template 5 (Project-Specific): [Most-Asked Question from intake]
 
 **Purpose:** Every engagement has one question customers will ask first — capture it here as a named, validated template so the agent answers it correctly on first try, without re-deriving the SQL.
 
-**Triggered by:** [The exact phrasing captured in project_state.md during Phase 1 — e.g. "biggest churn risk area", "which segment should we focus on", "what drove last month's revenue drop"]
+**Triggered by:** [The exact phrasing captured at intake (project_state.md) — e.g. "biggest churn risk area", "which segment should we focus on", "what drove last month's revenue drop"]
 **Expected shape:** [N] rows, shape: `{ [dim_1], [dim_2], [metric] }`
 **Row count expectation:** [N] rows, sums to [confirmed total from project_state.md]
 
 ```sql
 -- Customize: replace with the validated SQL for this project's #1 business question.
--- This query was run and confirmed in Phase 3 — do not change column names or GROUP BY.
+-- This query was run and confirmed in the first build — do not change column names or GROUP BY.
 SELECT [dim_1], [dim_2], SUM([metric_col]) AS [metric_alias]
 FROM {SINK_DB}.[table]
-WHERE [exclusion_clause]   -- from Phase 1/2 filter scope map; omit if no exclusion
+WHERE [exclusion_clause]   -- from the confirmed exclusions; omit if no exclusion
 GROUP BY [dim_1], [dim_2]
 ORDER BY [metric_alias] DESC
 ```
 
 **Validation:** SUM([metric_alias]) across all rows = [confirmed total from project_state.md]
 
-> **Why Template 5 matters:** This template anchors the agent's first real interaction with the user. Without it, the agent writes a fresh query on the fly — risking fan-out, wrong column names, or missing the exclusion clause. Populate this before the Track B push in Phase 4.
+> **Why Template 5 matters:** This template anchors the agent's first real interaction with the user. Without it, the agent writes a fresh query on the fly — risking fan-out, wrong column names, or missing the exclusion clause. Populate it when the skill is built.
 
 ---
 
@@ -198,7 +198,7 @@ Use this when a user asks: "How often does this data update?", "Where is the wor
 [source_db].[raw_tables]
   → dashboard-workflow-data-prep.dig (SQL aggregations)
   → [sink_db].fact_* (SINK tables — one per domain)
-  → Phase 3 dashboard queries
+  → dashboard queries
   → dashboard.html (HTML Client)
 ```
 
@@ -206,7 +206,7 @@ Use this when a user asks: "How often does this data update?", "Where is the wor
 
 | Field | Value |
 |---|---|
-| **Date** | [Last validated date from Phase 2] |
+| **Date** | [Last validated date] |
 | **Attempt ID** | [attempt_id from `tdx wf timeline`] |
 | **Row counts** | [table: N rows, table: N rows, ...] |
 
@@ -218,4 +218,4 @@ Use this when a user asks: "How often does this data update?", "Where is the wor
 | SINK table missing | SQL task failed | `tdx wf attempt [id] tasks --include-subtasks` |
 | Row count = 0 | Date range in input_params.yaml doesn't overlap source data | Update `start_date` / `end_date` in params, re-push, re-run |
 
-→ For full troubleshooting: `../../../phase-2/references/testing-troubleshooting.md` (if Phase 2 was run) or `../../../phase-3/references/testing-troubleshooting.md`
+→ Workflow troubleshooting: the builder's `references/workflow-setup.md`.

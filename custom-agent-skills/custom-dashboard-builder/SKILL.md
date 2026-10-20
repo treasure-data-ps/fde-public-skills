@@ -1,117 +1,78 @@
 ---
 name: fde-tais-custom-dashboard-builder
 description: >-
-  Build or resume a custom HTML dashboard on Treasure Data data, and the project's own dashboard
-  agent, through a questionnaire-led 5-phase pipeline: requirements and data discovery (with a
-  recommended architecture — direct queries or a pre-aggregating workflow), optional workflow,
-  dashboard build, the dashboard agent installed as a Work Folder skill, and an evaluation until it
-  is production-ready. Trigger when the user asks to build, create, make, develop, or resume a
-  dashboard, analytics dashboard, KPI dashboard, HTML dashboard, Treasure Data dashboard,
-  Treasure Insights dashboard, Sisense dashboard migration, .dash conversion, dashboard from
-  SQL/data, dashboard from a Treasure Data table, interactive dashboard, dashboard workflow,
-  SINK dashboard, dashboard validation, dashboard agent, or dashboard handoff documentation. Also
-  trigger when the user says resume dashboard, continue dashboard, dashboard requirements,
-  dashboard questionnaire, dashboard data discovery, dashboard performance, dashboard filters,
-  dashboard KPIs, dashboard to HTML, or dashboard from a .dash file. Do not skip the Phase 1
-  questionnaire or any execution-contract gate; special-case imports prefill answers but still
-  require explicit confirmation.
+  Build a custom HTML dashboard on Treasure Data data — new, or converted from an existing dashboard
+  (.dash export, HTML file, screenshot) — and turn it into the project's dashboard skill that opens,
+  explains and extends it. Discovers the data, recommends direct queries or a pre-aggregating workflow,
+  builds a first draft and registers it in the Work Folder. Trigger when the user asks to build, create,
+  convert, migrate or resume a dashboard, KPI dashboard, HTML dashboard, Treasure Data dashboard,
+  Treasure Insights / Sisense dashboard migration, .dash conversion, dashboard from a screenshot or
+  mockup, dashboard from a table, dashboard workflow, or a dashboard agent / dashboard skill.
 ---
 
-# FDE TAIS Dashboard Builder
+# Custom Dashboard Builder
 
-> **⚠️ CRITICAL: Read instructions in this order:**
-> 1. **`./INSTRUCTIONS.md`** (master instructions — load first)
-> 2. **`./references/execution-contract.md`** (non-skippable gates and checkpoint ledger)
-> 3. **The current phase's files** (Phase Reference Index below)
-> 4. **`./SKILL.md`** (this file)
-> 5. **Re-read after context compaction** (mandatory)
+Turns a list of metrics and filters — or an existing dashboard — into a single offline `dashboard.html` built from live Treasure Data queries, plus a **dashboard skill** for the project. Setup is a first draft with as few questions as possible; the user iterates afterwards through the dashboard skill (change metrics, filters, business context).
 
-Builds a custom dashboard from Treasure Data databases and the project's **dashboard agent** with a self-serve 5-phase pipeline. Rendering is always **HTML Client** — a single portable `dashboard.html` with data inlined at build time. Everything is local to the Work Folder: engagement files in `agent_outputs/<project_slug>/`, the agent in `.claude/skills/<project_slug>-dashboard-agent/`.
+**`<skill_dir>`** = the folder containing this file — resolve it to an absolute path before running anything from it. Commands run from the Work Folder root. Templates in `<skill_dir>/project_templates/` are read-only: copy, then edit the copy.
 
-**`<skill_dir>`** = the folder containing this `SKILL.md` — resolve it to an absolute path from the skill's base directory before running any command that reads from it (templates in `<skill_dir>/project_templates/`, scripts in `<skill_dir>/tools/`, shared patterns in `<skill_dir>/../shared/`). Commands run from the Work Folder, never from `<skill_dir>`. Templates are read-only: copy them into the project folder and edit the copy.
+## The flow
 
----
+| Step | What happens | Asks the user |
+|---|---|---|
+| 1. Intake | Existing dashboard or metric list, database, project name | 1–2 questions |
+| 2. Data Q&A + recommendation | Discovery queries, data quality, size; direct or workflow | 1 (accept the recommendation) |
+| 3. Workflow (only if recommended) | Plan, defaults, build, run, validate, report | 1 (approve build + run) |
+| 4. Dashboard + dashboard skill | First draft, spot-checks, knowledge files, register | 1 (register the skill) |
 
-## How to Start
+Start with one sentence on what will happen and this table. Then go straight into Step 1. Use `AskUserQuestion` for every question, with a `(Recommended)` default; never ask what the data can answer. Between steps, give a 2–4 line summary and continue — don't wait for "go on".
 
-This builder follows the custom-agent principles in `<skill_dir>/../shared/playbook.md` (template copied into the Work Folder → data exploration → business context → agent → evaluation → production-ready) with its own phases, gates and approval phrases — the execution contract wins where they differ.
+**Resume:** if `agent_outputs/*/project_state.md` with **Solution:** `dashboard-builder` exists, ask "new dashboard or continue `<project>`?" and pick up at its Next Action.
 
-### Step 0: Engagement Type
+## Step 1 — Intake
 
-**Ask the user:** "Is this a new dashboard engagement, or are you resuming an existing one?" — wait for the answer before any other step.
+Read `references/intake.md`. One `AskUserQuestion` batch:
 
-#### New engagement
+- **Starting point:** "I have an existing dashboard" (attach a `.dash` export, an HTML file or a screenshot) / "I'll list the metrics and filters".
+- **Database:** the database the tables live in — offer the likely ones from `tdx databases` (never assume).
 
-1. Re-read `./references/execution-contract.md` and `./references/guardrails-lite.md`.
-2. Say: "For this project, here are the 5 phases we'll work through step by step." and show:
+Then read the dashboard (intake.md) or take the metric list, and derive the project name from the dashboard title (`<project_slug>`, lowercase with hyphens, e.g. `sales-performance`). Bootstrap the workspace — `<skill_dir>/../shared/local_outputs.md` Step 1 — and create `agent_outputs/<project_slug>/project_state.md` (`<skill_dir>/../shared/project_state.md`, **Solution:** `dashboard-builder`). Say once that all data in the HTML file is visible to anyone who opens it.
 
-   ```
-   📊 FDE TAIS Dashboard Builder — Project Phases
+## Step 2 — Data Q&A and recommendation
 
-   ✅ Phase 1: Requirements + Data Discovery
-      → Stage A: KPIs, dimensions, filters, audience, success metrics
-      → Stage B: validate tables/columns, recommend metrics/dimensions, dashboard plan
-      → Output: Dashboard Complexity Score (0-6) + recommended architecture + business context draft
+Read `references/data-discovery.md` and run it without asking: tables and columns, the business time column and timezone, each metric validated as a formula on live data, joins checked for fan-out, the data-quality gate, dimension cardinality, payload estimate, query times. Ask only what the data can't answer (e.g. which column defines "cancelled", or a metric with two valid definitions).
 
-   ✅ Phase 2: Deploy Dashboard Workflow  [Optional — recommended for Score 4-6]
-      → Scheduled workflow that pre-aggregates metrics into SINK tables
+Present one summary — metrics as formulas with their current values, filters, data range, caveats — and the **recommendation** (direct `generate-data.js` + template, or a workflow first) with its reasons. One question: accept, or switch path. Record everything in `project_state.md` → Discovery Findings.
 
-   🎨 Phase 3: Build Interactive Dashboard
-      → dashboard.template.html + generate-data.js → dashboard.html, iterated until you approve it
+## Step 3 — Workflow (only when recommended)
 
-   🤖 Phase 4: Dashboard Agent
-      → Your project skill: opens and refreshes the dashboard, explains every metric,
-        answers follow-up data questions, adds metrics — installed in this Work Folder
+Read `references/workflow-setup.md`. Show the plan — SINK tables with their grain and measures, the refresh mode, and the defaults for the workflow project name and `sink_database` (checked to be free). One `AskUserQuestion`: "Build, run and validate (Recommended)" / "Change names first" / "Skip the workflow — build directly". On approval: copy and customize the template, push, run, monitor, validate the SINK tables against the source, and report (tables, rows, spot-checks, issues). If validation fails, fix and re-run before Step 4.
 
-   🧪 Phase 5: Evaluation → Production-Ready
-      → 10 test prompts until the agent passes; optional handoff docs
-   ```
+## Step 4 — First-draft dashboard and dashboard skill
 
-3. Read `./phase-1/INSTRUCTIONS.md` and start Phase 1. After Phase 1, route to Phase 2 or Phase 3 per the path decision.
+1. **Dashboard** — `references/dashboard-build.md`: copy `project_templates/dashboard_template/` into `agent_outputs/<project_slug>/dashboards/`, write `CONFIG`, `QUERIES` and `LAYOUT` in `generate-data.js`, run it, spot-check ≥ 3 KPIs against the source (exact match), and show the dashboard.
+2. **Knowledge files and agent build** — `references/agent-setup.md`: write `business-context.md` (inferences flagged for review), `data-dictionary.md`, `metrics-catalog.md` and `sql-templates.md` in `agent_outputs/<project_slug>/`, then build the skill in the staging folder (`<skill_dir>/../shared/customer_agent_pattern.md` Step 2).
+3. **Register** — one `AskUserQuestion`: "Register as a skill in this Work Folder (Recommended)" / "Not yet". On yes: install to `.claude/skills/<project_slug>-dashboard/` (pattern Step 3), run its build check, and show how to use it: "Show me the dashboard", "How is <KPI> calculated?", "Add <metric> to the dashboard".
+4. Update `project_state.md`: Current phase "complete — dashboard skill live" (or "awaiting registration"), what was built, open business-context items.
 
-**Special case — `.dash` file:** if the user provides a Sisense / Treasure Insights `.dash` export (or JSON with a `"widgets"` array and a `"datasource"` key) during session setup, Phase 1 converts it with `<skill_dir>/tools/dash_to_html.py` and prefills requirements and discovery — `./phase-1/references/steps-1pre.md` ("`.dash` / Sisense Special Case"). Prefilled answers are still shown and confirmed.
+After Step 4 the user iterates through the dashboard skill. **On request only:** a 10-prompt evaluation of the skill (`references/eval-setup.md` + `<skill_dir>/../shared/eval_pattern.md`), a customer requirements questionnaire for the open business-context items (`references/requirements_doc.md`), handoff docs (`references/handoff-docs.md`), or a workflow change.
 
-#### Resuming
+## Rules
 
-1. Re-read `./references/execution-contract.md` and `./references/guardrails-lite.md`.
-2. List `agent_outputs/*/project_state.md` and keep those whose **Solution** is `dashboard-builder`; confirm the project with `AskUserQuestion`.
-3. Read it: the header's Current phase and Next Action say where to pick up; the Phase Ledger holds every earlier decision. Show a short "Resuming" summary (completed phases, next action, key details) and continue at the next incomplete phase.
+- **Live data only.** Every number comes from a query; data reaches the HTML only through `generate-data.js`. Never type data into files.
+- **Query results never enter the chat.** Results flow `tdx → generate-data.js → dashboard.html`; checks use aggregate queries that return single numbers.
+- **Nothing changes in the account without approval** — the workflow (Step 3) and the skill registration (Step 4) are the two approval points. Everything else is read-only.
+- **Local only.** All files stay in the Work Folder (`agent_outputs/<project_slug>/`, `.claude/skills/<project_slug>-dashboard/`); nothing is uploaded or hosted. No generated `dashboard.html` or query output inside `.claude/skills/`.
+- **No PII rows in the HTML** — aggregate, or mask.
+- Templates and shipped scripts are pre-validated: fill them in, don't rewrite the engine.
 
----
+## Quick reference
 
-## Phase Reference Index
-
-| Phase | Read | Key output | Condition |
-|-------|------|-----------|-----------|
-| **1: Requirements + Data Discovery** | `./phase-1/INSTRUCTIONS.md` | Score (0-6) + path decision + `project_state.md`; `business-context.md`, `data-dictionary.md`, `requirements.md` (Step 1v) | Always |
-| **2: Workflow** | `./phase-2/INSTRUCTIONS.md` | SINK tables deployed + validated (`agent_outputs/<project_slug>/workflows/`) | Optional — Score 4-6 recommended, user can override |
-| **3: Build Dashboard** | `./phase-3/INSTRUCTIONS.md` | Approved `dashboard.template.html` + `generate-data.js` + `dashboard.html` (`agent_outputs/<project_slug>/dashboards/`) | Always |
-| **4: Dashboard Agent** | `./phase-4/INSTRUCTIONS.md` | `<project_slug>-dashboard-agent` installed to `.claude/skills/` | Always |
-| **5: Evaluation → Production-Ready** | `./phase-5/INSTRUCTIONS.md` | `eval.md` rounds until ≥ 9/10 Pass + every Compliance case; finalized agent; optional docs | Always |
-
-**Path decision at the end of Phase 1** (user can override): Score 0-2 → Phase 3 directly; Score 3 → user chooses; Score 4-6 → Phase 2, then Phase 3.
-
-The state pattern (`project_state.md` header + append-only Phase Ledger) is in `./references/architecture-and-state.md`.
-
----
-
-## How It Works
-
-1. **Phase 1** asks what the dashboard must show and for whom, checks every metric against the live data, scores the complexity and recommends the architecture (direct queries or a pre-aggregating workflow). It drafts the business context and data dictionary the agent will use, and a requirements doc for the customer.
-2. **Phase 2** (optional) deploys a scheduled workflow from `project_templates/workflow_template/` that writes SINK tables.
-3. **Phase 3** copies `project_templates/dashboard_template/`, writes the queries in `generate-data.js`, renders `dashboard.html` and iterates with the user until approved.
-4. **Phase 4** builds the dashboard agent from `project_templates/agent_template/` with the approved template and script and four knowledge files (business context, data dictionary, metrics catalog, SQL templates), and installs it with `<skill_dir>/../shared/customer_agent_pattern.md`.
-5. **Phase 5** evaluates the agent with `<skill_dir>/../shared/eval_pattern.md` and finalizes it.
-
-## Quick Reference
-
-- **Solution:** `dashboard-builder` (the **Solution** line in `project_state.md`)
-- **Engagement folder:** `agent_outputs/<project_slug>/` — `project_state.md`, `business-context.md`, `data-dictionary.md`, `metrics-catalog.md`, `sql-templates.md`, `requirements.md`, `workflows/`, `dashboards/`, `agent_build/`, `eval.md`, `docs/`
-- **Agent:** `.claude/skills/<project_slug>-dashboard-agent/`
-- **Templates:** `project_templates/workflow_template/`, `dashboard_template/`, `agent_template/`
-- **Approval phrases:** `YES, APPROVE [ACTION]` (execution contract), e.g. `YES, APPROVE AGENT INSTALL FOR <name>`
-- **Production bar:** ≥ 9/10 Pass and every Compliance case Pass
-
-## Security & Privacy
-
-**STRICT RULE:** query results flow through `generate-data.js` into the HTML, never into the chat context (`./references/guardrails-lite.md`). Nothing is uploaded or hosted — the dashboard and the agent stay in the Work Folder.
+| Item | Value |
+|---|---|
+| Engagement folder | `agent_outputs/<project_slug>/` — `project_state.md`, knowledge files, `intake/`, `workflows/`, `dashboards/`, `agent_build/` |
+| Dashboard skill | `.claude/skills/<project_slug>-dashboard/` |
+| Templates | `project_templates/workflow_template/`, `dashboard_template/`, `agent_template/` |
+| Tools | `tools/dash_to_html.py` (`.dash` spec extraction) |
+| Workflow defaults | project `<project_slug>_dashboard` (underscores), tables `<project_prefix>_sink_<group>` |
+| Payload budget | data < 500 KB ideal, ≤ 2 MB hard stop |

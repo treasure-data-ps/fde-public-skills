@@ -1,118 +1,58 @@
 _export:
   !include : 'input_params.yaml'
+  td:
+    database: ${sink_database}
+  # First day re-processed by an incremental run, as 'YYYY-MM-DD' — the staging window (01) and the
+  # DELETE below use this same day-truncated bound, so a rerun never leaves a partial day behind.
+  incr_start_day: ${moment(session_time).utc().startOf('day').subtract(incremental_look_back_days, 'days').format('YYYY-MM-DD')}
 
-# ── Section 1: Source Data Prep (staging table — always create_table:) ──
-#
-# 01_data_prep.sql branches internally on ${refresh_mode} (already exported globally
-# from input_params.yaml) to pick the full start_date→end_date window vs the
-# incremental_look_back_days window — no .dig-level if> branch needed for this task.
-#
-# events_prep is a STAGING table — it only ever needs to hold the current run's window,
-# so create_table: is correct regardless of refresh_mode (this is different from the SINK
-# aggregate tables below, which must accumulate history — see Section 2).
-+prepare_source_data:
-  td>: sql/01_data_prep.sql
+# 1. Staging: this run's window of cleaned source rows (always fully replaced)
++stage_events:
+  td>: sql/01_stage_events.sql
   engine: presto
-  create_table: ${project_prefix}_events_prep
+  create_table: ${project_prefix}_stg_events
 
-+validate_data_quality:
-  td>: sql/02_data_validation.sql
+# 2. Guard: stop before writing SINK tables if staging is empty (full runs) or has rows without a date
++check_staging:
+  td>: sql/02_check_staging.sql
   engine: presto
+  store_last_results: true
 
-# ── Section 2: SINK Table Creation ───────────────────────────────────
-#
-# One task-pair per SINK table — add/remove pairs to match Phase 2 confirmed tables.
-#
-# ⚠️ CRITICAL: full vs incremental use DIFFERENT write strategies. Never use create_table:
-# for the incremental branch of a SINK aggregate table — it REPLACES the entire table,
-# which silently deletes all history outside the current run's lookback window. This is
-# a real incident that happened in production (see incremental_update_patterns.md).
-#
-#   'full'        → create_table: (atomic full replace) — correct because the _full.sql
-#                    query already re-aggregates the ENTIRE historical window.
-#   'incremental' → DELETE the affected date range, then insert_into: the fresh window
-#                    (two separate tasks; the INSERT query never reads from the table it
-#                    writes to — a single query that reads-and-replaces the same table is
-#                    not supported by TD's engine and was found unsafe even via UNION ALL).
-#
-# ⚠️ The DELETE WHERE clause below compares event_date (a BIGINT epoch, produced by
-# TD_DATE_TRUNC in 01_data_prep.sql / 10_/11_/12_ _full.sql) directly against
-# TD_TIME_ADD(...) (also bigint) — do NOT wrap either side in DATE_FORMAT/FROM_UNIXTIME
-# to compare as strings; "bigint <= varchar" is a type error on TD's engine. If your
-# engagement's SINK grain key is a formatted date STRING instead (e.g. '2026-07-19' from
-# DATE_FORMAT(FROM_UNIXTIME(...), '%Y-%m-%d'), as used in some engagements' date columns),
-# compare against the matching string form instead — match the WHERE clause's type to
-# whatever type your grain key column actually is, and verify with a manual DELETE test
-# against a copy of the SINK table before trusting it in the workflow.
-#
-# Rename SQL files and task names to match your engagement
-# (e.g. 10_sink_sales_daily_full.sql / 10_sink_sales_daily_incremental.sql).
++assert_staging:
+  if>: ${(refresh_mode == 'full' && td.last_results.n_rows == 0) || td.last_results.null_dates > 0}
+  _do:
+    fail>: "Staging check failed: n_rows=${td.last_results.n_rows}, null_dates=${td.last_results.null_dates} — check source_table, history_start, table_filter and event_time_expr"
 
-+create_aggregates:
+# 3. SINK tables — one task per table: full = replace the table; incremental = delete the window, then append it.
+#    Never use create_table: in the incremental branch (it would delete all older history).
++sink_daily_metrics:
   if>: ${refresh_mode == 'full'}
   _do:
-    +full:
-      td>: sql/10_create_aggregates_full.sql
-      engine: presto
-      database: ${sink_database}
-      create_table: ${project_prefix}_aggregate_final
+    td>: sql/10_sink_daily_metrics.sql
+    engine: presto
+    create_table: ${project_prefix}_sink_daily_metrics
   _else_do:
-    _retry: 3
-    +delete_lookback_window:
+    +delete_window:
       td>:
-        data: |
-          DELETE FROM ${sink_database}.${project_prefix}_aggregate_final
-          WHERE event_date >= TD_TIME_ADD(TD_SCHEDULED_TIME(), '-${incremental_look_back_days}d', 'UTC')
+        data: "DELETE FROM ${project_prefix}_sink_daily_metrics WHERE event_date >= '${incr_start_day}'"
       engine: presto
-      database: ${sink_database}
-    +insert_fresh:
-      td>: sql/10_create_aggregates_incremental.sql
+    +append_window:
+      td>: sql/10_sink_daily_metrics.sql
       engine: presto
-      database: ${sink_database}
-      insert_into: ${project_prefix}_aggregate_final
+      insert_into: ${project_prefix}_sink_daily_metrics
 
-+create_path_stats:
++sink_daily_users:
   if>: ${refresh_mode == 'full'}
   _do:
-    +full:
-      td>: sql/11_create_path_stats_full.sql
-      engine: presto
-      database: ${sink_database}
-      create_table: ${project_prefix}_path_stats
+    td>: sql/11_sink_daily_users.sql
+    engine: presto
+    create_table: ${project_prefix}_sink_daily_users
   _else_do:
-    _retry: 3
-    +delete_lookback_window:
+    +delete_window:
       td>:
-        data: |
-          DELETE FROM ${sink_database}.${project_prefix}_path_stats
-          WHERE event_date >= TD_TIME_ADD(TD_SCHEDULED_TIME(), '-${incremental_look_back_days}d', 'UTC')
+        data: "DELETE FROM ${project_prefix}_sink_daily_users WHERE event_date >= '${incr_start_day}'"
       engine: presto
-      database: ${sink_database}
-    +insert_fresh:
-      td>: sql/11_create_path_stats_incremental.sql
+    +append_window:
+      td>: sql/11_sink_daily_users.sql
       engine: presto
-      database: ${sink_database}
-      insert_into: ${project_prefix}_path_stats
-
-+create_unique_visitors:
-  if>: ${refresh_mode == 'full'}
-  _do:
-    +full:
-      td>: sql/12_create_unique_visitors_full.sql
-      engine: presto
-      database: ${sink_database}
-      create_table: ${project_prefix}_unique_visitors
-  _else_do:
-    _retry: 3
-    +delete_lookback_window:
-      td>:
-        data: |
-          DELETE FROM ${sink_database}.${project_prefix}_unique_visitors
-          WHERE event_date >= TD_TIME_ADD(TD_SCHEDULED_TIME(), '-${incremental_look_back_days}d', 'UTC')
-      engine: presto
-      database: ${sink_database}
-    +insert_fresh:
-      td>: sql/12_create_unique_visitors_incremental.sql
-      engine: presto
-      database: ${sink_database}
-      insert_into: ${project_prefix}_unique_visitors
+      insert_into: ${project_prefix}_sink_daily_users

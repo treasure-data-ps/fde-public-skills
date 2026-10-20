@@ -1,6 +1,6 @@
 # Dashboard Builder — Eval Setup
 
-The "what" for `../../shared/eval_pattern.md`. Build **10 prompts** from this mix with real names from the engagement's metrics catalog, business context and data dictionary, phrased the way a dashboard reader would ask. At least **3** test business-context rules (categories 4, 6, 7) and at least **2** are Compliance cases. Skip categories outside the Step 1r agent scope and add prompts to the ones in scope.
+The "what" for `../../shared/eval_pattern.md`. Build **10 prompts** from this mix with real names from the engagement's metrics catalog, business context and data dictionary, phrased the way a dashboard reader would ask. At least **3** test business-context rules (categories 4, 6, 7) and at least **2** are Compliance cases. Skip categories the user doesn't need and add prompts to the ones they do.
 
 | # | Category | Count | Example prompt | Pass criteria |
 |---|---|---|---|---|
@@ -23,6 +23,6 @@ Write the concrete pass criteria per case into `eval.md` (e.g. "uses `sink.agg_s
 | Term, category or exclusion resolved wrongly; sensitive values shown; caveat ignored | Engagement `business-context.md` — make the rule explicit with columns and values |
 | Wrong formula, source or validated value | Engagement `metrics-catalog.md` |
 | Wrong table or time column; grain or NULL handling wrong | Engagement `data-dictionary.md` / `sql-templates.md` |
-| Refresh fails, writes into the skill folder, or asks for configuration | Master `generate-data.js` (`phase-4/references/agent-build-rules.md`), then rebuild |
+| Refresh fails, writes into the skill folder, or asks for configuration | Master `generate-data.js` (`dashboard-build.md` §2), then rebuild |
 | Process skipped (no check query, no approval before changing files, no definition stated) | Staging `SKILL.md` of the agent — sharpen the rule; report it as a template issue |
 | Pass criteria wrong or prompt ambiguous | The test case in `eval.md` — say so explicitly |

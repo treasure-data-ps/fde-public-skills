@@ -1,63 +1,52 @@
-# Dashboard Builder — Agent Setup
+# Dashboard Skill Setup
 
-Dashboard-agent specifics for `../../shared/customer_agent_pattern.md`. Template: `<skill_dir>/project_templates/agent_template/`. Agent name: `<project_slug>-dashboard-agent`.
+Builds `<project_slug>-dashboard` from `<skill_dir>/project_templates/agent_template/` with `<skill_dir>/../shared/customer_agent_pattern.md` (Steps 2, 3, 5). Name: `<project_slug>-dashboard` instead of the pattern's `-agent` suffix; ask for another name only if `.claude/skills/<name>/` belongs to another project.
 
-## What the agent does
+## 1. Knowledge files (master copies in `agent_outputs/<project_slug>/`)
 
-Opens and refreshes the project's dashboard with one command (data inlined into `agent_outputs/<project_slug>/dashboards/dashboard.html`), explains metrics and numbers from the metrics catalog and business context, answers follow-up questions with SQL against the same tables, adds or changes metrics in the dashboard template on request (after approval), and summarizes trends.
+Copy the four skeletons from `agent_template/references/*.template.md` (never overwrite an existing copy) and fill them from `project_state.md`, the spec and the dashboard files:
 
-## Files copied at every build
+| File | Content |
+|---|---|
+| `business-context.md` | The business behind the dashboard: purpose and audience, terms, metric meaning, data caveats, exclusion and compliance rules, output preferences. What the user said = plain facts; what was inferred from the data = `[INFERRED — please confirm]`; open questions = `- [NEEDS YOUR INPUT] …` |
+| `data-dictionary.md` | Every table and column the dashboard reads, grain, event time column and timezone, data-quality notes |
+| `metrics-catalog.md` | Every KPI: formula, source, exclusions, validated value with date (the spot-checks), tab / widget |
+| `sql-templates.md` | Every `QUERIES` entry, the workflow SQL (if any), source-table fallbacks |
 
-`customer_agent_pattern.md` Step 2 copies `business-context.md` and `data-dictionary.md`. Also copy the other master copies from the engagement folder into `$stage/references/`:
+## 2. Build in staging
+
+`customer_agent_pattern.md` Step 2, then add the dashboard files next to the knowledge files:
 
 ```bash
-d="agent_outputs/<project_slug>"
+d="agent_outputs/<project_slug>"; stage="$d/agent_build/<project_slug>-dashboard"
 cp "$d/metrics-catalog.md" "$d/sql-templates.md" "$stage/references/"
-cp "$d/dashboards/dashboard.template.html" "$d/dashboards/generate-data.js" "$stage/references/"
+cp "$d/dashboards/"{dashboard.template.html,generate-data.js,chart.umd.min.js} "$stage/references/"
 ```
 
-Never copy `dashboard.html`, query results or `data.json` into the agent.
-
-## Placeholders
-
-Standard placeholders plus the dashboard ones, all in `SKILL.md`:
+Placeholders in `SKILL.md`:
 
 | Placeholder | Value |
 |---|---|
-| `{{agent_name}}` | `<project_slug>-dashboard-agent` |
-| `{{project_name}}` | Project display name (e.g. `Acme Campaign Performance`) |
+| `{{agent_name}}` | `<project_slug>-dashboard` |
+| `{{project_name}}` | Project display name (e.g. `Sales Performance`) |
 | `{{engagement_dir}}` | `agent_outputs/<project_slug>` |
-| `{{dashboard_title}}` | The dashboard's title (the `<h1>` of the approved template) |
-| `{{data_database}}` | The database the dashboard queries — the SINK database (Workflow path) or the source database (Non-Workflow) |
+| `{{dashboard_title}}` | The dashboard title (`CONFIG.title`) |
+| `{{data_database}}` | The database the dashboard reads (SINK on the workflow path, otherwise source) |
 | `{{data_source_note}}` | `pre-aggregated by workflow <project>` or `queried directly from the source tables` |
-| `{{source_database}}` | Source database |
-| `{{sink_database}}` | SINK database; the source database again on the Non-Workflow path |
-| `{{trigger_phrases}}` | 3–5 natural phrases from the business goal (e.g. "campaign dashboard", "show me campaign performance") |
+| `{{source_database}}`, `{{sink_database}}` | Confirmed databases (sink = source on the direct path) |
+| `{{trigger_phrases}}` | 3–5 natural phrases from the title and goal (e.g. "sales dashboard", "show me sales performance") |
 
-The four knowledge files carry `{{project_name}}` from their skeletons — filled when the engagement copies were written.
+Never copy `dashboard.html`, query output or `*.template.md` files into the skill.
 
-## Agent files
+## 3. Register (after the user says yes)
 
-Show after every build, then a starter prompt.
+`customer_agent_pattern.md` Step 3 to `.claude/skills/<project_slug>-dashboard/`, then check from the Work Folder root:
 
-| File | What it is for | Ask it, for example |
-|---|---|---|
-| `SKILL.md` | The agent's instructions: refresh command, how it explains numbers, ad-hoc questions, adding metrics, rules | "What can you help me with?" |
-| `references/business-context.md` | Your business knowledge — audience, terms, metric meaning, data caveats, exclusion and compliance rules. Keep adding to it: the more it says, the less the agent guesses | "Which of our definitions are still unconfirmed?" |
-| `references/metrics-catalog.md` | Every dashboard metric: formula, source, exclusions, validated value | "How is average order value calculated?" |
-| `references/data-dictionary.md` | Tables and columns behind the dashboard, time column, data quality notes | "Which table does the revenue chart use?" |
-| `references/sql-templates.md` | The dashboard's queries, reusable for follow-up questions and new metrics | "Show revenue by region for last quarter" |
-| `references/dashboard.template.html`, `generate-data.js` | The dashboard itself — the agent fills the template with fresh data in one command | "Show me the dashboard" |
-| `references/runbook.md` (Phase 5) | Operating the dashboard and agent | "How do I refresh the workflow?" |
+1. The refresh command in the installed `SKILL.md` exits without error and rewrites `agent_outputs/<project_slug>/dashboards/dashboard.html`; nothing new appears in `.claude/skills/<project_slug>-dashboard/`.
+2. `grep -c "INFERRED\|NEEDS YOUR INPUT" .claude/skills/<project_slug>-dashboard/references/business-context.md` — tell the user how many business-context items are still open and that the skill answers "which definitions are unconfirmed?".
 
-## Build checks (Phase 4 Step 3)
+Tell the user: the skill is available in new chats in this folder (and can be shared with Studio's Develop → Share); try "Show me the dashboard", "How is <KPI> calculated?", "Add <metric> to the overview tab".
 
-From the Work Folder root:
+## Rebuilds
 
-1. Run the refresh command from the installed `SKILL.md` once. Pass = exits without error, `agent_outputs/<project_slug>/dashboards/dashboard.html` is rewritten (`ls -l`), and nothing new appears in `.claude/skills/<name>/` (`ls .claude/skills/<name>/references/`).
-2. The headline KPI in the regenerated file matches the Phase 3 spot-check value (one `tdx query` against `metrics-catalog.md`'s formula).
-3. `grep -c "INFERRED\|NEEDS YOUR INPUT" .claude/skills/<name>/references/business-context.md` — report the number of unconfirmed items.
-
-## Finalize (Phase 5)
-
-Rebuild with the confirmed `business-context.md`, then add `references/runbook.md` (copy of `docs/runbook.md` if the docs were written; otherwise a short runbook: refresh command, workflow schedule and monitoring if Phase 2 ran, how to update the business context and rebuild, where the master copies live). Add it to the Session Start list in the staging `SKILL.md` as "read only for operations questions".
+Whenever a master copy changes (business context answered, a metric added through the skill, a workflow change): repeat Step 2 (the staging `SKILL.md` keeps earlier fixes) and Step 3. No new question for a refresh of the same skill.

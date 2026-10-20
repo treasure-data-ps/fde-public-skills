@@ -1,6 +1,6 @@
 # Dashboard Builder — Requirements Doc Body
 
-Body for `agent_outputs/<project_slug>/requirements.md` (title `<Project Name> Requirements`), written in Phase 1 Step 1v. Purpose line: "These answers make your dashboard and its assistant use your business terms and rules. Answers below were drafted from your requirements session and your data — please review, correct or expand." Then a target return date and one section per `business-context.md` heading that still has open or inferred items: the question in business words, the drafted answer marked `[INFERRED — please confirm]` or `[NEEDS YOUR INPUT]`, and `> _Your answer:_`. No SQL, no raw records, no notes on how the draft was made.
+Body for `agent_outputs/<project_slug>/requirements.md` (title `<Project Name> Requirements`), written only when the user asks for a customer questionnaire. Purpose line: "These answers make your dashboard and its assistant use your business terms and rules. Answers below were drafted from your requirements session and your data — please review, correct or expand." Then a target return date and one section per `business-context.md` heading that still has open or inferred items: the question in business words, the drafted answer marked `[INFERRED — please confirm]` or `[NEEDS YOUR INPUT]`, and `> _Your answer:_`. No SQL, no raw records, no notes on how the draft was made.
 
 ## Sections (in order — skip a section with nothing open)
 
@@ -19,4 +19,4 @@ Close with: "When done, save this file and send it back to the person who shared
 
 ## Answer → file mapping
 
-Every answer goes into the section of the same name in `agent_outputs/<project_slug>/business-context.md` (terse, imperative, real columns and values; remove the marker of each answered item). An answer that changes a metric formula or filter also updates `metrics-catalog.md` and — through the Phase 3 change loop — the dashboard. After merging: rebuild the agent (Phase 4) and run a new eval round (Phase 5), updating the prompts that test changed definitions first.
+Every answer goes into the section of the same name in `agent_outputs/<project_slug>/business-context.md` (terse, imperative, real columns and values; remove the marker of each answered item). An answer that changes a metric formula or filter also updates `metrics-catalog.md` and — through the dashboard skill's add-or-change flow — the dashboard. After merging: rebuild the dashboard skill (`agent-setup.md` Rebuilds); if an evaluation was run before, offer a new round.

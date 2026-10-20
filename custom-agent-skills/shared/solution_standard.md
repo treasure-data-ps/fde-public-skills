@@ -68,7 +68,7 @@ Cross-cutting rules: questions only with `AskUserQuestion`; read-only by default
 
 | Solution | Exception | Reason |
 |---|---|---|
-| `custom-dashboard-builder` | Own phase folders (`phase-1/` … `phase-5/`), execution contract with `YES, APPROVE [ACTION]` gates, `project_state.md` with a rewritten header + append-only Phase Ledger, and two extra templates (`workflow_template/`, `dashboard_template/`). Phase 1 = requirements + discovery + business context (Step 1v), Phase 2 optional workflow, Phase 3 dashboard, Phase 4 dashboard agent (`customer_agent_pattern.md`), Phase 5 evaluation (`eval_pattern.md`) | Builds an HTML dashboard (and optionally a pre-aggregating workflow) before the agent; same template → business context → agent → eval → production principles |
+| `custom-dashboard-builder` | 4-step setup (intake → data Q&A + recommendation → optional workflow → first-draft dashboard + dashboard skill), two extra templates (`workflow_template/`, `dashboard_template/`), skill named `<project_slug>-dashboard`; evaluation, requirements doc and docs only on request | Builds a dashboard (and optionally a pre-aggregating workflow) before the skill; first setup kept minimal — iteration happens through the installed skill |
 
 ## 6. Conformance checklist
 
