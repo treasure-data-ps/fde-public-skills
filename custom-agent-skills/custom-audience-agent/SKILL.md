@@ -1,5 +1,5 @@
 ---
-name: fde-audience-agent
+name: fde-custom-audience-agent
 description: |
   Sets up a customer-specific audience agent on a Treasure AI CDP parent segment: explores attributes, behaviors and existing segments, drafts the business context (key terms, conversion events, product categories, lead definitions, compliance and exclusion rules) and data dictionary, builds the agent into the Work Folder's .claude/skills/, and evaluates it with ten customer-specific test prompts until it is production-ready. Use it to set up, update, rebuild or evaluate the audience agent. Trigger on: set up an audience agent, build an audience agent for [customer], custom audience agent setup, parent segment agent setup, update audience agent business context, rebuild the audience agent, run audience agent eval, test the audience agent. Audience and segment analysis questions go to the installed project agent.
 ---

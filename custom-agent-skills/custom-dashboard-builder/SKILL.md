@@ -1,5 +1,5 @@
 ---
-name: fde-dashboard-builder
+name: fde-custom-dashboard-builder
 description: |
   Builds a custom HTML dashboard on Treasure Data data — new, or converted from an existing dashboard (.dash export, HTML file, screenshot) — and turns it into the project's dashboard skill: discovers the data, recommends direct queries or a pre-aggregating workflow, builds a first draft and registers it in the Work Folder. Use it to build, convert, migrate or resume a dashboard project, or to change its workflow. Trigger on: build a dashboard, create a KPI dashboard, convert a dashboard to HTML, Treasure Insights / Sisense dashboard migration, .dash conversion, dashboard from a screenshot or mockup, dashboard from a table, dashboard workflow, resume dashboard project. Questions about an existing dashboard's numbers go to its installed dashboard skill.
 ---

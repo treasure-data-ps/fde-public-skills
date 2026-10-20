@@ -33,7 +33,7 @@ custom-agent-skills/<solution_folder>/
 
 ## 2. `SKILL.md` section order
 
-1. Frontmatter — `name: fde-<solution>`; `description` about **setup only** (set up, configure, change, rebuild, resume) with concrete trigger phrases — analysis of the results belongs to the installed project agent, so its phrases stay out of the setup skill's description. `How to Start` includes the **Setup skill vs. project agent** routing paragraph.
+1. Frontmatter — `name: fde-<solution folder name>` (e.g. `rfm/` → `fde-rfm`, `custom-audience-agent/` → `fde-custom-audience-agent`); `description` about **setup only** (set up, configure, change, rebuild, resume) with concrete trigger phrases — analysis of the results belongs to the installed project agent, so its phrases stay out of the setup skill's description. `How to Start` includes the **Setup skill vs. project agent** routing paragraph.
 2. `# <Solution Name>` + 1–2 sentence summary.
 3. `## How to Start` — "Read `../shared/playbook.md` … This file provides the <X>-specific context." Nothing between the title and this section.
 4. `## Phase Summary` — exactly 5 rows, Phase 1–5, matching §4.

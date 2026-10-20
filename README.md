@@ -29,8 +29,8 @@ Five phases: data exploration → requirements doc → first workflow run → ha
 
 | Skill | Sets up | Project agent |
 |---|---|---|
-| `fde-audience-agent` | An audience and segment-analysis agent on one parent segment, evaluated with ten test prompts | `audience-agent` |
-| `fde-dashboard-builder` | A custom HTML dashboard (new, or from a `.dash` export, HTML file or screenshot), with a workflow only when the data needs one | `<project>-dashboard` |
+| `fde-custom-audience-agent` | An audience and segment-analysis agent on one parent segment, evaluated with ten test prompts | `audience-agent` |
+| `fde-custom-dashboard-builder` | A custom HTML dashboard (new, or from a `.dash` export, HTML file or screenshot), with a workflow only when the data needs one | `<project>-dashboard` |
 
 Agent names get a project prefix when you choose one (e.g. `loyalty-rfm-agent`), so several people can build their own side by side.
 
@@ -56,4 +56,4 @@ Everything is written to your Work Folder — never to the plugin or an external
 | `custom-agent-skills/shared/` | Custom-agent playbook, solution standard, agent build and eval patterns |
 | `<plugin>/<solution>/` | `SKILL.md` (setup flow), `references/`, `project_templates/` (workflow, dashboard and agent templates — copied, never edited in place) |
 
-New solutions follow the solution standard of their plugin (`*/shared/solution_standard.md`): `name: fde-<solution>`, a setup-only `description`, templates under `project_templates/`, all outputs under `agent_outputs/<project_slug>/`, and an entry in `marketplace.json`.
+New solutions follow the solution standard of their plugin (`*/shared/solution_standard.md`): `name: fde-<solution folder name>`, a setup-only `description`, templates under `project_templates/`, all outputs under `agent_outputs/<project_slug>/`, and an entry in `marketplace.json`.
