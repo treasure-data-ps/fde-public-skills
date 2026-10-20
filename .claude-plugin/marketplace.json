@@ -1,8 +1,7 @@
 {
   "name": "fde-public-skills",
   "owner": {
-    "name": "Treasure AI FDE Team",
-    "email": "<Enter list of user emails here>"
+    "name": "Treasure AI FDE Team"
   },
   "metadata": {
     "version": "2.0.0-public",
