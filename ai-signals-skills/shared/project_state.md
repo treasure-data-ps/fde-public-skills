@@ -11,7 +11,7 @@ Engagements span multiple sessions. `agent_outputs/<project_slug>/project_state.
 ## Rules
 
 1. **Create early.** `project_state.md` is the first file created for an engagement (end of Phase 1, with the business context draft).
-2. **Update at the end of every phase.** Phase completion, date, key paths, key decisions, next action.
+2. **Update at the end of every phase, every part of a phase and every iteration round.** Phase completion, date, key paths, key decisions, Current phase, Next Action — the file must always say where to resume.
 3. **Read first on resume.** When starting a new session, list existing engagements and read the matching file:
    ```bash
    grep -l '^- \*\*Solution:\*\* <Solution Name>' agent_outputs/*/project_state.md 2>/dev/null

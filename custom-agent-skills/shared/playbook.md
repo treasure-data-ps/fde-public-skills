@@ -37,7 +37,7 @@ Record both in `project_state.md` and reuse them everywhere afterwards.
 
 **First reply — before any question or tool call:** introduce the setup in two or three sentences, then show the solution's Phase Summary table (solution `SKILL.md`). For example: "I'd be happy to set up <Solution> for your data step by step. Below is the plan: we explore your data, capture your business context, build the agent, and test it with ten example prompts until it passes — then it is ready for production. After each phase I update `project_state.md`, so we can resume later exactly where we left off." Then ask: **"Is this a new setup, or are you resuming an existing one?"**
 
-- **New:** ask for the project name first (`local_outputs.md` Step 2) with `AskUserQuestion`: "Use the default `<solution_slug>` — agent `<solution_slug>-agent` (Recommended)" / "Add a project prefix" (a brand, team or use case, e.g. `loyalty` → `loyalty-<solution_slug>-agent`, so several agents can live side by side). Recommend a prefix if the default is already used here. State the resulting project slug and agent name once, then start Phase 1.
+- **New:** ask for the project name first (`local_outputs.md` Step 2) with `AskUserQuestion`: "Use the default `<solution_slug>` — agent `<solution_slug>-agent` (Recommended)" / "Add a project prefix" (a brand, team or use case, e.g. `loyalty` → `loyalty-<solution_slug>-agent`, so several agents can live side by side). Recommend a prefix if the default is already used here. State the resulting project slug and agent name once. Then ask once with `AskUserQuestion` whether to start: "Start Phase 1 (Recommended)" / "Change something first" / "Not now". "Not now" writes nothing; "Change something first" adjusts the plan, then asks again.
 - **Resume:** list `agent_outputs/*/project_state.md`, keep those whose **Solution** is this one, confirm the project, read it — "Current phase" + "Next Action" say where to pick up.
 
 | User says | Likely phase |
@@ -55,6 +55,7 @@ When in doubt, **read `project_state.md` first**.
 Rules for every phase:
 
 - **Read files just in time.** In each phase, read only the files that phase names (here and in the solution `SKILL.md`).
+- **Update `project_state.md` after every phase, every part of a phase (each eval round, each Phase 5 step) and every iteration round** — rewrite its header (Current phase, Next Action, Last updated) and log what was done, so an interrupted session can always resume from the file.
 - **Keep moving.** After each step, continue straight to the next step of the same phase. At the end of a phase, give a short summary and ask with `AskUserQuestion` whether to continue, with the next phase as the `(Recommended)` option. Never end a turn without either continuing or asking.
 - **Questions:** always `AskUserQuestion`, never plain-text lists — batches of up to 4, 2–4 options each, the recommended default marked `(Recommended)`, the implicit "Other" for free answers.
 - **Read-only by default.** Exploration and evaluation never create, change or push anything in the customer's account. Pushing a segment (or any other object) needs the user's explicit approval in the chat.
@@ -93,7 +94,7 @@ Rules for every phase:
 1. Write the test plan — 10 prompts built from the customer's own data dictionary and business context — to `agent_outputs/<project_slug>/eval.md`, show it, and ask for permission to run.
 2. Run each prompt in a fresh subagent against the installed agent; score Pass / Partial / Fail.
 3. Record the round in `eval.md`; propose fixes (business context, data dictionary, or the agent's `SKILL.md`), apply the approved ones, rebuild (Phase 3 Step 1), re-run.
-4. Repeat until the production bar is met (`eval_pattern.md`). Then update `project_state.md` and offer Phase 5.
+4. Repeat until the production bar is met (`eval_pattern.md`). After every round update `project_state.md` (round, score, Current phase, Next Action — `eval_pattern.md` Step 5), then offer Phase 5.
 
 A new eval round is due after every material change: customer answers merged, a context file edited, the data source changed, or the agent rebuilt from a newer template.
 
@@ -105,6 +106,7 @@ Only when the user asks to finalize, after the production bar was met.
 2. If the context changed since the last passing round, rebuild (Phase 3) and run a final eval round — the bar must still be met.
 3. **Finalize the agent** — `customer_agent_pattern.md` Step 4 + `references/agent-setup.md` (Finalize).
 4. **Documentation** (offer with `AskUserQuestion`; optional) — `customer_docs_pattern.md` + the solution's `references/docs-setup.md` → `docs/`.
+After each of steps 1–4, update `project_state.md` (step done, Next Action = the next step). Finally:
 5. Update `project_state.md` → "complete — agent live". Tell the user the agent can be shared to the account with Studio's Develop → Share.
 
 ## Solution folder reference

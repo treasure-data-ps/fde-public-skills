@@ -25,7 +25,7 @@ Turns a list of metrics and filters — or an existing dashboard — into a sing
 | 3. Workflow (only if recommended) | Plan, defaults, build, run, validate, report | 1 (approve build + run) |
 | 4. Dashboard + dashboard skill | First draft, spot-checks, knowledge files, register | 1 (register the skill) |
 
-Start with one sentence on what will happen and this table. Then go straight into Step 1. Use `AskUserQuestion` for every question, with a `(Recommended)` default; never ask what the data can answer. Between steps, give a 2–4 line summary and continue — don't wait for "go on".
+Start with one sentence on what will happen and this table, then go straight into Step 1 — its first question doubles as the go-ahead. Use `AskUserQuestion` for every question, with a `(Recommended)` default; never ask what the data can answer. Between steps, give a 2–4 line summary and continue — don't wait for "go on".
 
 **Resume:** if `agent_outputs/*/project_state.md` with **Solution:** `dashboard-builder` exists, ask "new dashboard or continue `<project>`?" and pick up at its Next Action.
 
@@ -33,22 +33,24 @@ Start with one sentence on what will happen and this table. Then go straight int
 
 Read `references/intake.md`. One `AskUserQuestion` batch:
 
-- **Starting point:** "I have an existing dashboard" (attach a `.dash` export, an HTML file or a screenshot) / "I'll list the metrics and filters".
+- **Starting point:** "I have an existing dashboard" (attach a `.dash` export, an HTML file or a screenshot) / "I'll list the metrics and filters" / "Not now" (stop; nothing is written).
 - **Database:** the database the tables live in — offer the likely ones from `tdx databases` (never assume).
 
-Then read the dashboard (intake.md) or take the metric list, and derive the project name from the dashboard title (`<project_slug>`, lowercase with hyphens, e.g. `sales-performance`). Bootstrap the workspace — `<skill_dir>/../shared/local_outputs.md` Step 1 — and create `agent_outputs/<project_slug>/project_state.md` (`<skill_dir>/../shared/project_state.md`, **Solution:** `dashboard-builder`). Say once that all data in the HTML file is visible to anyone who opens it.
+Then read the dashboard (intake.md) or take the metric list, and derive the project name from the dashboard title (`<project_slug>`, lowercase with hyphens, e.g. `sales-performance`). Bootstrap the workspace — `<skill_dir>/../shared/local_outputs.md` Step 1 — and create `agent_outputs/<project_slug>/project_state.md` (`<skill_dir>/../shared/project_state.md`, **Solution:** `dashboard-builder`). Say once that all data in the HTML file is visible to anyone who opens it. Record the spec in `project_state.md`: Current phase "2 — data discovery", Next Action "Run data discovery".
 
 ## Step 2 — Data Q&A and recommendation
 
 Read `references/data-discovery.md` and run it without asking: tables and columns, the business time column and timezone, each metric validated as a formula on live data, joins checked for fan-out, the data-quality gate, dimension cardinality, payload estimate, query times. Ask only what the data can't answer (e.g. which column defines "cancelled", or a metric with two valid definitions).
 
-Present one summary — metrics as formulas with their current values, filters, data range, caveats — and the **recommendation** (direct `generate-data.js` + template, or a workflow first) with its reasons. One question: accept, or switch path. Record everything in `project_state.md` → Discovery Findings.
+Present one summary — metrics as formulas with their current values, filters, data range, caveats — and the **recommendation** (direct `generate-data.js` + template, or a workflow first) with its reasons. One question: accept, or switch path. Record everything in `project_state.md` → Discovery Findings, with the accepted path; Current phase "3 — workflow" or "4 — dashboard + skill" and the matching Next Action.
 
 ## Step 3 — Workflow (only when recommended)
 
-Read `references/workflow-setup.md`. Show the plan — SINK tables with their grain and measures, the refresh mode, and the defaults for the workflow project name and `sink_database` (checked to be free). One `AskUserQuestion`: "Build, run and validate (Recommended)" / "Change names first" / "Skip the workflow — build directly". On approval: copy and customize the template, push, run, monitor, validate the SINK tables against the source, and report (tables, rows, spot-checks, issues). If validation fails, fix and re-run before Step 4.
+Read `references/workflow-setup.md`. Show the plan — SINK tables with their grain and measures, the refresh mode, and the defaults for the workflow project name and `sink_database` (checked to be free). One `AskUserQuestion`: "Build, run and validate (Recommended)" / "Change names first" / "Skip the workflow — build directly". On approval: copy and customize the template, push, run, monitor, validate the SINK tables against the source, and report (tables, rows, spot-checks, issues). If validation fails, fix and re-run before Step 4. Update `project_state.md` after the approval (names), after the run (attempt, result) and after validation (tables, checks) — Current phase "4 — dashboard + skill" once it passes.
 
 ## Step 4 — First-draft dashboard and dashboard skill
+
+Update `project_state.md` after each of the sub-steps below (Next Action = the next sub-step).
 
 1. **Dashboard** — `references/dashboard-build.md`: copy `project_templates/dashboard_template/` into `agent_outputs/<project_slug>/dashboards/`, write `CONFIG`, `QUERIES` and `LAYOUT` in `generate-data.js`, run it, spot-check ≥ 3 KPIs against the source (exact match), and show the dashboard.
 2. **Knowledge files and agent build** — `references/agent-setup.md`: write `business-context.md` (inferences flagged for review), `data-dictionary.md`, `metrics-catalog.md` and `sql-templates.md` in `agent_outputs/<project_slug>/`, then build the skill in the staging folder (`<skill_dir>/../shared/customer_agent_pattern.md` Step 2).

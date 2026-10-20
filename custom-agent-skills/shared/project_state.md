@@ -24,7 +24,7 @@ Engagements span multiple sessions. `agent_outputs/<project_slug>/project_state.
 Living context store. New sessions read this file first.
 
 ## Status
-- **Current phase:** <1 — data exploration | 2 — business context | 3 — build agent | 4 — evaluation | 5 — production-ready | complete — agent live>
+- **Current phase:** <the solution's phase or step name — audience agent: 1 — data exploration | 2 — business context | 3 — build agent | 4 — evaluation | 5 — production-ready | complete — agent live; dashboard builder: 1 — intake | 2 — data discovery | 3 — workflow | 4 — dashboard + skill | complete — dashboard skill live>
 - **Last updated:** <YYYY-MM-DD>
 
 ## Project
