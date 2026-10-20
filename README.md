@@ -1,71 +1,59 @@
-# FDE Skills
+# FDE Public Skills
 
-Templatized skill library for deploying ML solutions and custom AI agents on Treasure AI with Claude. Everything a skill needs ships inside the plugin, and everything it produces stays on your machine.
+Skills for Treasure AI Studio that set up AI Signals models and custom AI agents on your own Treasure Data account — step by step, inside a Work Folder. Built by the Treasure AI Forward Deployed Engineering team.
 
-## How routing works
+## How it works
 
-Each solution folder (e.g. `ai-signals-skills/mta/`, `custom-agent-skills/custom-audience-agent/`) contains a `SKILL.md` whose YAML frontmatter `description` is what the skill registry uses to match user requests. The registry compares the user's prompt against every registered skill's description and loads the matching one directly. Shared pattern files (`*/shared/`) are not registered as skills; solution skills read them by path.
+1. **Add the marketplace** `fde-public-skills` in Treasure AI Studio and enable the plugins you need.
+2. **Start a setup in a Work Folder** — e.g. *"Set up RFM segmentation"*, *"Build a custom sales dashboard"*. The matching **setup skill** shows the plan and walks through it phase by phase, asking only what it can't learn from your data.
+3. **It copies its templates into the Work Folder** and customizes the copies: a Treasure Data workflow (AI Signals solutions, or a dashboard workflow when needed) and an agent template.
+4. **It installs your project's own agent** as a skill in `.claude/skills/<project>-agent/` (or `<project>-dashboard/`). That agent answers questions about your results in any chat in the folder, and can be shared with your team (Studio: Develop → Share).
 
-```
-fde-public-skills/
-├── README.md                          ← you are here (human docs)
-├── .claude-plugin/marketplace.json    ← registers skills with the loader
-│
-├── ai-signals-skills/
-│   ├── README.md                      ← category overview
-│   ├── shared/                        ← generic phase flow + patterns (local outputs, deploy, requirements, docs)
-│   ├── rfm/         SKILL.md + project_templates/, workflow-setup/, agent-skills/, prod-docs/
-│   ├── mta/         SKILL.md + project_templates/, workflow-setup/, agent-skills/, prod-docs/
-│   ├── classifier/  SKILL.md + project_templates/, workflow-setup/, agent-skills/, prod-docs/
-│   ├── nba-scores/  SKILL.md + project_templates/, workflow-setup/, agent-skills/, prod-docs/
-│   └── nbp/         SKILL.md + project_templates/, workflow-setup/, agent-skills/, prod-docs/
-│
-└── custom-agent-skills/
-    ├── shared/                    ← local outputs, project state, requirements doc, docs set
-    ├── custom-audience-agent/     SKILL.md + references/ (business-context, data-dictionary, eval templates)
-    └── custom-dashboard-builder/  SKILL.md + phase-1/ … phase-5/, references/ (questionnaire-led HTML dashboard builder)
-```
+Setup skills are the same for everyone and update with the marketplace; your project agent and files are yours. Ask a setup skill to resume, change or rebuild; ask your project agent about results.
 
-### Custom agent skills
+## Skills
 
-| Skill | Folder | Use it when the user wants to… |
+### `ai-signals-skills`
+
+| Skill | Sets up | Project agent |
 |---|---|---|
-| `custom-audience-agent` | `custom-agent-skills/custom-audience-agent/` | analyze a CDP parent segment (attributes, behaviors, existing segments) and draft child segments |
-| `fde-tais-custom-dashboard-builder` | `custom-agent-skills/custom-dashboard-builder/` | build or resume a custom HTML dashboard from Treasure Data tables, SQL, or a Sisense `.dash` file, following a 5-phase questionnaire-led pipeline |
+| `fde-rfm` | RFM segmentation — ten customer segments from recency, frequency and monetary value | `rfm-agent` |
+| `fde-nbp` | Next Best Product — top product and category recommendations per customer | `nbp-agent` |
+| `fde-mta` | Multi-Touch Attribution — channel contribution with Markov, Shapley and standard models | `mta-agent` |
+| `fde-nba-scores` | Next Best Action — best time, channel and campaign per customer, engagement flags | `nba-scores-agent` |
+| `fde-classifier` | Propensity scoring — any yes/no outcome (lead scoring, churn, conversion, response) | `classifier-agent` |
 
-## Where outputs go: `agent_outputs/`
+Five phases: data exploration → requirements doc → first workflow run → hands-on testing with the agent and dashboard (DEV) → Parent Segment attributes, docs and final agent (PROD, when you say the model is ready).
 
-Skills never write customer material into the plugin folders or to external services. Every engagement artifact — requirements doc, project state, the customized workflow copy, validation results, documentation, dashboards — is written to `agent_outputs/<customer_slug>/<solution_slug>/` in **your current working directory**.
+### `custom-agent-skills`
 
-- `agent_outputs/` is git-ignored twice: the skills create `agent_outputs/.gitignore` (containing `*`) on first use, and add `agent_outputs/` to the enclosing repo's `.gitignore` if there is one. Customer-specific information can't be committed by accident.
-- Templates (`project_templates/` for ML workflows, `references/` for the audience agent) are read-only. A skill copies them into `agent_outputs/` and edits the copy; `tdx wf push` runs from the workflow copy.
-- Resume an engagement in a new session by asking the skill to continue; it reads `agent_outputs/<customer_slug>/<solution_slug>/project_state.md` first.
+| Skill | Sets up | Project agent |
+|---|---|---|
+| `fde-audience-agent` | An audience and segment-analysis agent on one parent segment, evaluated with ten test prompts | `audience-agent` |
+| `fde-dashboard-builder` | A custom HTML dashboard (new, or from a `.dash` export, HTML file or screenshot), with a workflow only when the data needs one | `<project>-dashboard` |
 
-See `ai-signals-skills/shared/local_outputs.md` for the full layout.
+Agent names get a project prefix when you choose one (e.g. `loyalty-rfm-agent`), so several people can build their own side by side.
 
-## Adding a new skill
+## Your files
 
-**ML solutions must follow `ai-signals-skills/shared/solution_standard.md`** — the required folder layout, `SKILL.md` section order, the 5-phase contract (what each phase must / must not do), the allowed exceptions, and a conformance checklist. Run through its checklist before opening a PR. `nba-scores/` is the reference implementation.
-
-1. Create a folder under `ai-signals-skills/` or `custom-agent-skills/`.
-2. Add a `SKILL.md` with YAML frontmatter:
-   - `name` — must be globally unique; prefix with `fde-` (e.g. `fde-cltv`).
-   - `description` — concrete trigger phrases the registry will match against.
-3. Put the deployable template under `project_templates/` and supporting material in `workflow-setup/references/`, `prod-docs/references/`, etc.
-4. Write all engagement outputs to `agent_outputs/` per `ai-signals-skills/shared/local_outputs.md`.
-5. Add the new skill path to `.claude-plugin/marketplace.json` (only folders that contain a `SKILL.md`).
-
-## Repeating folder template (ML solutions)
+Everything is written to your Work Folder — never to the plugin or an external service:
 
 ```
-<solution>/
-├── SKILL.md
-├── project_templates/
-│   └── <wf_dir>/        # TD workflow template — read-only, copied into agent_outputs/
-├── workflow-setup/
-│   └── references/      # config templates, requirements doc template, eval checks, deploy instructions
-├── agent-skills/
-│   └── <insights-skill>/  # Claude skill for analyzing outputs + generating dashboards
-└── prod-docs/
-    └── references/      # content for the documentation set
+<Work Folder>/
+├── agent_outputs/<project>/      # git-ignored: project_state.md (resume point), business context,
+│                                 # requirements, workflow copy, dashboards, eval results, docs
+└── .claude/skills/<agent-name>/  # your project agent (own .gitignore)
 ```
+
+`project_state.md` records what was built and what comes next — in a new chat, ask the setup skill to continue. For Treasure AI Studio itself (Work Folders, sharing, permissions) see https://docs.treasure.ai/products/ai-studio/overview.
+
+## For maintainers
+
+| Path | Contents |
+|---|---|
+| `.claude-plugin/marketplace.json` | Marketplace and plugin registration (one entry per setup skill) |
+| `ai-signals-skills/shared/` | AI Signals playbook (phase flow), solution standard, shared patterns |
+| `custom-agent-skills/shared/` | Custom-agent playbook, solution standard, agent build and eval patterns |
+| `<plugin>/<solution>/` | `SKILL.md` (setup flow), `references/`, `project_templates/` (workflow, dashboard and agent templates — copied, never edited in place) |
+
+New solutions follow the solution standard of their plugin (`*/shared/solution_standard.md`): `name: fde-<solution>`, a setup-only `description`, templates under `project_templates/`, all outputs under `agent_outputs/<project_slug>/`, and an entry in `marketplace.json`.

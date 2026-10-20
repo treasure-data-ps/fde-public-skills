@@ -1,7 +1,7 @@
 ---
 name: fde-nba-scores
 description: |
-  NBA (Next Best Action) Engagement Scores for Treasure Data. Sets up a workflow that unions customer activity and writes per-profile Next Best Time, Next Best Channel and Next Best Campaign scores plus engagement flags (cart abandon, new visitor, recent purchase, ad engagement) for use as Parent Segment attributes, then builds a customer-specific NBA insights agent and dashboard. Trigger on: NBA, next best action, engagement scores, next best channel, next best time, next best campaign, cart abandon flag, new visitor flag, NBA workflow setup, NBA configuration, NBA runbook.
+  Sets up NBA (Next Best Action) engagement scores on Treasure Data: a workflow that unions customer activity and writes per-profile next best time, channel and campaign scores plus engagement flags for Parent Segment attributes, then builds the project's NBA agent and dashboard. Use it to set up, configure, change, re-run or resume the NBA workflow and to build or rebuild the NBA agent. Trigger on: set up NBA, next best action setup, engagement scores setup, NBA workflow, configure NBA, NBA configuration, rebuild the NBA agent, resume NBA setup, NBA runbook. Questions about the scores and flags go to the installed project agent.
 ---
 
 # NBA Engagement Scores
@@ -11,6 +11,8 @@ Unions a customer's touchpoint data (web, email, CRM, orders, …), scores every
 ## How to Start
 
 Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, the name gates and when to read each shared pattern. Follow that flow. Read each referenced file once per conversation: when this skill is invoked again later in the same conversation, the playbook and any reference files already read are still in context — don't read them again; in a new session, read `project_state.md` to pick up. This file provides the NBA-specific context for each phase.
+
+**Setup skill vs. project agent:** this skill sets up, changes and rebuilds the solution; it is the same for every project. Once the project's own agent is installed in `.claude/skills/` (`<project_slug>-agent`), questions about its results are answered by that agent. If this skill is invoked with such a question, read the installed agent's `SKILL.md` and answer by its rules (or tell the user to ask the agent in a new chat); if no agent is installed yet, say so and offer the setup.
 
 **Treasure AI Studio questions:** when the user asks how Treasure AI Studio works — Work Folders, permissions and access, sharing skills or agents, plugins and marketplaces, or where to find Studio documentation — answer from what you know, then share the official documentation: https://docs.treasure.ai/products/ai-studio/overview
 

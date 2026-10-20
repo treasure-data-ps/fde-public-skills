@@ -1,7 +1,7 @@
 ---
 name: fde-mta
 description: |
-  MTA (Multi-Touch Attribution) for Treasure Data. Sets up a workflow that unions a customer's marketing touchpoints (web, email, sales, ads) and conversion events into customer journeys, runs the standard attribution models (first touch, last touch, linear, U-shaped) and the AI Signals Markov and Shapley models to measure each channel's contribution to conversions, then builds a customer-specific MTA insights agent and dashboard. Trigger on: MTA, multi-touch attribution, channel attribution, marketing attribution, conversion paths, journey analytics, Markov, Shapley, removal effect, channel mix, MTA workflow setup, MTA configuration, MTA runbook, MTA output tables.
+  Sets up MTA (Multi-Touch Attribution) on Treasure Data: a workflow that builds customer journeys from marketing touchpoints and conversions, runs the standard attribution models and the AI Signals Markov and Shapley models, then builds the project's MTA agent and dashboard. Use it to set up, configure, change, re-run or resume the MTA workflow and to build or rebuild the MTA agent. Trigger on: set up MTA, multi-touch attribution setup, attribution workflow, configure MTA, MTA configuration, rebuild the MTA agent, resume MTA setup, MTA runbook, MTA output tables. Questions about channel contribution and journeys go to the installed project agent.
 ---
 
 # MTA (Multi-Touch Attribution)
@@ -15,6 +15,8 @@ Read `../shared/playbook.md` — it defines the entry point (new vs. resume), th
 **AI Signals model questions:** when the user asks how the Markov or Shapley model works or credits channels, or wants to try other API parameter values, or change the models' input or output tables, read `references/ai-signals-guide.md` first, and end the answer with the documentation note at its top (AI Signals overview link; no public MTA page yet). It is not needed for the standard setup steps (Phases 1–3) — `references/workflow-setup.md` covers those.
 
 **Exception (`../shared/solution_standard.md` §5):** MTA has no Parent Segment step in Phase 5 — attribution outputs are tables, not profile attributes.
+
+**Setup skill vs. project agent:** this skill sets up, changes and rebuilds the solution; it is the same for every project. Once the project's own agent is installed in `.claude/skills/` (`<project_slug>-agent`), questions about its results are answered by that agent. If this skill is invoked with such a question, read the installed agent's `SKILL.md` and answer by its rules (or tell the user to ask the agent in a new chat); if no agent is installed yet, say so and offer the setup.
 
 **Treasure AI Studio questions:** when the user asks how Treasure AI Studio works — Work Folders, permissions and access, sharing skills or agents, plugins and marketplaces, or where to find Studio documentation — answer from what you know, then share the official documentation: https://docs.treasure.ai/products/ai-studio/overview
 

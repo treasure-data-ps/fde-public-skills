@@ -1,13 +1,7 @@
 ---
-name: fde-tais-custom-dashboard-builder
-description: >-
-  Build a custom HTML dashboard on Treasure Data data — new, or converted from an existing dashboard
-  (.dash export, HTML file, screenshot) — and turn it into the project's dashboard skill that opens,
-  explains and extends it. Discovers the data, recommends direct queries or a pre-aggregating workflow,
-  builds a first draft and registers it in the Work Folder. Trigger when the user asks to build, create,
-  convert, migrate or resume a dashboard, KPI dashboard, HTML dashboard, Treasure Data dashboard,
-  Treasure Insights / Sisense dashboard migration, .dash conversion, dashboard from a screenshot or
-  mockup, dashboard from a table, dashboard workflow, or a dashboard agent / dashboard skill.
+name: fde-dashboard-builder
+description: |
+  Builds a custom HTML dashboard on Treasure Data data — new, or converted from an existing dashboard (.dash export, HTML file, screenshot) — and turns it into the project's dashboard skill: discovers the data, recommends direct queries or a pre-aggregating workflow, builds a first draft and registers it in the Work Folder. Use it to build, convert, migrate or resume a dashboard project, or to change its workflow. Trigger on: build a dashboard, create a KPI dashboard, convert a dashboard to HTML, Treasure Insights / Sisense dashboard migration, .dash conversion, dashboard from a screenshot or mockup, dashboard from a table, dashboard workflow, resume dashboard project. Questions about an existing dashboard's numbers go to its installed dashboard skill.
 ---
 
 # Custom Dashboard Builder
@@ -17,6 +11,8 @@ Turns a list of metrics and filters — or an existing dashboard — into a sing
 **`<skill_dir>`** = the folder containing this file — resolve it to an absolute path before running anything from it. Commands run from the Work Folder root. Templates in `<skill_dir>/project_templates/` are read-only: copy, then edit the copy.
 
 **Treasure AI Studio questions:** when the user asks how Treasure AI Studio works — Work Folders, permissions and access, sharing skills or agents, plugins and marketplaces, or where to find Studio documentation — answer from what you know, then share the official documentation: https://docs.treasure.ai/products/ai-studio/overview
+
+**Setup skill vs. project agent:** this skill sets up, changes and rebuilds the solution; it is the same for every project. Once the project's own agent is installed in `.claude/skills/` (`<project_slug>-dashboard`), questions about its results are answered by that agent. If this skill is invoked with such a question, read the installed agent's `SKILL.md` and answer by its rules (or tell the user to ask the agent in a new chat); if no agent is installed yet, say so and offer the setup.
 
 ## The flow
 

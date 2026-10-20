@@ -1,7 +1,7 @@
 ---
-name: custom-audience-agent
+name: fde-audience-agent
 description: |
-  Sets up a customer-specific Custom Audience Agent on a Treasure AI CDP parent segment: explores attributes, behaviors and existing segments, drafts the customer's business context (key terms, conversion events, product categories, lead definitions, compliance and exclusion rules) and data dictionary, builds the agent into the Work Folder's .claude/skills/, and evaluates it with ten customer-specific test prompts until it is production-ready. The installed agent answers customer-data and segment-analysis questions with SQL and drafts child segments for approval. Trigger on: audience agent, custom audience agent, set up audience agent, build an audience agent for [customer], parent segment agent, CDP analysis agent, marketing analytics agent, segment analysis agent, run audience agent eval, test the audience agent, update audience agent business context.
+  Sets up a customer-specific audience agent on a Treasure AI CDP parent segment: explores attributes, behaviors and existing segments, drafts the business context (key terms, conversion events, product categories, lead definitions, compliance and exclusion rules) and data dictionary, builds the agent into the Work Folder's .claude/skills/, and evaluates it with ten customer-specific test prompts until it is production-ready. Use it to set up, update, rebuild or evaluate the audience agent. Trigger on: set up an audience agent, build an audience agent for [customer], custom audience agent setup, parent segment agent setup, update audience agent business context, rebuild the audience agent, run audience agent eval, test the audience agent. Audience and segment analysis questions go to the installed project agent.
 ---
 
 # Custom Audience Agent
@@ -12,7 +12,7 @@ Fits the audience-agent template to one customer's parent segment — data explo
 
 Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, the names and when to read each shared pattern. Follow that flow. Read each referenced file once per conversation; in a new session, read `project_state.md` to pick up. This file provides the audience-agent-specific context for each phase.
 
-Analysis requests ("how many customers …", "create a segment …") are answered by the **installed agent** (`.claude/skills/<agent-name>/`), not by this skill. If no agent is installed yet, say so and offer the setup.
+**Setup skill vs. project agent:** this skill sets up, changes and rebuilds the solution; it is the same for every project. Once the project's own agent is installed in `.claude/skills/` (`<project_slug>-agent`), questions about its results are answered by that agent. If this skill is invoked with such a question, read the installed agent's `SKILL.md` and answer by its rules (or tell the user to ask the agent in a new chat); if no agent is installed yet, say so and offer the setup.
 
 **Treasure AI Studio questions:** when the user asks how Treasure AI Studio works — Work Folders, permissions and access, sharing skills or agents, plugins and marketplaces, or where to find Studio documentation — answer from what you know, then share the official documentation: https://docs.treasure.ai/products/ai-studio/overview
 

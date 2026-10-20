@@ -1,25 +1,25 @@
-# ML Skills
+# AI Signals Skills
 
-ML workflow skills for Treasure AI: customer segmentation, attribution, classification, recommendations, engagement scoring.
+Setup skills for AI Signals models on Treasure AI: customer segmentation, attribution, propensity scoring, recommendations, engagement scoring. Each one sets up the workflow and installs the project's own analysis agent.
 
 Each subfolder is a self-contained solution with its own `SKILL.md` entry point. The skill registry routes user requests directly to the matching solution — there is no router at this level.
 
-| Folder | Solution | Status |
-|--------|----------|--------|
-| `rfm/` | RFM (Recency, Frequency, Monetary) customer segmentation | Ready |
-| `mta/` | MTA — Multi-Touch Attribution (standard models + AI Signals Markov and Shapley) | Ready |
-| `classifier/` | Binary classification (lead scoring, churn, propensity) with SHAP explainability | Ready |
-| `nba-scores/` | NBA — Next Best Channel / Time / Campaign engagement scores | Ready |
-| `nbp/` | NBP — Next Best Product recommendations (AI Signals NBP model) | Ready |
+| Folder | Skill | Solution | Project agent |
+|--------|-------|----------|---------------|
+| `rfm/` | `fde-rfm` | RFM (Recency, Frequency, Monetary) customer segmentation | `rfm-agent` |
+| `mta/` | `fde-mta` | MTA — Multi-Touch Attribution (standard models + AI Signals Markov and Shapley) | `mta-agent` |
+| `classifier/` | `fde-classifier` | Propensity scoring — binary classification with SHAP explanations | `classifier-agent` |
+| `nba-scores/` | `fde-nba-scores` | NBA — Next Best Channel / Time / Campaign engagement scores | `nba-scores-agent` |
+| `nbp/` | `fde-nbp` | NBP — Next Best Product recommendations (AI Signals NBP model) | `nbp-agent` |
 
 ## Shared workflow pattern
 
 Every ML solution follows the same 5 phases (defined in `shared/playbook.md`):
-1. **Data exploration** — explore the customer's TD database via Trino SQL (`tdx-skills:tdx-basic`), identify source tables and key columns
-2. **Requirements doc** — write a customer-fillable `requirements.md` to `agent_outputs/`
-3. **Minimal push** — copy the bundled workflow template from `project_templates/` into `agent_outputs/`, generate the config, push with `tdx wf push`, run, validate
-4. **Production config** — apply the customer's answers, re-push, re-validate
-5. **Parent Segment + docs** — add score attributes and example audiences, write the documentation set to `agent_outputs/`
+1. **Data exploration** — list and classify the source tables, run discovery queries, draft the business context
+2. **Requirements doc** — write a customer-fillable `requirements.md`, then continue without waiting
+3. **Minimal workflow** — copy the workflow template, configure it from the data, push, run, validate; offer the hands-on kit
+4. **Hands-on testing (DEV)** — install the project agent, dashboard and guides; apply the customer's answers in rounds
+5. **Production (PROD)** — Parent Segment attributes and example audiences, documentation, final agent
 
 All outputs are written to the git-ignored `agent_outputs/<project_slug>/` folder in the user's working directory — see `shared/local_outputs.md`.
 
@@ -31,4 +31,4 @@ Each solution folder contains:
 - `project_templates/agent_template/` — the customer analysis agent blueprint (`SKILL.template.md` + `references/`)
 - `references/` — workflow setup, requirements doc, agent setup, docs content, Parent Segment spec, and the AI Signals model guide (AI Signals solutions)
 
-`rfm/`, `nba-scores/`, `nbp/` and `mta/` follow this layout (`shared/solution_standard.md`); `classifier/` is still being restructured.
+All five follow this layout (`shared/solution_standard.md`, checked by the maintainers' conformance script).

@@ -1,7 +1,7 @@
 ---
 name: fde-nbp
 description: |
-  NBP (Next Best Product) product recommendations for Treasure Data. Sets up a workflow that reads a customer's item-level purchase or interaction data, trains the AI Signals NBP model (ALS, similar-to-latest or popular), writes the top recommended products and categories per user for use as Parent Segment attributes, then builds a customer-specific NBP insights agent and dashboard. Trigger on: NBP, next best product, product recommendations, recommended products, item recommendations, cross-sell, upsell recommendations, NBP workflow setup, NBP configuration, NBP runbook, NBP output tables.
+  Sets up NBP (Next Best Product) recommendations on Treasure Data: a workflow that reads item-level purchase or interaction data, trains the AI Signals NBP model (ALS, similar-to-latest or popular) and writes the top products and categories per user for Parent Segment attributes, then builds the project's NBP agent and dashboard. Use it to set up, configure, change, re-run or resume the NBP workflow and to build or rebuild the NBP agent. Trigger on: set up NBP, next best product setup, product recommendation setup, NBP workflow, configure NBP, NBP configuration, rebuild the NBP agent, resume NBP setup, NBP runbook, NBP output tables. Questions about the recommendations themselves go to the installed project agent.
 ---
 
 # NBP (Next Best Product)
@@ -13,6 +13,8 @@ Reads a customer's user–item interactions (order lines, purchases, item views)
 Read `../shared/playbook.md` — it defines the entry point (new vs. resume), the phase sequence, the name gates and when to read each shared pattern. Follow that flow. Read each referenced file once per conversation: when this skill is invoked again later in the same conversation, the playbook and any reference files already read are still in context — don't read them again; in a new session, read `project_state.md` to pick up. This file provides the NBP-specific context for each phase.
 
 **AI Signals model questions:** when the user asks how the NBP model works or recommends, or wants to try another algorithm or API parameter values, or change the model's input or output table, read `references/ai-signals-guide.md` first, and end the answer with the public documentation link at its top. It is not needed for the standard setup steps (Phases 1–3) — `references/workflow-setup.md` covers those.
+
+**Setup skill vs. project agent:** this skill sets up, changes and rebuilds the solution; it is the same for every project. Once the project's own agent is installed in `.claude/skills/` (`<project_slug>-agent`), questions about its results are answered by that agent. If this skill is invoked with such a question, read the installed agent's `SKILL.md` and answer by its rules (or tell the user to ask the agent in a new chat); if no agent is installed yet, say so and offer the setup.
 
 **Treasure AI Studio questions:** when the user asks how Treasure AI Studio works — Work Folders, permissions and access, sharing skills or agents, plugins and marketplaces, or where to find Studio documentation — answer from what you know, then share the official documentation: https://docs.treasure.ai/products/ai-studio/overview
 
