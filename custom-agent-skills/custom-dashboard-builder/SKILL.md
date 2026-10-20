@@ -16,6 +16,8 @@ Turns a list of metrics and filters — or an existing dashboard — into a sing
 
 **`<skill_dir>`** = the folder containing this file — resolve it to an absolute path before running anything from it. Commands run from the Work Folder root. Templates in `<skill_dir>/project_templates/` are read-only: copy, then edit the copy.
 
+**Treasure AI Studio questions:** when the user asks how Treasure AI Studio works — Work Folders, permissions and access, sharing skills or agents, plugins and marketplaces, or where to find Studio documentation — answer from what you know, then share the official documentation: https://docs.treasure.ai/products/ai-studio/overview
+
 ## The flow
 
 | Step | What happens | Asks the user |

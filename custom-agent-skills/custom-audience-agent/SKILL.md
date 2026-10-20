@@ -14,6 +14,8 @@ Read `../shared/playbook.md` — it defines the entry point (new vs. resume), th
 
 Analysis requests ("how many customers …", "create a segment …") are answered by the **installed agent** (`.claude/skills/<agent-name>/`), not by this skill. If no agent is installed yet, say so and offer the setup.
 
+**Treasure AI Studio questions:** when the user asks how Treasure AI Studio works — Work Folders, permissions and access, sharing skills or agents, plugins and marketplaces, or where to find Studio documentation — answer from what you know, then share the official documentation: https://docs.treasure.ai/products/ai-studio/overview
+
 ## Phase Summary
 
 | Phase | What happens |

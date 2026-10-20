@@ -16,6 +16,8 @@ Read `../shared/playbook.md` — it defines the entry point (new vs. resume), th
 
 **Exceptions to the standard flow** (`../shared/solution_standard.md` §5): Phase 1 starts by asking the use case, the outcome and where the label lives; Phase 3 writes the project's feature SQL (`sql/input_features.sql`) in the workflow copy — the one template file besides the config that every Classifier deployment edits.
 
+**Treasure AI Studio questions:** when the user asks how Treasure AI Studio works — Work Folders, permissions and access, sharing skills or agents, plugins and marketplaces, or where to find Studio documentation — answer from what you know, then share the official documentation: https://docs.treasure.ai/products/ai-studio/overview
+
 ## Phase Summary
 
 | Phase | Stage | What happens |

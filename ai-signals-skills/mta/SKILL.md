@@ -16,6 +16,8 @@ Read `../shared/playbook.md` — it defines the entry point (new vs. resume), th
 
 **Exception (`../shared/solution_standard.md` §5):** MTA has no Parent Segment step in Phase 5 — attribution outputs are tables, not profile attributes.
 
+**Treasure AI Studio questions:** when the user asks how Treasure AI Studio works — Work Folders, permissions and access, sharing skills or agents, plugins and marketplaces, or where to find Studio documentation — answer from what you know, then share the official documentation: https://docs.treasure.ai/products/ai-studio/overview
+
 ## Phase Summary
 
 | Phase | Stage | What happens |

@@ -14,6 +14,8 @@ Read `../shared/playbook.md` — it defines the entry point (new vs. resume), th
 
 **AI Signals model questions:** when the user asks how the NBP model works or recommends, or wants to try another algorithm or API parameter values, or change the model's input or output table, read `references/ai-signals-guide.md` first, and end the answer with the public documentation link at its top. It is not needed for the standard setup steps (Phases 1–3) — `references/workflow-setup.md` covers those.
 
+**Treasure AI Studio questions:** when the user asks how Treasure AI Studio works — Work Folders, permissions and access, sharing skills or agents, plugins and marketplaces, or where to find Studio documentation — answer from what you know, then share the official documentation: https://docs.treasure.ai/products/ai-studio/overview
+
 ## Phase Summary
 
 | Phase | Stage | What happens |
