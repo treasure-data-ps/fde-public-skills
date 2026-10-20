@@ -25,7 +25,9 @@ description: >-
 > 4. **`./SKILL.md`** (this file)
 > 5. **Re-read after context compaction** (mandatory)
 
-Build custom dashboards from Treasure Data databases using a **self-serve 5-phase pipeline**. Rendering is always **HTML Client** — a single portable `dashboard.html` file with data inlined at build time. No Confluence, no git branching — everything lives in one local project folder.
+Build custom dashboards from Treasure Data databases using a **self-serve 5-phase pipeline**. Rendering is always **HTML Client** — a single portable `dashboard.html` file with data inlined at build time. Everything lives in one local project folder in the Work Folder.
+
+**`<skill_dir>`** = the folder containing this `SKILL.md` — resolve it to an absolute path from the skill's base directory before running any command that reads from it (templates in `<skill_dir>/project_templates/`, scripts in `<skill_dir>/tools/`). Commands run from the Work Folder, never from `<skill_dir>`. Templates are read-only: copy them into the project folder and edit the copy.
 
 ---
 
@@ -80,7 +82,7 @@ Then follow these 2 steps:
 
 3. **Route to Phase 1:** Read `./phase-1/SKILL.md` — it handles session setup (project name, business goal, scoring, path decision) for both Stage A (requirements) and Stage B (data discovery). After Phase 1 completes, **route to Phase 2 or Phase 3 per the path decision** (no additional prompt needed).
 
-**Special case — providing a `.dash` file:** If, during session setup, the user provides a Sisense/Treasure Insights `.dash` export (or JSON with a `"widgets"` array + `"datasource"` key), Phase 1 detects it and switches to a fast-track migration path — it converts the file with `./references/dash_to_html.py`, prefills requirements and data discovery directly from the export, and skips straight to building/validating the dashboard instead of asking every Stage A/B question from scratch. See `./phase-1/references/steps-1pre.md` ("`.dash` / Sisense Special Case") for the full flow.
+**Special case — providing a `.dash` file:** If, during session setup, the user provides a Sisense/Treasure Insights `.dash` export (or JSON with a `"widgets"` array + `"datasource"` key), Phase 1 detects it and switches to a fast-track migration path — it converts the file with `<skill_dir>/tools/dash_to_html.py`, prefills requirements and data discovery directly from the export, and skips straight to building/validating the dashboard instead of asking every Stage A/B question from scratch. See `./phase-1/references/steps-1pre.md` ("`.dash` / Sisense Special Case") for the full flow.
 
 #### Existing Engagement Path
 
@@ -105,7 +107,7 @@ Then follow these 3 steps:
         • Phase 1 (Requirements + Data Discovery): Score 6/6 — Workflow path
 
      ⏳ Next Actions:
-        • Phase 2: Deploy Workflow (SINK database: test_suraj)
+        • Phase 2: Deploy Workflow (SINK database: dashboard_sink)
         • Then Phase 3: Build Dashboard
 
      📌 Key Details:
@@ -116,14 +118,6 @@ Then follow these 3 steps:
 4. **Route to the next incomplete phase based on project state:**
    - For example, if Phase 1 is complete and Phase 2 is next → use `./phase-2/SKILL.md`
    - `state.md` clearly indicates which phase to start with (append-only log of every phase's outputs)
-
----
-
-## Recommended Model
-
-**This skill works with all Claude models.** Best default: **Claude Sonnet 5** (balanced cost/performance across all 5 phases) or similar. Alternatives can be used but better works with good models with context:
-- **Haiku 4.5:** Fast iteration on Phase 1 requirements gathering
-- **Opus 4.7/4.8:** Complex Phase 4 agent development if needed
 
 ---
 
@@ -141,8 +135,6 @@ Then follow these 3 steps:
 - **Score 0-2 (Non-Workflow):** Phase 1 → Phase 3 — skip Phase 2
 - **Score 3 (Optional):** User chooses between Phase 2 (workflow) or Phase 3 (direct build)
 - **Score 4-6 (Workflow):** Phase 2 first, then Phase 3
-
----
 
 ---
 
@@ -187,7 +179,6 @@ Then follow these 3 steps:
 
 ---
 
-→ **Full file & folder index:** `./INDEX.md`
 
 ---
 

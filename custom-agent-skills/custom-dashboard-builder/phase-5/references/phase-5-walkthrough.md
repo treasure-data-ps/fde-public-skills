@@ -1,7 +1,7 @@
 ---
 name: shared-phase-5-handoff-lite
 description: |
-  Step-by-step Phase 5 workflow for handing off validated dashboards. Creates 4 local markdown documentation files: Dashboard Architecture, Usage Guide, Runbook, and Access & Ownership. Invoked after Phase 3 dashboard validation (and optional Phase 4 automation/agent deployment). Lite version — no Confluence, no git.
+  Step-by-step Phase 5 workflow for handing off validated dashboards. Creates 4 local markdown documentation files: Dashboard Architecture, Usage Guide, Runbook, and Access & Ownership. Invoked after Phase 3 dashboard validation (and optional Phase 4 automation/agent deployment). All files are local to the Work Folder.
 ---
 
 # Phase 5: Handoff Documentation (Lite)
@@ -408,24 +408,10 @@ Your [Dashboard Name] dashboard is live! Here's the documentation:
 **Last Updated:** 15 July 2026
 **Author:** FDE Team
 
-### Deployment: Just Share the File
+### Deployment: The File Is the Artifact
 
-**No deployment infrastructure needed.**
+`dashboard.html` is self-contained and lives in the project's `dashboards/` folder in the Work Folder; the same file is used for testing and production. There is no upload, hosting or deployment step in this skill.
 
-Since `dashboard.html` is self-contained:
-
-1. **Development:** User develops locally
-2. **Testing:** User shares `dashboard.html` with stakeholders
-3. **Production:** Same file used in production (no changes)
-
-**Distribution options:**
-- Email the file
-- Store in shared drive (Google Drive, Dropbox, etc.)
-- Version control (GitHub, GitLab — commit as binary)
-- Knowledge base/wiki (attach HTML file)
-- Embed in Confluence page (upload as attachment)
-
-**No deployment pipeline needed** — the file IS the deployment artifact.
 
 ---
 

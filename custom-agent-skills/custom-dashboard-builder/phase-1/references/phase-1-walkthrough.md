@@ -210,7 +210,6 @@ Before scoring or routing, confirm the three-level filter hierarchy from Rule P1
 | Understand Dashboard Complexity Scoring & path decision | [`steps-1p-1t.md`](references/steps-1p-1t.md), [`stage-b-path-routing.md`](references/stage-b-path-routing.md) |
 | Handle conflicts between Stage A assumptions and Stage B data reality | [`workflow-notes.md`](references/workflow-notes.md) |
 | Write `state.md` and get final approval | [`step-1u-finalization.md`](references/step-1u-finalization.md), [`exit-checklist.md`](references/exit-checklist.md) |
-| See all reference files at once | [`references/INDEX.md`](references/INDEX.md) |
 
 ---
 
@@ -260,7 +259,6 @@ When requirements conflict (e.g. "Real-time" + "Minimize cost"):
 
 All detailed guidance lives in: `./references/`
 
-→ **Start with [`references/INDEX.md`](references/INDEX.md)** for a quick directory of all files and their purposes.
 
 ---
 

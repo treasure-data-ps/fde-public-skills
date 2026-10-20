@@ -8,7 +8,7 @@ description: |
 
 # Incremental Update Patterns for Dashboard Workflows
 
-> **Note on config keys below:** this file uses an illustrative `incremental_strategy`/`fresh_run` schema to explain the three conceptual patterns. The embedded `workflow-templates/input_params.yaml` implements Pattern 1 (Append-Only) out of the box via `refresh_mode: 'full' | 'incremental'` + `incremental_look_back_days` — see `input_params_examples.md`. Only reach for the Upsert or State Managed patterns below if Step 2h's eligibility assessment finds tasks the built-in `refresh_mode` branching doesn't cover (e.g. source data that gets corrected after the fact).
+> **Note on config keys below:** this file uses an illustrative `incremental_strategy`/`fresh_run` schema to explain the three conceptual patterns. The embedded `project_templates/workflow_template/input_params.yaml` implements Pattern 1 (Append-Only) out of the box via `refresh_mode: 'full' | 'incremental'` + `incremental_look_back_days` — see `input_params_examples.md`. Only reach for the Upsert or State Managed patterns below if Step 2h's eligibility assessment finds tasks the built-in `refresh_mode` branching doesn't cover (e.g. source data that gets corrected after the fact).
 
 ## Critical SQL Rules (Learned from Production)
 

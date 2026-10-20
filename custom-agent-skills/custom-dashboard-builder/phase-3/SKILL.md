@@ -1,7 +1,7 @@
 ---
 name: fde-tais-dashboard-builder-phase-3
 description: |
-  INTERNAL — Phase 3 only. Build and validate an interactive HTML Client dashboard.
+  Dashboard builder sub-file — Phase 3 only. Build and validate an interactive HTML Client dashboard.
 ---
 
 # Phase 3: Build + Validate Interactive Dashboard (FDE TAIS Dashboard Builder)

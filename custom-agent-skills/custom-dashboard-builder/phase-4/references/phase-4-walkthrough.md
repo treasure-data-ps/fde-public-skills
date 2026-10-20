@@ -122,7 +122,6 @@ AskUserQuestion:
 | **Extract a reusable skill (Track A)** | [`references/track-a-automation.md`](references/track-a-automation.md) |
 | **Deploy a companion agent (Track B)** | [`references/track-b-ai-agent.md`](references/track-b-ai-agent.md) |
 | **Find the knowledge-base / agent-prompt templates** | [`references/templates/`](references/templates/) |
-| **See all reference files** | [`references/INDEX.md`](references/INDEX.md) |
 
 ---
 
@@ -149,7 +148,6 @@ AskUserQuestion:
 
 ## Reference Directory
 
-Start with [`references/INDEX.md`](references/INDEX.md) for the full file listing.
 
 ---
 

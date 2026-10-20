@@ -178,7 +178,7 @@ Both patterns work because `state.md` is the bridge.
 
 ## No External Dependencies
 
-- **No Confluence** — all docs live in the project folder
+- **Local files only** — all docs live in the project folder
 - **No git branching** — working on one local `./<project-name>/` directory
 - **No external APIs** — skill is self-contained with references/ subfolder at each level
 - **No live dashboards** — everything is generated fresh, not fetched from an existing system

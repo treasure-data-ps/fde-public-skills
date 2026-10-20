@@ -105,7 +105,7 @@ The resulting `dashboard.html` is fully self-contained:
 <script>renderDashboard(RAW);</script>
 ```
 
-✅ Works everywhere (email, Confluence, file attachment, offline)
+✅ Works anywhere as one local file, offline
 ✅ One file to share
 ❌ File size limit ~2MB
 
@@ -1057,7 +1057,6 @@ Neutral:
 
 ## Related Files
 
-- `html-deployment-guide.md` - Deployment options
 - `../../testing-troubleshooting.md` - Quality validation
 
 ---

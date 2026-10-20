@@ -1,6 +1,6 @@
 ---
 name: fde-tais-dashboard-builder-phase-5
-description: INTERNAL — Phase 5 only. Optional: create 4 local handoff documentation files.
+description: Dashboard builder sub-file — Phase 5 only. Optional: create 4 local handoff documentation files.
 ---
 
 # Phase 5: Handoff Documentation (FDE TAIS Dashboard Builder)

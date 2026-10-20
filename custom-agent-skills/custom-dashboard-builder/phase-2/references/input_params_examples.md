@@ -1,6 +1,6 @@
 # input_params.yaml Examples
 
-Real-world configuration examples for custom dashboard workflows, using the exact schema shipped in `workflow-templates/input_params.yaml`.
+Real-world configuration examples for custom dashboard workflows, using the exact schema shipped in `project_templates/workflow_template/input_params.yaml`.
 
 > ⚠️ **Critical Rules (learned from production deployments):**
 > 1. **All variables MUST be top-level** — never nest under `globals:` or any parent key. Digdag resolves only root-level keys; nested variables cause `Failed to evaluate variable ${...}` at runtime.

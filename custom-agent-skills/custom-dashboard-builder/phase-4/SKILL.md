@@ -1,6 +1,6 @@
 ---
 name: fde-tais-dashboard-builder-phase-4
-description: INTERNAL — Phase 4 only. Optional: extract reusable skill (Option A - Recommended) or deploy Foundry agent (Option B - external API access only).
+description: Dashboard builder sub-file — Phase 4 only. Optional: extract reusable skill (Option A - Recommended) or deploy Foundry agent (Option B - external API access only).
 ---
 
 # Phase 4: Automate & Deploy (FDE TAIS Dashboard Builder)

@@ -11,8 +11,8 @@ HTML Client = one `.html` file with data embedded at generation time. No server,
 **How it works:**
 
 ```
-./templates/                    ← embedded locally in this skill
-  dashboard-template.html       ← layout + rendering code (no data)
+<skill_dir>/project_templates/dashboard_template/   ← shipped with this skill
+  dashboard.template.html       ← layout + rendering code (no data)
   generate-data.js               ← queries TD → injects data into HTML
 ./<project-name>/dashboards/
   dashboard.html                 ← generated output (template + data merged)
@@ -26,18 +26,11 @@ HTML Client = one `.html` file with data embedded at generation time. No server,
 
 ## Step 1: Copy the Template
 
-Templates are embedded locally in this skill — no external repo needed. Copy the one that fits your layout:
-
-```
-./templates/
-├── kpi-dashboard.html           → KPI cards + summary
-├── table-dashboard.html         → Sortable/filterable table
-└── multi-chart-dashboard.html   → Multiple charts (bar, line, doughnut)
-```
+The template ships with this skill. Copy it into the project:
 
 ```bash
 mkdir -p ./<project-name>/dashboards
-cp templates/kpi-dashboard.html ./<project-name>/dashboards/dashboard-template.html
+cp "<skill_dir>/project_templates/dashboard_template/dashboard.template.html" ./<project-name>/dashboards/dashboard-template.html
 ```
 
 The template contains a `<!-- DATA_PLACEHOLDER -->` comment where `generate-data.js` will inject the data block. Leave this comment in place.
@@ -140,19 +133,9 @@ If charts are flat at 0: the most common cause is string numbers — verify `num
 
 ---
 
-## Step 5: Share / Deliver
+## Step 5: Where the Dashboard Lives
 
-The generated `dashboard.html` is fully self-contained. No server needed.
-
-| Delivery method | Works? |
-|-----------------|--------|
-| Email attachment | ✅ |
-| Confluence upload | ✅ |
-| Google Drive / OneDrive | ✅ |
-| Double-click locally | ✅ |
-| Web server URL | ✅ |
-
-For Pattern B (data.json separate): zip `dashboard.html` + `data.json` together and instruct recipients to unzip both into the same folder before opening.
+The generated `dashboard.html` is fully self-contained and stays in `./<project-name>/dashboards/` in the Work Folder. Open it from there; download it to share it like any other file. No server, upload or hosting step.
 
 ---
 

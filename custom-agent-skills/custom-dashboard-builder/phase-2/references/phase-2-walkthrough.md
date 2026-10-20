@@ -46,7 +46,7 @@ Stage A/B: Interactive     Phase 2: Workflow           Phase 3: Dashboard
 
 | Step | Topic | Details |
 |------|-------|---------|
-| 2a | Set up workflow project | **Copy the locally embedded workflow templates** — see `./references/workflow-templates/`. See [`workflow-setup-configure.md`](references/workflow-setup-configure.md) |
+| 2a | Set up workflow project | **Copy the locally embedded workflow templates** — see `<skill_dir>/project_templates/workflow_template/`. See [`workflow-setup-configure.md`](references/workflow-setup-configure.md) |
 | 2b | Configure parameters | Edit `input_params.yaml` with Stage B metrics, tables, filters, SINK DB. **Multi-source:** use flat `source_db_*` keys (one per database) — never nest. See [`workflow-setup-configure.md`](references/workflow-setup-configure.md) + [`input_params_examples.md`](references/input_params_examples.md) |
 | 2c | Customize SQL queries | Replace template SQL with Stage B queries; optimize with `td_time_range()`. See [`workflow-setup-configure.md`](references/workflow-setup-configure.md) + [`td-time-functions.md`](references/td-time-functions.md) |
 | 2d | Configure datamodel | Only if you're using an SINK-aware analytics layer that requires a schema config file (e.g. a datamodel/join config). Skip if not applicable. See [`workflow-setup-configure.md`](references/workflow-setup-configure.md) |
@@ -59,7 +59,7 @@ Stage A/B: Interactive     Phase 2: Workflow           Phase 3: Dashboard
 
 ## Starting Point: Locally Embedded Templates
 
-The workflow templates are bundled with this skill — no external repo access needed. Everything in `./references/workflow-templates/` (`<project_name>_launch.dig`, `<project_name>_data_prep.dig`, `<project_name>_cleaner.dig`, `input_params.yaml`, `sql/*.sql`) is a ready-to-customize starting point.
+The workflow templates are bundled with this skill — no external repo access needed. Everything in `<skill_dir>/project_templates/workflow_template/` (`<project_name>_launch.dig`, `<project_name>_data_prep.dig`, `<project_name>_cleaner.dig`, `input_params.yaml`, `sql/*.sql`) is a ready-to-customize starting point.
 
 ---
 
@@ -96,7 +96,7 @@ schedule:
 
 ## Phase 2 Optional: Data Retention with Cleaner Task
 
-**Template:** `./references/workflow-templates/<project_name>_cleaner.dig`
+**Template:** `<skill_dir>/project_templates/workflow_template/<project_name>_cleaner.dig`
 
 **When to use:**
 - Dashboard only needs recent data (e.g., last 90 days)
@@ -137,7 +137,7 @@ schedule:
 # Copy workflow templates into your project working directory
 mkdir -p ./<project_name>/workflows
 
-cp -r ./references/workflow-templates/. ./<project_name>/workflows/
+cp -r <skill_dir>/project_templates/workflow_template/. ./<project_name>/workflows/
 ```
 
 ---
@@ -229,13 +229,12 @@ If you skip Phase 2, your Phase 3 queries will hit both databases on EVERY dashb
 
 | I want to... | See... |
 |---|---|
-| **Understand the template structure** | `./references/workflow-templates/` — launch, data-prep, cleaner, input_params.yaml |
+| **Understand the template structure** | `<skill_dir>/project_templates/workflow_template/` — launch, data-prep, cleaner, input_params.yaml |
 | **Get detailed guidance per step** | [`workflow-setup-configure.md`](references/workflow-setup-configure.md) (2a-2d), [`workflow-deployment-validate.md`](references/workflow-deployment-validate.md) (2e-2h) |
 | **Configure `input_params.yaml`** | [`input_params_examples.md`](references/input_params_examples.md) — worked examples for metrics, filters, time windows |
 | **Understand TD time functions** | [`td-time-functions.md`](references/td-time-functions.md) — patterns, incremental modes, performance testing |
 | **Test & troubleshoot** | [`testing-troubleshooting.md`](references/testing-troubleshooting.md) — checklist, common issues, diagnostics |
 | **Understand Phase 2 architecture** | [`workflow-setup-configure.md`](references/workflow-setup-configure.md) — architecture, key principles, datamodel design |
-| **See all reference files** | [`INDEX.md`](references/INDEX.md) — directory index |
 
 ---
 
@@ -315,7 +314,6 @@ Phase 3 covers:
 
 All detailed guidance lives in: `./references/`
 
-→ **Start with [`INDEX.md`](references/INDEX.md)** for complete directory and file descriptions.
 
 ---
 
@@ -521,7 +519,7 @@ Append to **`state.md`**:
 
 | Question | Reference |
 |----------|-----------|
-| Template structure | `./references/workflow-templates/` |
+| Template structure | `<skill_dir>/project_templates/workflow_template/` |
 | Configure `input_params.yaml` | `./references/input_params_examples.md` |
 | Use `td_time_range()` | `./references/td-time-functions.md` |
 | Incremental mode choice | `./references/td-time-functions.md` — volatility decision table |

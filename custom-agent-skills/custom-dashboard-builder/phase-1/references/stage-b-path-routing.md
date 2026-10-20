@@ -2,7 +2,7 @@
 
 **CRITICAL CHECKPOINT:** Summarize Stage B inferences, update `state.md`, and confirm the path forward.
 
-**⚠️ No Confluence updates, no git commits, no engineer gate, no customer clarification loop in this lite skill.** This is a single-session, self-serve flow — the user reviews and confirms directly, in-session.
+**⚠️ No git commits, no engineer gate, no customer clarification loop in this lite skill.** This is a single-session, self-serve flow — the user reviews and confirms directly, in-session.
 
 **Step 2f must be executed in this exact order — do not skip or reorder:**
 

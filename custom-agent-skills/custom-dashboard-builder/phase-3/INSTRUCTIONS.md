@@ -124,7 +124,7 @@ SELECT COUNT(*) FROM <SOURCE_DB>.<source_table>  # Verify data exists
 1. **`../references/treasure-data-theme.md`** — Brand colors, fonts, component styles (if not already read in root SKILL.md)
 2. **`./references/filter-architecture.md`** — Complete filter design patterns, cross-tab filter logic, dimension interaction rules (763 lines) — **READ BEFORE building filters**
 3. **`./references/rendering/html-client/html-dashboard-patterns.md`** — Standard HTML dashboard patterns and component structure (22K)
-4. **`./references/rendering/html-client/templates/generate-data.js`** — Reference data generation script template (243 lines) — **READ BEFORE writing your generate-data.js**
+4. **`<skill_dir>/project_templates/dashboard_template/generate-data.js`** — Reference data generation script template (243 lines) — **READ BEFORE writing your generate-data.js**
 
 **Why these reads matter:**
 - `filter-architecture.md` prevents filter granularity mismatches (month vs daily), tab-scope binding issues, and COUNT DISTINCT edge cases

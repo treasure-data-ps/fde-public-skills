@@ -224,7 +224,7 @@ LIMIT 5000
 ```
 
 **Actions:**
-1. Copy the base template from `references/rendering/html-client/templates/` (kpi / table / multi-chart) matching the requirements' layout
+1. Copy the base template from `<skill_dir>/project_templates/dashboard_template/` (kpi / table / multi-chart) matching the requirements' layout
 2. **Write tooltip text for every widget** (definition + calculation) — do this now, before Step 4d
 3. Define all dashboard sections (filters, KPI cards, charts, tables)
 4. Add data range banner

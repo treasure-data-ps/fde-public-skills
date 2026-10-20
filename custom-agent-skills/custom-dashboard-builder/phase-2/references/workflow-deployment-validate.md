@@ -229,7 +229,7 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
    # Expected:
    # ✔ Project uploaded
    # Project ID: <id>
-   # Console: https://console.us01.treasuredata.com/app/workflows/<id>/info
+   # Console: TD Console → Workflows → <project> (the console URL of the account's region)
 
    # This creates tdx.json automatically:
    # cat tdx.json
@@ -283,7 +283,7 @@ If you run `tdx wf push` without a prior `tdx.json`, it fails with "no workflow 
    - Row count: [N rows expected per SINK table]
    - Estimated duration: 2-5 minutes
    - SINK location: <sink_database>
-   - Status tracking: https://console.us01.treasuredata.com/app/workflows/<PROJECT_ID>/info
+   - Status tracking: TD Console → Workflows → <project> (`tdx wf projects <project>` shows the ID)
    ```
 
    **Only run `tdx wf run` after user explicitly selects "Yes, trigger now".**

@@ -119,17 +119,17 @@ Final: User Approval (Step 4i)
 > **All user-facing questions in this phase use `AskUserQuestion`** — never plain text lists.
 > Provide 2–4 pre-populated options. Mark recommended with `(Recommended)`. Batch up to 4 questions per call.
 
-**Template source (embedded locally, no external repo needed):** `references/rendering/html-client/templates/`
+**Template source (embedded locally, no external repo needed):** `<skill_dir>/project_templates/dashboard_template/`
 
 Copy the standard template into your project:
 
 ```bash
 mkdir -p ./<project-name>/dashboards
 
-cp references/rendering/html-client/templates/dashboard.template.html \
+cp <skill_dir>/project_templates/dashboard_template/dashboard.template.html \
    ./<project-name>/dashboards/dashboard-template.html
 
-cp references/rendering/html-client/templates/generate-data.js \
+cp <skill_dir>/project_templates/dashboard_template/generate-data.js \
    ./<project-name>/dashboards/generate-data.js
 ```
 
@@ -558,7 +558,6 @@ SINK_DB.fact_deduped (rows without duplicates)
 | **3. Numeric coercion** | Parse `"1234.56"` → `1234.56` in generate-data.js | -3 bytes per numeric × 10K values = -30 KB |
 | **4. SELECT only used columns** | No unused fields in final JSON | -50 bytes per unused column × 1K rows = -50 KB |
 | **5. LIMIT enforcement** | All queries include `LIMIT 10000` (user can override) | Prevents OOM; user controls truncation |
-| **6. Enable gzip when serving** | `npx serve --compress` or nginx gzip | HTML compresses ~500+ KB → 60-70 KB (87% reduction) — only applies if serving over network, not needed for double-click/email delivery |
 
 ### Example: Optimized Query Pattern
 
@@ -661,19 +660,6 @@ See [`references/query-patterns-for-dashboards.md`](references/query-patterns-fo
 ### Chart.js Is Inlined, Not Loaded via CDN
 
 Chart.js is inlined directly inside each template's HTML (no `<script src="...cdn...">` tag, no external network request). This keeps the dashboard fully self-contained and working offline. It adds a fixed ~200 KB to every dashboard.html — this is expected and not itself reducible without breaking offline support. There is no CDN script to `defer`; no action is needed here.
-
-### Enable Gzip When Serving the Dashboard
-
-If serving via network (npx serve, nginx) rather than double-clicking or emailing the file directly:
-
-```bash
-# With serve
-npx serve --compress ./<project-name>/dashboards/
-
-# Result: HTML compresses from 500+ KB → 60-70 KB (87% reduction)
-```
-
-See [`references/rendering/html-client/html-deployment-guide.md`](references/rendering/html-client/html-deployment-guide.md) → "Performance Optimization: Enable Gzip Compression" for full setup. This step is optional — it only applies to the fallback server-hosting path, not the default double-click/email delivery.
 
 ### Profiling Tools
 
@@ -837,13 +823,12 @@ See [`references/rendering/html-client/html-deployment-guide.md`](references/ren
 
 | I want to... | See... |
 |---|---|
-| **Copy dashboard templates** | `references/rendering/html-client/templates/` (see How to Execute block above for exact `cp` commands) |
+| **Copy dashboard templates** | `<skill_dir>/project_templates/dashboard_template/` (see How to Execute block above for exact `cp` commands) |
 | **Execute any Phase 3 step** | [`references/steps.md`](references/steps.md) |
 | **Run testing checklist** | [`testing-troubleshooting.md`](references/testing-troubleshooting.md) |
 | **Troubleshoot blank/wrong dashboard** | [`testing-troubleshooting.md`](references/testing-troubleshooting.md) |
 | **Understand Non-Workflow vs Workflow architecture** | "Key Concept" section above (this file) |
-| **See all reference files** | [`references/INDEX.md`](references/INDEX.md) |
-| **HTML Client engine details** | [`references/rendering/html-client/SKILL.md`](references/rendering/html-client/SKILL.md) |
+| **HTML Client engine details** | [`references/rendering/html-client/html-client.md`](references/rendering/html-client/html-client.md) |
 
 ---
 
@@ -887,7 +872,6 @@ At end of Phase 3, user receives:
 - ❌ Hosting platform (Heroku, Vercel, AWS)
 - ❌ CI/CD pipeline for deployment
 
-**If you DO want a server:** `npx serve .` is optional for local testing/sharing, but not necessary for production use.
 
 ---
 

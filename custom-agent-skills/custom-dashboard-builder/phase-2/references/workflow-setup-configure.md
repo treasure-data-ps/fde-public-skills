@@ -14,7 +14,7 @@
 > ```
 > If "Read it now" → read `../../references/guardrails-lite.md` in full before any step.
 >
-> **Single local file for state — no Confluence, no git.**
+> **Single local file for state.**
 > Only update: `state.md`, in `./<project_name>/`.
 
 ## ⚠ CRITICAL: Schema Inspection BEFORE Any SQL (5 min)
@@ -172,7 +172,7 @@ source_db_commerce: commerce_db
 1. **Copy the embedded template into your project working directory:**
    ```bash
    mkdir -p ./<project_name>/workflows
-   cp -r ../references/workflow-templates/. ./<project_name>/workflows/
+   cp -r <skill_dir>/project_templates/workflow_template/. ./<project_name>/workflows/
    ```
 
 2. **Rename workflow files with project name** (REQUIRED):

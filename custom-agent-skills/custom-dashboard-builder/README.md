@@ -144,9 +144,11 @@ Q1: Do you need the dashboard now?
 fde-tais-dashboard-builder/
 ├── SKILL.md              ← you are here — entry point and phase routing
 ├── README.md              ← this file
-├── INDEX.md               ← full file & folder index
-├── references/
-│   └── guardrails-lite.md ← cross-phase guardrails (data integrity, queries, rendering, agent prompts)
+├── references/            ← cross-phase: execution contract, guardrails, state pattern, theme
+├── project_templates/
+│   ├── workflow_template/ ← Phase 2 workflow template (.dig, input_params.yaml, sql/) — copied, never edited in place
+│   └── dashboard_template/← Phase 3 dashboard.template.html + generate-data.js — copied, never edited in place
+├── tools/                 ← dash_to_html.py (.dash conversion), insights-api-helper.py (Treasure Insights schema)
 ├── phase-1/               ← Phase 1: Requirements + Data Discovery (Stage A + Stage B, state.md created)
 ├── phase-2/               ← Phase 2: Deploy Dashboard Workflow (template setup, configure, deploy, validate SINK tables) [Score 4-6 only]
 ├── phase-3/                ← Phase 3: Build + Validate Interactive Dashboard (HTML Client only, 12-step build+validate loop)
@@ -193,7 +195,7 @@ fde-tais-dashboard-builder/
 
 ## The Business Context File: Central Control
 
-**`state.md`** is the single source of truth for all dashboard implementation details, written under `./<project-name>/`. It controls SQL generation, validation, and feedback incorporation. It replaces the old `project_context.md` — same append-only pattern, no git/Confluence framing.
+**`state.md`** is the single source of truth for all dashboard implementation details, written under `./<project-name>/`. It controls SQL generation, validation, and feedback incorporation. It replaces the old `project_context.md` — same append-only pattern, local files only.
 
 ### What It Is
 - **Business goals** — what the dashboard tracks

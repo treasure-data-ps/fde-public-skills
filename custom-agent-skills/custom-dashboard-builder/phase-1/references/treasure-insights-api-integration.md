@@ -198,5 +198,5 @@ For each relation:
 
 - **Treasure Insights Reporting API official docs:** [Treasure Data API reference](https://docs.treasuredata.com)
 - **Phase 1 Special Case (`.dash` flow):** `steps-1pre.md` (Treasure Insights/Sisense Special Case section)
-- **Helper script:** `../../references/insights-api-helper.py`
+- **Helper script:** `<skill_dir>/tools/insights-api-helper.py`
 

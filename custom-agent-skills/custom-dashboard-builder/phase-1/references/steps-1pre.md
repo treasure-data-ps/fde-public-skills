@@ -221,12 +221,12 @@ Combining them prevents stale export files from mismatching the live datamodel, 
 
 **Special note:** If the user also selected the datamodel in Setup-E, follow the "Combined Path" guidance in Step 2b below instead of running Steps 1–7 independently.
 
-**Lite-specific notes:** No Confluence, no git branching — everything below writes to `state.md` only. No live Sisense datamodel API fetch — the datamodel question in Step 3 is answered conversationally (paste JSON or describe relationships in text), not via a `curl` call to a TD reporting API. The converter script lives locally at `../../references/dash_to_html.py` (repo-root `references/`) — there is no external repo dependency.
+**Lite-specific notes:** Local files only — everything below writes to `state.md` only. No live Sisense datamodel API fetch — the datamodel question in Step 3 is answered conversationally (paste JSON or describe relationships in text), not via a `curl` call to a TD reporting API. The converter script lives locally at `<skill_dir>/tools/dash_to_html.py` (repo-root `references/`) — there is no external repo dependency.
 
 ### Step 1: Run the Converter Immediately
 
 ```bash
-python3 ../../references/dash_to_html.py "<path-to-dash-file>" --out /tmp/dash-convert --db __DB__
+python3 <skill_dir>/tools/dash_to_html.py "<path-to-dash-file>" --out /tmp/dash-convert --db __DB__
 ```
 
 This produces `render.js`, `template.html`, and `widget_audit.json` in `/tmp/dash-convert/`. `__DB__` is a placeholder — the real database is confirmed in Step 3 and substituted in Step 4.
@@ -309,7 +309,7 @@ Any relationship found here that the converter's auto-join heuristic didn't alre
 ### Step 4: Re-Run the Converter With the Real Database
 
 ```bash
-python3 ../../references/dash_to_html.py "<path-to-dash-file>" --out /tmp/dash-convert --db <confirmed-database>
+python3 <skill_dir>/tools/dash_to_html.py "<path-to-dash-file>" --out /tmp/dash-convert --db <confirmed-database>
 ```
 
 Open `/tmp/dash-convert/template.html` (e.g. via `mcp__work__open_file`) so the user can see the structure before any data is queried.
@@ -385,7 +385,7 @@ Write the Session Setup block (Setup-A–E) plus the `.dash`-derived Requirement
 
 **Why this path exists:** A Treasure Insights datamodel already encodes the schema (tables, columns, metrics, dimensions, and join relationships) in the Reporting API. Instead of asking every Stage A/B question from scratch, we fetch the live schema via API and **prefill** Stage A requirements and Stage B data discovery automatically. This is faster and avoids stale export files.
 
-**Lite-specific notes:** Uses the Reporting API (documented at `../references/treasure-insights-api-integration.md`) to fetch the schema. The helper script lives at `../../references/insights-api-helper.py` (repo-root `references/`) — pure Python, no external dependencies beyond `requests`.
+**Lite-specific notes:** Uses the Reporting API (documented at `../references/treasure-insights-api-integration.md`) to fetch the schema. The helper script lives at `<skill_dir>/tools/insights-api-helper.py` (repo-root `references/`) — pure Python, no external dependencies beyond `requests`.
 
 ### Step 1: Fetch the Datamodel Schema
 
@@ -394,7 +394,7 @@ Ask the user: "Is this a datamodel name (e.g., 'sales_model') or a datamodel OID
 Once provided, run the helper script:
 
 ```bash
-python3 ../../references/insights-api-helper.py "<datamodel_name_or_oid>" --region <us|jp|eu|kr>
+python3 <skill_dir>/tools/insights-api-helper.py "<datamodel_name_or_oid>" --region <us|jp|eu|kr>
 ```
 
 This outputs:
@@ -545,10 +545,10 @@ Running these together:
 
 ```bash
 # Fetch datamodel schema
-python3 ../../references/insights-api-helper.py "<datamodel_name_or_oid>" --region <us|jp|eu|kr>
+python3 <skill_dir>/tools/insights-api-helper.py "<datamodel_name_or_oid>" --region <us|jp|eu|kr>
 
 # Convert .dash file
-python3 ../../references/dash_to_html.py "<path-to-dash-file>" --out /tmp/dash-convert --db __DB__
+python3 <skill_dir>/tools/dash_to_html.py "<path-to-dash-file>" --out /tmp/dash-convert --db __DB__
 ```
 
 **Step B: Cross-Validate**

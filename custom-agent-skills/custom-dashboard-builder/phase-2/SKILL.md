@@ -1,6 +1,6 @@
 ---
 name: fde-tais-dashboard-builder-phase-2
-description: INTERNAL — Phase 2 only. Deploy a scheduled workflow that pre-aggregates metrics into SINK tables.
+description: Dashboard builder sub-file — Phase 2 only. Deploy a scheduled workflow that pre-aggregates metrics into SINK tables.
 ---
 
 # Phase 2: Deploy Dashboard Workflow (FDE TAIS Dashboard Builder)
@@ -31,7 +31,7 @@ description: INTERNAL — Phase 2 only. Deploy a scheduled workflow that pre-agg
 
 → **Full workflow:** See `./references/phase-2-walkthrough.md` for step-by-step overview, checklists, troubleshooting, and next-phase routing.
 
-→ **Key resources:** `./references/workflow-setup-configure.md` · `workflow-deployment-validate.md` · `td-time-functions.md` · `testing-troubleshooting.md` · `workflow-templates/`
+→ **Key resources:** `./references/workflow-setup-configure.md` · `workflow-deployment-validate.md` · `td-time-functions.md` · `testing-troubleshooting.md` · `project_templates/workflow_template/`
 
 ### Step 2c: SINK Schema Design — Avoiding Multi-Dimension Double-Counting
 

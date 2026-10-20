@@ -208,7 +208,7 @@ KPI Dashboard
 ├─ Use Case: Status reports, briefings
 ├─ UI Style: Scan-friendly (4 big numbers)
 ├─ Interaction: Read-only
-└─ Share method: Email, Confluence
+└─ Delivery: one local dashboard.html file
 
 Table Dashboard
 ├─ Audience: Operators, Analysts

@@ -1,14 +1,9 @@
----
-name: fde-custom-dashboard-html-client
-description: "INTERNAL — invoked by rendering index (phase-3/references/rendering/SKILL.md) only. Do not trigger directly. HTML Client rendering engine: self-contained .html files, no backend, shareable via email/Confluence. Uses generate-data.js for data injection."
----
-
 # HTML Client-Side Dashboard Rendering Engine
 
 **Platform:** Browser-based (all platforms)  
 **Build time:** 10-25 minutes  
 **Complexity:** Simple (HTML/CSS/JavaScript)  
-**Best for:** Shareable reports, email delivery, Confluence embedding  
+**Best for:** Self-contained dashboards that open from a single local file  
 **Server requirement:** None (data must be fully inlined)
 
 ---
@@ -40,9 +35,7 @@ The delivered `dashboard.html` is fully self-contained:
 
 ✅ **Works by:**
 - Double-click on local file
-- Email attachment (recipients download & open)
-- Confluence upload (download & open)
-- Google Drive / cloud storage
+- Downloading the file and opening it anywhere (no server, no network)
 
 **Pattern B — `generate-data.js` writes a separate `data.json` (only if > 2MB):**
 
@@ -63,12 +56,7 @@ The HTML fetches at runtime:
 
 ❌ **Does NOT work in:**
 - Double-click (CORS blocks file:// fetches)
-- Email attachment (data.json lost)
-- Confluence (can't host data.json separately)
-
-✅ **Only works with:**
-- Web server (Nginx, Node.js, etc.)
-- Same directory with explicit server (`npx serve .`)
+- A downloaded copy (data.json is lost)
 
 **Rule (Lite):** Pattern A is the only sanctioned pattern in the lite skill — a single portable `dashboard.html` with data inlined. Pattern B (separate `data.json`, server-hosted) is **out of scope for lite** — it breaks the "double-click and open" portability guarantee this skill promises. If a dataset genuinely exceeds 2MB, flag it to the user as an exception rather than silently switching patterns. In all cases, `generate-data.js` is the only source of data — never write data values into `dashboard.html` by hand.
 
@@ -76,21 +64,19 @@ The HTML fetches at runtime:
 
 ## Templates
 
-Templates are embedded locally — no external repo needed:
-`./templates/` (`kpi-dashboard.html`, `table-dashboard.html`, `multi-chart-dashboard.html`, `generate-data.js`, `render.js`, `README.md`)
+One template ships with the skill in `<skill_dir>/project_templates/dashboard_template/`: `dashboard.template.html` (layout + rendering code, with a `<!-- DATA_PLACEHOLDER -->` comment), `generate-data.js` (queries TD and inlines the data) and `example-data.json` (data shape).
 
 ---
 
 ## Quick Start
 
-> **`generate-data.js` is mandatory for every HTML Client dashboard.** It is the only sanctioned way to populate `data.json` — never inline query results manually or hardcode data values in the HTML.
+> **`generate-data.js` is mandatory for every HTML Client dashboard.** It is the only sanctioned way to put data into `dashboard.html` — never inline query results manually or hardcode data values in the HTML.
 
-1. **Copy template** — Pick one of 3 templates (KPI, Table, Multi-Chart) from `./templates/` (embedded locally in this skill)
-2. **Write `generate-data.js`** — Query script that runs `tdx query` and writes `data.json`. This file is **required**; the dashboard will not have real data without it.
-3. **Run `generate-data.js`** — `node generate-data.js` → produces `data.json`
-4. **Serve and open** — `npx serve .` → open `http://localhost:3000` (or use `preview_document` in Treasure Work)
+1. **Copy the template** — `dashboard.template.html` and `generate-data.js` from `<skill_dir>/project_templates/dashboard_template/` into the project's `dashboards/` folder
+2. **Write the queries in `generate-data.js`** — it runs `tdx query` and inlines the results into `dashboard.html`. This file is **required**; the dashboard will not have real data without it.
+3. **Run it** — `node generate-data.js` → writes `dashboard.html`
+4. **Open** — open the local `dashboard.html` file (or `preview_document` in Treasure Work)
 5. **Validate** — confirm charts/tables show real data
-6. **Share** — zip `dashboard.html` + `render.js` + `data.json` and send
 
 ---
 
@@ -145,7 +131,7 @@ Templates are embedded locally — no external repo needed:
 ## Key Advantages
 
 ✅ **Self-contained** — One .html file, no dependencies  
-✅ **Shareable** — Email, Confluence, Google Drive  
+✅ **Portable** — one local file, nothing to host  
 ✅ **Works offline** — No internet required after download  
 ✅ **Fast** — No server roundtrips, instant filtering  
 ✅ **Browser-native** — Works in all modern browsers  
@@ -232,30 +218,9 @@ const allData = [
 
 ---
 
-## Deployment Options
+## Where the Dashboard Lives
 
-### Email
-- Download .html file
-- Attach to email
-- Recipients open in browser
-- Works offline
-
-### Confluence
-1. Go to Confluence page
-2. Click "Insert" → "Attachments"
-3. Upload .html file
-4. Share page URL
-5. Recipients download and open
-
-### Web Server
-1. Upload .html to server
-2. Share URL: `https://yourserver.com/dashboards/sales.html`
-3. Recipients open in browser
-
-### Cloud Storage
-1. Upload to Google Drive / OneDrive / Dropbox
-2. Share link
-3. Recipients download and open
+`dashboard.html` is written to the project's `dashboards/` folder in the Work Folder. Open it from there; open it from there, or download it and share it like any other file. No upload, hosting or server step is part of this skill.
 
 ---
 

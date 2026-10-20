@@ -1,7 +1,7 @@
 ---
 name: fde-tais-dashboard-builder-phase-1
 description: |
-  INTERNAL — Phase 1 only. Gather business requirements, validate against real data, calculate dashboard complexity (0-6), and route to Phase 2/3. Produces local state.md with requirements, data findings, and path decision.
+  Dashboard builder sub-file — Phase 1 only. Gather business requirements, validate against real data, calculate dashboard complexity (0-6), and route to Phase 2/3. Produces local state.md with requirements, data findings, and path decision.
 ---
 
 # Phase 1: Requirements & Data Discovery (FDE TAIS Dashboard Builder)
@@ -14,16 +14,8 @@ description: |
 > 5. `./references/phase-1-walkthrough.md` (step-by-step walkthrough)
 > 6. `../references/guardrails-lite.md` (cross-phase guardrails)
 
-**Phase Goal:** Gather business requirements (Stage A), validate them against real data (Stage B), calculate the Dashboard Complexity Score (0–6), decide Workflow vs Non-Workflow path, and get user approval — all in one session, with no Confluence and no git branching.
+**Phase Goal:** Gather business requirements (Stage A), validate them against real data (Stage B), calculate the Dashboard Complexity Score (0–6), decide Workflow vs Non-Workflow path, and get user approval — all in one session, with local files only.
 **Deliverable:** A local `state.md` file at `./<project-name>/state.md` containing the approved requirements, confirmed data findings, Dashboard Complexity Score, and path decision.
-
----
-
-## Recommended Model
-
-**This skill works with all Claude models.** Best default: **Claude Sonnet 5** (balanced cost/performance across all phases). Alternatives:
-- **Haiku 4.5:** Fast iteration on requirements gathering (Phase 1)
-- **Opus 4.7/4.8:** Complex Phase 4 agent development if needed
 
 ---
 
@@ -59,8 +51,8 @@ Run the session-setup questions (project name, business goal, platform, data sou
 If resources prefill answers, display the prefilled requirements and ask the user to confirm or correct them. Prefilling is not permission to skip mandatory questions.
 
 **Special cases — Sisense/Treasure Insights exports, datamodels, and workflows:** If Setup-E turns up any of these, route to the appropriate special-case flow. Do not repeat already-prefilled questions, but do show and explicitly confirm every mandatory decision before Stage B/finalization. Instead follow the appropriate path in `./references/steps-1pre.md`:
-- **`.dash` export alone** → "`.dash` / Sisense Special Case" — converts the file with `../references/dash_to_html.py`, prefills requirements and discovery
-- **Treasure Insights datamodel alone** → "Treasure Insights API Special Case" — fetches schema via Reporting API with `../references/insights-api-helper.py`, prefills requirements and discovery
+- **`.dash` export alone** → "`.dash` / Sisense Special Case" — converts the file with `<skill_dir>/tools/dash_to_html.py`, prefills requirements and discovery
+- **Treasure Insights datamodel alone** → "Treasure Insights API Special Case" — fetches schema via Reporting API with `<skill_dir>/tools/insights-api-helper.py`, prefills requirements and discovery
 - **Multiple resources (`.dash` + datamodel ± workflow)** → "Combined Resources Path" — fetches datamodel, converts `.dash` file, cross-validates both, incorporates workflow metadata if present, then prefills Stage A/B with unified context
 
 Special-case paths may prefill repetitive requirements, but they do not bypass the execution contract: show the prefilled answers, confirm every mandatory decision with the user, validate the live data, then route to Phase 2/3 based on the migration goal (Replicate / Replicate+improve / Modernize) and workflow selection.
@@ -179,7 +171,6 @@ If the data source is pre-aggregated (`skip_phase_3` in the old numbering, i.e. 
 | Avoiding redundant re-querying in later phases | `./references/confirmed-values-checkpoint.md` |
 | Conflict resolution, large-table performance | `./references/workflow-notes.md` |
 | Final validation + approval flow | `./references/step-1u-finalization.md`, `./references/exit-checklist.md` |
-| Directory index of all Phase 1 reference files | `./references/INDEX.md` |
 
 ---
 

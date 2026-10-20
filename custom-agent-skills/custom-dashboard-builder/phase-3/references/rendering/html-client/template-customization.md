@@ -48,7 +48,7 @@ grep 'DATA_PLACEHOLDER' dashboard-template.html
 Copy the canonical starter (embedded locally in this skill):
 
 ```bash
-cp templates/generate-data.js \
+cp "<skill_dir>/project_templates/dashboard_template/generate-data.js" \
    ./<project-name>/dashboards/generate-data.js
 ```
 
@@ -198,16 +198,9 @@ After changing the title, re-run `generate-data.js` to regenerate `dashboard.htm
 
 ---
 
-## Step 7: Deliver
+## Step 7: Where the Dashboard Lives
 
-The generated `dashboard.html` is fully self-contained. Delivery options:
-
-| Method | Steps |
-|--------|-------|
-| Email | Attach `dashboard.html` |
-| Confluence | Upload as attachment to the page, share page URL |
-| Google Drive / OneDrive | Upload, share link — recipients download and open |
-| Web server | Upload to static host, share URL |
+The generated `dashboard.html` is fully self-contained and stays in the project's `dashboards/` folder in the Work Folder — open it from there or download it. No upload or hosting step.
 
 ---
 
