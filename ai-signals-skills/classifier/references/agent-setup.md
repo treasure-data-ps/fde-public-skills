@@ -47,7 +47,9 @@ Show this table to the user after every build (`../../shared/customer_agent_patt
 After installing, from the Work Folder root:
 
 1. `tdx query -d <sink_database> "SELECT session_id, auc_roc FROM classifier_run_log ORDER BY time DESC LIMIT 1"` returns the validated run, and `tdx query -d <sink_database> "SELECT COUNT(*) FROM <pred_table>_latest"` returns the scored entities.
-2. Generate the dashboard once with the command in the installed `SKILL.md`. Pass = the command exits without an error and `ls -l agent_outputs/<project_slug>/dashboards/classifier_summary_dashboard.html` shows the file. Nothing else — the dashboard template and `generate-data.js` are pre-validated: run the command once and use the result as it is. Do not take screenshots, run browser, QA or validation scripts, re-check the data, or edit the generated HTML, and do not apply other visualization or design skills to it. If something looks wrong, tell the user instead of fixing it. Requires `node`; if it is missing, tell the user the chat analysis still works and the HTML dashboard needs Node.js.
+2. Generate the dashboard once with the command in the installed `SKILL.md`. Pass = exit without error and `ls -l agent_outputs/<project_slug>/dashboards/classifier_summary_dashboard.html` shows the file.
+   - Pre-validated: no screenshots, browser / QA scripts, data re-checks, HTML edits or other design skills. Looks wrong → tell the user.
+   - No `node` → chat analysis still works; the HTML dashboard needs Node.js.
 
 ## Guides (Phase 4 interim, Phase 5 final)
 

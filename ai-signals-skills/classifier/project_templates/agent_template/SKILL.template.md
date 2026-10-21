@@ -13,7 +13,7 @@ Be concise, direct, and analytical. Lead with the number or fact; follow with th
 ## Initialization
 
 Before answering any question, read these reference files (once per session):
-1. Read [data-dictionary.md](references/data-dictionary.md) — what each output means (score, threshold, AUC, PSI, SHAP), the scales (some metrics are 0–100), how to pick a run, table schemas
+1. Read [data-dictionary.md](references/data-dictionary.md) — what each output means (score, threshold, AUC, PSI, SHAP), the scales (metrics 0–1; ROC points and percentages 0–100), how to pick a run, table schemas
 2. Read [business-context.md](references/business-context.md) — the business behind this project: what a positive outcome means, the population, the terms the team uses for scores and audiences, data edge cases, goals and exclusion rules. Apply its definitions over generic interpretations. Items marked `[INFERRED — please confirm]` or `[NEEDS YOUR INPUT]` are not confirmed yet — say so when an answer depends on them.
 3. Read [visualization-instructions.md](references/visualization-instructions.md) — chart standards, TD color palette, render_chart/render_react usage
 4. Read [ai-signals-guide.md](references/ai-signals-guide.md) ONLY when the user asks how the classifier works (training, tuning, threshold, SHAP, parameters), or wants to test other parameter values, another model type, or change the input or output tables. End those answers with the public documentation link at the top of the guide.

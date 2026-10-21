@@ -70,14 +70,14 @@ Parameter meanings are in the template `README.md` (Configuration); choosing rul
 | 4 | Parent Segment used in Phase 5 (`references/parent_segment.md`) |
 | 5, 6 | Population CTE and filters in `sql/input_features.sql` |
 | 7 | `user_id_column` (and the join keys in the SQL) |
-| 9, 10 | `label_window_days`; churn rule in the label CTE |
+| 9, 10 | `label_window_days`; churn rule in the label CTE; `spacing_days` (= horizon) and `n_train_snapshots` within the history (`dataprep-guide.md` §2) |
 | 11, 12 | Feature CTEs in `sql/input_features.sql` |
 | 13 | Remove from the SQL; non-features into `columns_to_drop` |
 | 14 | `feature_lookback_days` |
 | 15 | `optuna_metric`, `fbeta_beta`, `threshold_strategy`, `min_metric_floor` (guide §5 table) |
 | 16 | `threshold_strategy: fixed` + `fixed_threshold` for an existing cut-off; ranking only → `optuna_metric: auc_pr`; Phase 5 attributes (`score_bucket` vs `predicted_label`) |
 | 17 | `model_type` |
-| 18, 19 | `schedule` in `classify.dig`, or separate schedules in `train.dig` / `predict.dig` |
+| 18, 19 | `schedule` in `classify.dig`, or separate schedules in `train.dig` / `predict.dig` (`dataprep-guide.md` §6) |
 | 20 | `_error` → `to:` in `classify.dig` |
 
 Questions 1–3, 6, 8, 10, 12, 13, 15 and every section 7 answer also go into `business-context.md` (playbook Phase 4 Part B step 4); questions 1–3 feed the documentation set.

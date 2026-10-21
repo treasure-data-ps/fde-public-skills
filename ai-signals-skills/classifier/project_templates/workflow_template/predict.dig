@@ -1,5 +1,16 @@
 timezone: UTC
 
+# ###################### SCHEDULE PARAMS ##################################
+# Uncomment to score on its own cadence (dataprep-guide.md §6), e.g. weekly:
+# schedule:
+#   weekly>: Mon,06:00:00
+
+####################### ERROR EMAIL NOTIFICATION ##########################
+# _error:
+#  mail>: body.txt
+#  subject: Classifier Scoring failed - Project Name
+#  to: ['your-team@example.com']
+
 _export:
   !include : 'config.yml'
   td:
