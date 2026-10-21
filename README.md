@@ -55,9 +55,9 @@ Everything is written to your Work Folder — never to the plugin or an external
 
 | Path | Contents |
 |---|---|
-| `.claude-plugin/marketplace.json` | Marketplace and plugin registration (one entry per setup skill) |
-| `ai-signals-skills/shared/` | AI Signals playbook (phase flow), solution standard, shared patterns |
-| `custom-agent-skills/shared/` | Custom-agent playbook, solution standard, agent build and eval patterns |
+| `.claude-plugin/marketplace.json` | Marketplace and plugin registration (one entry per setup skill, plus each plugin's `shared/`) |
+| `ai-signals-skills/shared/` | AI Signals playbook (phase flow), solution standard, shared patterns — registered with a stub `SKILL.md` only so Studio ships it |
+| `custom-agent-skills/shared/` | Custom-agent playbook, solution standard, agent build and eval patterns — registered with a stub `SKILL.md` only so Studio ships it |
 | `<plugin>/<solution>/` | `SKILL.md` (setup flow), `references/`, `project_templates/` (workflow, dashboard and agent templates — copied, never edited in place) |
 
 New solutions follow the solution standard of their plugin (`*/shared/solution_standard.md`): `name: fde-<solution folder name>`, a setup-only `description`, templates under `project_templates/`, all outputs under `agent_outputs/<project_slug>/`, and an entry in `marketplace.json`.

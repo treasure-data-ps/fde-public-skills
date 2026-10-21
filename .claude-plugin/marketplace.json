@@ -18,7 +18,8 @@
         "./ai-signals-skills/classifier",
         "./ai-signals-skills/mta",
         "./ai-signals-skills/nba-scores",
-        "./ai-signals-skills/nbp"
+        "./ai-signals-skills/nbp",
+        "./ai-signals-skills/shared"
       ]
     },
     {
@@ -28,7 +29,8 @@
       "strict": false,
       "skills": [
         "./custom-agent-skills/custom-audience-agent",
-        "./custom-agent-skills/custom-dashboard-builder"
+        "./custom-agent-skills/custom-dashboard-builder",
+        "./custom-agent-skills/shared"
       ]
     }
   ]
