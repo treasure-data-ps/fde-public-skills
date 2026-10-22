@@ -118,7 +118,7 @@ keep the headings below as the plan for one:
 ## Accuracy Rules and Lessons Learned
 
 <!-- fill — append-only list of pitfalls found during the engagement, each with the correct approach:
-- Scales (auc_roc / aucpr / f1_score are 0–100), latest run by `time`, dedupe appended tables
+- Scales (all run-log metrics are 0–1; ROC fpr / tpr 0–100), latest run by `time`, dedupe appended tables
 - Exact value spellings in the data (statuses, plan names, score buckets)
 - Columns or tables that look right but must not be used, and why (e.g. post-outcome fields)
 - Anything a future chat got wrong once and should not repeat

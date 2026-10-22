@@ -17,8 +17,8 @@ All tables live in `{{sink_database}}`. The AI Signals classifier writes the tra
 
 | Columns | Scale |
 |---|---|
-| `precision`, `recall`, `fbeta`, `test_accuracy`, `best_threshold`, `score`, `threshold_applied` | 0–1 |
-| `auc_roc`, `aucpr`, `f1_score` (run logs) and `fpr`, `tpr` (ROC curve) | **0–100** — divide by 100 before putting them next to 0–1 metrics |
+| `auc_roc`, `aucpr`, `f1_score`, `precision`, `recall`, `fbeta`, `test_accuracy`, `best_threshold`, `score`, `threshold_applied` | 0–1 |
+| `fpr`, `tpr` (ROC curve) | **0–100** — divide by 100 before putting them next to 0–1 metrics |
 | `percentage` (prediction bins), `pct_pushing_up`, `pct_pushing_down` | 0–100 |
 
 ---
@@ -29,7 +29,7 @@ All tables live in `{{sink_database}}`. The AI Signals classifier writes the tra
 |---|---|---|
 | **Score** | Model probability of the positive outcome. With `class_balance_strategy: balanced` it is inflated — read it as a ranking | Spread across buckets; a pile-up in one bucket means weak features |
 | **Threshold** (`best_threshold`, `threshold_applied`) | Score at or above which `predicted_label = 1`, chosen in training by the threshold strategy on out-of-fold predictions | Exactly 0.5 with a non-`fixed` strategy = the metric floor was not met (fallback) |
-| **AUC-ROC** | Probability that a random positive scores above a random negative | 50 = random; 70–80 useful; 80–90 strong; above ~98 suspect leakage |
+| **AUC-ROC** | Probability that a random positive scores above a random negative | 0.5 = random; 0.7–0.8 useful; 0.8–0.9 strong; above ~0.98 suspect leakage |
 | **AUC-PR** | Precision–recall area — the honest metric for rare positives | Compare with the positive rate × 100 (the random baseline) |
 | **Precision / recall at the threshold** | Of those flagged, share truly positive / of the positives, share flagged | The trade-off chosen by `fbeta_beta` and the strategy |
 | **F-beta** | Weighted mean of precision and recall; `fbeta_beta` < 1 favors precision, > 1 recall | — |
@@ -52,7 +52,7 @@ The test metrics describe the model fitted on the training split; the stored mod
 | `model_type` | varchar | `xgboost` or `catboost` |
 | `test_accuracy`, `precision`, `recall`, `fbeta` | double | Test metrics at the threshold (0–1) |
 | `fbeta_beta` | double | Beta used for F-beta |
-| `f1_score`, `auc_roc`, `aucpr` | double | Test metrics (**0–100**) |
+| `f1_score`, `auc_roc`, `aucpr` | double | Test metrics (0–1) |
 | `best_threshold` | double | Decision threshold chosen in training |
 | `true_positives`, `true_negatives`, `false_positives`, `false_negatives` | bigint | Confusion counts on the test split |
 | `confusion_matrix` | varchar | Same as text |
@@ -140,6 +140,6 @@ Same columns (except `time`), replaced on every scoring run. The Parent Segment 
 - **Model performance:** `classifier_run_log` (latest) + `classifier_train_run_log` (same session) + `classifier_roc_curve`.
 - **Overfitting:** AUC and F-beta gap between the two run logs; then `best_params` (depth, learning rate).
 - **Drivers:** `classifier_feature_importance` ⨝ `classifier_shap_directional` on `feature_name` (same session and batch).
-- **Leakage check:** top SHAP feature + its `classifier_target_correlations` value + an AUC above ~98.
+- **Leakage check:** top SHAP feature + its `classifier_target_correlations` value + an AUC above ~0.98.
 - **Who scores high and why:** `{{pred_table}}_latest` ⨝ the prediction input table on the ID; compare feature averages between `predicted_label` 1 and 0. Per-record SHAP is not written — explain individuals with their feature values and the global directions.
 - **Run-over-run:** `classifier_run_log` ordered by `time`; scoring runs from `{{pred_table}}` grouped by `session_id`.

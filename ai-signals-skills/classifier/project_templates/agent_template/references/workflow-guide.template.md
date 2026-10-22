@@ -46,7 +46,7 @@ Use this document to answer questions about how **this customer's deployed** cla
 - Population: source table, eligibility rule and exclusions, the ID column (`user_id_column`)
 - Label: the outcome rule in plain words, its table and columns, the window (`label_window_days`), the latest positive rate
 - Features: one line per source CTE — table, what it measures, the window (`feature_lookback_days`), the feature names
-- The windows as deployed: `reference_date` ('' = run date), cut-off for training and for scoring
+- The windows as deployed: `reference_date` ('' = run date), the training cut-offs (`n_train_snapshots`, `spacing_days`) and the scoring cut-off
 - `columns_to_drop` and why each column is excluded
 - Tables reviewed in Phase 1 but not used, with the reason (from project_state.md)
 -->

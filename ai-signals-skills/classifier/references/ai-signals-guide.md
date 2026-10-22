@@ -1,117 +1,107 @@
 # AI Signals Classifier (Propensity Scoring) — Model Guide
 
-Read this for any task about the AI Signals classifier model: how it trains and scores, which API parameters exist and how to set them, testing other parameter values, or changing the input or output tables. The workflow template (`train.dig`, `predict.dig`, `config.yml`) is the source of truth for what this setup sends today; this guide covers what the API accepts and how the model behaves.
+For any question about the model: how it trains and scores, API parameters, other parameter values or model types, changing its input or output tables. The template (`train.dig`, `predict.dig`, `config.yml`) is what this setup sends; this guide is what the API accepts and how the model behaves. `workflow-setup.md`, `dataprep-guide.md` and `output-tables-guide.md` are files of the setup skill (`fde-classifier`).
 
-**Public documentation:** https://docs.treasure.ai/products/customer-data-platform/machine-learning/ai-signals/propensity-ai-signals — after answering a question about the model from this guide, share this link and tell the user they can find more detail in the public AI Signals documentation.
+**Public documentation:** https://docs.treasure.ai/products/customer-data-platform/machine-learning/ai-signals/propensity-ai-signals — share it after answering from this guide.
 
 ## 1. What it does
 
-A general-purpose binary classifier for tabular data. Given a flat table of features and a 0/1 target, it trains a gradient-boosted tree model, picks a decision threshold, and scores every entity (profile, lead, account) with the probability of the positive class. One model = one binary outcome = one score per entity. Batch only — no real-time scoring, no multi-class (train one model per class) and no regression.
+Gradient-boosted binary classifier for tabular data: one model = one 0/1 outcome = one score per entity. Batch only; no multi-class (one model per class), no regression.
 
-Two API solutions:
-
-- `classifier_train` — trains with an embedded hyperparameter search, evaluates on a held-out split, writes diagnostic tables and stores the model under `model_name`. Runs on a single node.
-- `classifier_predict` — loads the model by `model_name` and scores every input row. Runs distributed: rows are sharded across workers by a hash of the user ID.
-
-Typical use cases: lead or conversion propensity, churn, campaign response or purchase likelihood, upsell, renewal, any "will X happen?" with a labelled history.
-
-Two model families share one interface, preprocessing, evaluation and output schema:
+| Solution | Does | Runs |
+|---|---|---|
+| `classifier_train` | Tuning search, threshold, held-out evaluation, diagnostics, stores the model under `model_name` | Single node |
+| `classifier_predict` | Loads the model, scores every row | Distributed, sharded by a hash of the user ID |
 
 | | `xgboost` (default) | `catboost` |
 |---|---|---|
-| Choose when | Features are mostly numeric or low/medium-cardinality strings; the table is large; training time matters | Many categorical or high-cardinality string features (ordered target statistics resist overfitting on categories), or small to medium data |
-| Categoricals | pandas `category` dtype, `enable_categorical`, `hist` trees | `cat_features` on raw strings |
-| Class balance | `scale_pos_weight` = negatives / positives | `auto_class_weights = Balanced` |
-| Model-specific search block | `xgboost`: subsample, colsample_bytree, min_child_weight, reg_alpha, reg_lambda, gamma | `catboost`: l2_leaf_reg, bagging_temperature, random_strength, border_count |
-| Speed | Faster | Usually slower |
+| Choose when | Mostly numeric / low-cardinality features, large tables, speed matters | Many or high-cardinality string features, small–medium data |
+| Categoricals | pandas `category`, `enable_categorical`, `hist` trees | `cat_features` on raw strings |
+| Class balance | `scale_pos_weight` = neg / pos | `auto_class_weights = Balanced` |
+| Search block | `subsample`, `colsample_bytree`, `min_child_weight`, `reg_alpha`, `reg_lambda`, `gamma` | `l2_leaf_reg`, `bagging_temperature`, `random_strength`, `border_count` |
+| Speed | Faster | Slower |
 
-When in doubt, train both under different `model_name`s and compare `aucpr`, `fbeta` and `psi` in `classifier_run_log`.
+Unsure → train both under different `model_name`s and compare `aucpr`, `fbeta`, `psi`.
 
 ## 2. Input table
 
-A flat, one-row-per-observation table. Feature engineering, aggregation and joins happen upstream — in this template, the project's feature SQL (`sql/input_features.sql`, built by `data_prep.dig`).
+Flat table; feature engineering happens upstream in `sql/input_features.sql` (`dataprep-guide.md`).
 
 | Item | Requirement |
 |---|---|
-| Grain | One row per entity per observation. Compute features as of a cut-off date and observe the label after it, so no feature leaks the outcome |
-| Target (required) | `{0, 1}` as int, `0.0`/`1.0` or boolean; no NULLs; both classes present. Anything else (`yes`/`no`, `{1, 2}`, `{-1, 1}`, NULL labels, a single class) fails with a user-input error — the target is never re-encoded |
-| Identity (recommended) | `user_id_column`: unique per row, non-NULL, never used as a feature. Stored with the model and inherited by every prediction run; distributed prediction needs it |
-| Numeric features | int / double; NULLs pass through to the trees (no imputation); ±inf becomes NULL |
-| Categorical features | Any non-numeric column; NULL and unseen values become `"missing"`. Avoid free text and very high-cardinality strings (emails, IDs, URLs) |
-| Columns to exclude | TD's `time`, `session_id`, raw timestamps or date strings (turn them into numbers such as `days_since_x`), PII, anything derived from the label. List them in `columns_to_drop` — only `target_column` and `user_id_column` are excluded automatically (the public docs also mention `session_id`; this template drops it explicitly either way) |
-| Prediction input | Same feature columns and types as training plus the ID column; the target is ignored if present. A missing numeric feature is filled with 0 — it silently changes scores, so keep the schema identical |
+| Grain | One row per entity per observation (cutoff). Training stacks several cutoffs; scoring has one |
+| Target | `{0, 1}` int / `0.0`, `1.0` / boolean; no NULLs; both classes. Anything else fails — never re-encoded |
+| `user_id_column` | Non-NULL, never a feature; unique per row at prediction (once per cutoff in training). Stored with the model; needed for distributed scoring |
+| Numeric features | int / double; NULLs pass through; ±inf → NULL |
+| Categorical features | Any non-numeric; NULL / unseen → `"missing"`. Avoid free text, emails, IDs, URLs |
+| Exclude | `time`, `session_id`, `cutoff_date`, raw dates (→ `days_since_x`), PII, label-derived columns — list in `columns_to_drop` (only target and ID are automatic) |
+| Prediction input | Same features and types; target ignored. A missing numeric feature becomes 0 and silently shifts scores |
 
-Have at least a few hundred positives in the training table for a stable CV and threshold.
+Have a few hundred positives at least.
 
 ## 3. Parameters
 
-Passed under `solution_arguments`. This template sends the nested blocks (`tuning`, `threshold`, `metric`, `xgboost`); flat keys (`n_trials`, `threshold_strategy`, …) directly under `solution_arguments` are also accepted, and a nested block wins over a flat key. The `xgboost` and `catboost` ranges are nested-only. `session_id` is sent too — the service stamps it on every output row.
+Under `solution_arguments`. The template sends nested blocks (`tuning`, `threshold`, `metric`, `xgboost`); flat keys also work, nested wins. Model-family ranges are nested-only. `session_id` is stamped on every output row.
 
 ### Training — `solution_name: classifier_train`
 
-Top level: `input_table` and `output_table` (both `db.table`, required — only the database part of `output_table` is used; the artifact tables get fixed `classifier_*` names).
+Top level: `input_table`, `output_table` (`db.table`; only the database of `output_table` is used — artifacts get fixed `classifier_*` names).
 
-| Parameter | API default | Allowed / range | Notes |
+| Parameter | API default | Range | Notes |
 |---|---|---|---|
-| `target_column` | required | column name | 0/1, both classes |
-| `model_name` | null | string | Unique per TD account; prediction loads the model by it; retraining under the same name replaces it |
+| `target_column` | required | column | 0/1, both classes |
+| `model_name` | null | string | Unique per account; retraining replaces it |
 | `model_type` | `xgboost` | `xgboost`, `catboost` | |
-| `user_id_column` | null | column name | Recommended — see §2 |
-| `columns_to_drop` | null | pipe-separated | Saved with the model and reused at prediction |
-| `test_size` | `0.2` | 0.05–0.5 | Hold-out share, stratified |
-| `max_load_rows` | `10000000` | ≥ 0 (0 = off) | SQL `LIMIT` on rows loaded for training (memory guard) — not set by this template |
+| `user_id_column` | null | column | Recommended (§2) |
+| `columns_to_drop` | null | pipe-separated | Saved with the model, reused at prediction |
+| `test_size` | `0.2` | 0.05–0.5 | Stratified hold-out |
+| `max_load_rows` | `10000000` | ≥ 0 (0 = off) | Row cap for training — not set by the template |
 
-`tuning` block (both families):
+`tuning`:
 
-| Parameter | API default | Allowed / range | Notes |
+| Parameter | API default | Range | Notes |
 |---|---|---|---|
-| `n_trials` | `30` | ≥ 0 | `0` skips the search and uses built-in defaults |
+| `n_trials` | `30` | ≥ 0 | `0` = no search, built-in defaults |
 | `cv_folds` | `3` | 2–10 | Stratified folds per trial |
-| `max_tuning_rows` | `1000000` | ≥ 0 (0 = off) | Stratified subsample used only for the search — not set by this template |
-| `optuna_metric` | `fbeta` | `fbeta`, `auc_roc`, `auc_pr`, `precision`, `recall`, `log_loss` | Aliases: `auc`/`roc_auc` → `auc_roc`, `aucpr`/`pr_auc` → `auc_pr`, `logloss` → `log_loss` |
-| `fbeta_beta` | `0.5` | 0.01–10.0 | < 1 favors precision, > 1 recall; also sets which floor applies |
-| `early_stopping_rounds` | `0` | ≥ 0 (0 = off) | Uses the eval set during CV |
-| `class_balance_strategy` | `balanced` | `balanced`, `none` | `balanced` = XGBoost `scale_pos_weight` / CatBoost Balanced weights |
-| `n_estimators_min` / `_max` | 100 / 800 | int ≥ 10 | Trees (CatBoost iterations) |
-| `max_depth_min` / `_max` | 3 / 10 | int ≥ 1 | Lower to regularize |
+| `max_tuning_rows` | `1000000` | ≥ 0 | Subsample for the search only — not set by the template |
+| `optuna_metric` | `fbeta` | `fbeta`, `auc_roc`, `auc_pr`, `precision`, `recall`, `log_loss` | Aliases `auc`, `roc_auc`, `aucpr`, `pr_auc`, `logloss` |
+| `fbeta_beta` | `0.5` | 0.01–10 | < 1 precision, > 1 recall |
+| `early_stopping_rounds` | `0` | ≥ 0 | |
+| `class_balance_strategy` | `balanced` | `balanced`, `none` | |
+| `n_estimators_min` / `_max` | 100 / 800 | ≥ 10 | |
+| `max_depth_min` / `_max` | 3 / 10 | ≥ 1 | Lower to regularize |
 | `learning_rate_min` / `_max` | 0.01 / 0.3 | float | Log-uniform |
 
-`threshold` block:
+`threshold`:
 
-| Parameter | API default | Allowed / range | Notes |
+| Parameter | API default | Range | Notes |
 |---|---|---|---|
 | `strategy` | `precision_optimal` | `precision_optimal`, `f1_optimal`, `recall_optimal`, `youden_j`, `fixed` | Template key `threshold_strategy` |
-| `min_metric_floor` | `0.35` | 0.0–1.0 | Minimum recall for `precision_optimal`, minimum precision for `recall_optimal`; ignored by the others. If no threshold meets it, the threshold falls back to **0.5** — check `best_threshold` |
-| `fixed_threshold` | `0.5` | 0.0–1.0 | Only with `fixed` |
+| `min_metric_floor` | `0.35` | 0–1 | Min recall (`precision_optimal`) / min precision (`recall_optimal`); unmet → threshold **0.5** |
+| `fixed_threshold` | `0.5` | 0–1 | Only with `fixed` |
 
-`metric` block:
+`metric`:
 
-| Parameter | API default | Allowed / range | Notes |
+| Parameter | API default | Range | Notes |
 |---|---|---|---|
-| `eval_metric` | `aucpr` | tree eval metric | Mapped for CatBoost (`aucpr` → PRAUC, `auc` → AUC, `logloss` → Logloss) |
-| `corr_threshold` | `0.9` | 0.5–1.0 | Numeric features correlated above it are dropped (`classifier_corr_drop_report`) |
-| `shap_max_samples` | `1000` | ≥ 10 | Test rows used for SHAP |
+| `eval_metric` | `aucpr` | tree metric | Mapped for CatBoost |
+| `corr_threshold` | `0.9` | 0.5–1.0 | Numeric features correlated above it are dropped |
+| `shap_max_samples` | `1000` | ≥ 10 | Test rows for SHAP |
 
-`xgboost` block (only with `model_type: xgboost`), each a `_min` / `_max` search range: `subsample` 0.6–1.0, `colsample_bytree` 0.6–1.0, `min_child_weight` 1–50, `reg_alpha` 0.001–10.0, `reg_lambda` 0.001–10.0, `gamma` 0.0–10.0.
+Search ranges (`_min` / `_max`): `xgboost` — `subsample` 0.6–1.0, `colsample_bytree` 0.6–1.0, `min_child_weight` 1–50, `reg_alpha` / `reg_lambda` 0.001–10, `gamma` 0–10. `catboost` — `l2_leaf_reg` 1–10, `bagging_temperature` 0–1, `random_strength` 1e-08–10, `border_count` 32–255 (the template sends no `catboost` block; add one to `train.dig` to tune it).
 
-`catboost` block (only with `model_type: catboost`): `l2_leaf_reg` 1.0–10.0, `bagging_temperature` 0.0–1.0, `random_strength` 1e-08–10.0, `border_count` 32–255. This template does not send a `catboost` block — with `catboost` the API defaults apply unless one is added to `train.dig`.
-
-The template's own values (`config.yml`) differ from several API defaults on purpose (e.g. `cv_folds`, `fbeta_beta`, `optuna_metric`, `min_metric_floor`, `corr_threshold`, `shap_max_samples`); they are what this setup sends.
+The template's `config.yml` deliberately differs from several API defaults (`cv_folds`, `fbeta_beta`, `optuna_metric`, `min_metric_floor`, `corr_threshold`, `shap_max_samples`).
 
 ### Prediction — `solution_name: classifier_predict`
 
-Top level: `input_table`, `output_table` (the predictions table).
-
 | Parameter | API default | Notes |
 |---|---|---|
-| `model_name` | required | The model to load; config, threshold and preprocessing come from it (no `target_column` needed) |
-| `user_id_column` | the model's | Overrides the column stored with the model; one of the two must resolve or the run fails. Rows with a NULL ID are excluded from distributed runs |
-| `columns_to_drop` | — | Accepted but not applied: prediction reuses the list saved with the model, and extra input columns are dropped when the input is aligned to the trained features |
-| `output_mode` | `append` | `append` or `overwrite`; distributed runs always append, so filter on the latest `session_id` |
+| `model_name` | required | Config, threshold, preprocessing come from the model |
+| `user_id_column` | the model's | Overrides; must resolve; NULL IDs excluded |
+| `columns_to_drop` | — | Ignored — the model's saved list is used |
+| `output_mode` | `append` | Distributed runs always append |
 
-### Endpoint by region
-
-`ml_batch_api_endpoint` in `config.yml` — set it from the account's site (`tdx status`):
+### Endpoint by region (`ml_batch_api_endpoint`, from `tdx status`)
 
 | Site | Endpoint |
 |---|---|
@@ -121,7 +111,7 @@ Top level: `input_table`, `output_table` (the predictions table).
 | AP (ap02) | `https://ml-batch-api.ap02.treasuredata.com` |
 | AP (ap03) | `https://ml-batch-api.ap03.treasuredata.com` |
 
-Prerequisite: the account's AI Signals solutions include `classifier_train` and `classifier_predict`.
+Prerequisite: AI Signals includes `classifier_train` and `classifier_predict` for the account.
 
 ## 4. Workflow syntax
 
@@ -163,122 +153,116 @@ Prerequisite: the account's AI Signals solutions include `classifier_train` and 
 
 ## 5. How it works
 
-**Training (`classifier_train`):**
+**Training:**
 
-1. **Load** `SELECT * FROM input_table LIMIT max_load_rows`.
-2. **Validate** the target (exists, no NULLs, exactly {0, 1}, both classes) and the ID column.
-3. **Split** stratified train/test (`test_size`, fixed seed).
-4. **Preprocess** — drop `columns_to_drop`, the ID and the target; non-numeric columns become native categoricals (NULL → `"missing"`); numeric NULLs pass through; numeric features correlated above `corr_threshold` are dropped; correlation and VIF diagnostics are computed.
-5. **Tune** — Optuna (TPE sampler with a median pruner) runs `n_trials` trials, each scored by stratified `cv_folds`-fold CV on up to `max_tuning_rows` rows, optimizing `optuna_metric`. Every trial goes to `classifier_optuna_trials`.
-6. **Fit** the training split with the best parameters; class weighting follows `class_balance_strategy`.
-7. **Choose the threshold** on out-of-fold CV predictions of the training split (not on re-scored training rows, which boosted trees nearly memorize) with `threshold.strategy`.
-8. **Evaluate** on the held-out test split (`classifier_run_log`) and the training split (`classifier_train_run_log`); compute train-vs-test PSI.
-9. **Explain** with SHAP on up to `shap_max_samples` test rows.
-10. **Refit** on all loaded rows (train + test) with the tuned parameters, keep the threshold from step 7, and store the model under `model_name`.
+| # | Step |
+|---|---|
+| 1 | Load `input_table` (up to `max_load_rows`) |
+| 2 | Validate target ({0, 1}, no NULLs, both classes) and ID |
+| 3 | Stratified train / test split (`test_size`, fixed seed) |
+| 4 | Preprocess: drop `columns_to_drop`, ID, target; strings → categoricals; drop features correlated above `corr_threshold`; correlation + VIF diagnostics |
+| 5 | Optuna search (TPE + median pruner): `n_trials` × `cv_folds` CV on ≤ `max_tuning_rows`, optimizing `optuna_metric` |
+| 6 | Fit the training split with the best parameters (`class_balance_strategy`) |
+| 7 | Threshold from out-of-fold CV predictions (`threshold.strategy`) |
+| 8 | Evaluate test (`classifier_run_log`) and train (`classifier_train_run_log`) splits; PSI |
+| 9 | SHAP on ≤ `shap_max_samples` test rows |
+| 10 | Refit on all rows, keep the threshold, store under `model_name` |
 
-The reported test metrics describe the model fitted on the training split. The stored model has also seen the test rows, so to measure it independently, score a later time window and compare with the actual outcomes.
+Test metrics describe the pre-refit model. Independent check: score a later window and compare with actual outcomes (`workflow-setup.md` §4 check 6).
 
-**Prediction (`classifier_predict`):**
+**Prediction:** load the model → resolve the ID → shard by ID hash (NULL IDs dropped) → align features (missing numeric → 0, missing / unseen categorical → `"missing"`, extras dropped) → `score`, `predicted_label` (`score >= threshold_applied`), `score_bucket` → append.
 
-1. Load the model by `model_name`; resolve the ID column (request first, then the model's).
-2. Shard rows across workers by a hash of the user ID; rows with a NULL ID are excluded.
-3. Apply the training preprocessing and align to the trained features — missing numeric features → 0, missing categoricals → `"missing"`, extra columns dropped, unseen category values treated as missing.
-4. Score, label (`score >= threshold_applied`), bucket, and append to the output table.
-
-**Choosing the objective** — match it to the business action:
+**Choosing the objective:**
 
 | Goal | `optuna_metric` | `fbeta_beta` | `threshold_strategy` | `min_metric_floor` |
 |---|---|---|---|---|
-| Small, high-quality audience where each action is costly (sales call, discount) | `fbeta` | `0.5` | `precision_optimal` | 0.2–0.35 = minimum recall |
-| Catch as many positives as possible where each action is cheap (churn save, email) | `fbeta` | `2.0` | `recall_optimal` | 0.2–0.4 = minimum precision |
-| Balanced precision and recall | `fbeta` | `1.0` | `f1_optimal` | n/a |
-| Ranking only (top-N, deciles); the label is not used | `auc_pr` (imbalanced) or `auc_roc` | n/a | any — use `score` / `score_bucket` | n/a |
-| Probabilities used as-is (expected value, budget maths) | `log_loss` | n/a | any | n/a |
-| Balanced TPR/FPR, no precision target | `auc_roc` | n/a | `youden_j` | n/a |
-| The business already has a cut-off | any | n/a | `fixed` + `fixed_threshold` | n/a |
+| Small high-quality audience, costly action | `fbeta` | `0.5` | `precision_optimal` | 0.2–0.35 (min recall) |
+| Catch most positives, cheap action | `fbeta` | `2.0` | `recall_optimal` | 0.2–0.4 (min precision) |
+| Balanced | `fbeta` | `1.0` | `f1_optimal` | — |
+| Ranking only (top-N, deciles) | `auc_pr` (imbalanced) / `auc_roc` | — | any; use `score` / `score_bucket` | — |
+| Probabilities used as-is | `log_loss` | — | any | — |
+| Balanced TPR / FPR | `auc_roc` | — | `youden_j` | — |
+| Existing business cut-off | any | — | `fixed` + `fixed_threshold` | — |
 
-**Class imbalance:** keep `class_balance_strategy: balanced` for most propensity tasks, especially with positives under ~10%, and pair it with `auc_pr` or `fbeta`, never accuracy. Use `none` (with `log_loss`) when scores must be read as real probabilities — balanced weighting inflates them.
+**Class imbalance:** keep `balanced` (positives < ~10%) with `auc_pr` / `fbeta`, never accuracy. `none` + `log_loss` when scores must be real probabilities — balanced weighting inflates them.
 
-**Tuning budget presets:**
+**Tuning presets:**
 
 | Preset | Settings | Use for |
 |---|---|---|
-| Baseline / smoke | `n_trials: 0`, or `n_trials: 5`, `cv_folds: 2` | Pipeline validation, quick feasibility |
-| Standard | `n_trials: 30`, `cv_folds: 3`, `max_tuning_rows: 1000000` | Most production models |
-| Thorough | `n_trials: 75`–`100`, `cv_folds: 5`, `early_stopping_rounds: 50` | High-value models retrained rarely |
-| Very large tables | Standard + `max_tuning_rows: 200000`–`500000`; raise `max_load_rows` only if memory allows | Tens of millions of rows |
+| Smoke | `n_trials: 0`, or `5` with `cv_folds: 2` | Pipeline check |
+| Standard | `n_trials: 30`, `cv_folds: 3`, `max_tuning_rows: 1000000` | Most models |
+| Thorough | `n_trials: 75`–`100`, `cv_folds: 5`, `early_stopping_rounds: 50` | High-value, rarely retrained |
+| Very large | Standard + `max_tuning_rows: 200000`–`500000` | Tens of millions of rows |
 
-Training cost grows roughly with `n_trials` × `cv_folds` model fits, plus `cv_folds` out-of-fold fits for the threshold and two final fits. The training instance is sized at about 2 GB per million rows.
+Cost ≈ `n_trials` × `cv_folds` fits + `cv_folds` out-of-fold fits + 2 final fits; ~2 GB per million rows.
 
 ## 6. Output tables
 
-**Training** writes into the database of `output_table`, every table prefixed `classifier_`, stamped with `session_id` (most also with `created_at`; the two run logs only have `time`) and **appended on every run**:
+Training appends fixed-name `classifier_*` tables to the database of `output_table`, stamped with `session_id`; prediction appends to `output_table`. All metrics are 0–1; ROC `fpr` / `tpr` and `percentage` columns are 0–100. The model itself is stored by the service, not in TD.
 
 | Table | Contents |
 |---|---|
-| `classifier_run_log` | One row per run, test split: `test_accuracy`, `precision`, `recall`, `fbeta` (0–1); `auc_roc`, `aucpr`, `f1_score` (**0–100**); `best_threshold`; `true_positives`, `true_negatives`, `false_positives`, `false_negatives`, `test_samples`; `train_target_dist`, `test_target_dist`; `best_params`; `mcfadden_r2`, `cox_snell_r2`, `chi_square`; `psi`; the run's tuning config (`optuna_metric`, `threshold_strategy`, `min_metric_floor`, `cv_folds`, `corr_threshold`, …) |
-| `classifier_train_run_log` | Same schema on the training split (its `psi` is empty) |
-| `classifier_feature_list` | Model features in order (`feature_name`, `feature_index`) |
-| `classifier_feature_importance` | SHAP mean \|value\| per feature (`mean_abs_shap_value`, `rank`) |
-| `classifier_shap_directional` | Per feature: `direction` (increases score / decreases score / mixed), `mean_shap`, `median_shap`, `shap_std`, `pct_pushing_up`, `pct_pushing_down`, `direction_confidence`, `pearson_value_vs_shap` |
-| `classifier_roc_curve` | ROC points (`fpr`, `tpr` as 0–100, `threshold`) |
-| `classifier_prediction_bins` | Test-score histogram: 10 buckets (`bin_range`, `count`, `percentage`) |
-| `classifier_vif_scores`, `classifier_feature_correlations`, `classifier_target_correlations` | VIF per numeric feature, pairwise correlations, feature-vs-target correlations |
-| `classifier_corr_drop_report` | Features dropped for correlation (only when any were) |
-| `classifier_optuna_trials` | Every search trial: `params_*`, `value`, `state` (only if `n_trials > 0`) |
-| `classifier_xgboost_gain_importance` / `classifier_catboost_gain_importance` | Native importance (`feature_name`, `importance`) |
+| `classifier_run_log` / `classifier_train_run_log` | Test / train metrics, confusion counts, `best_threshold`, `best_params`, `psi`, run config |
+| `classifier_feature_list` | Model features in order |
+| `classifier_feature_importance`, `classifier_shap_directional` | SHAP importance and direction |
+| `classifier_xgboost_gain_importance` / `classifier_catboost_gain_importance` | Native importance |
+| `classifier_roc_curve`, `classifier_prediction_bins` | Test ROC points, 10-bin score histogram |
+| `classifier_target_correlations`, `classifier_feature_correlations`, `classifier_vif_scores`, `classifier_corr_drop_report` | Numeric diagnostics; dropped features (only if any) |
+| `classifier_optuna_trials` | Search trials (only if `n_trials > 0`) |
+| Predictions | `session_id`, `model_type`, `user_id`, `score`, `predicted_label`, `threshold_applied`, `score_bucket`, `prediction_timestamp` |
 
-**Prediction** appends to `output_table`: `session_id`, `model_type`, `user_id` (the resolved ID column, its type follows the input), `score` (P(positive), 6 dp), `predicted_label` (1 if `score >= threshold_applied`), `threshold_applied` (from training), `score_bucket` (10-way bin, e.g. `0.8-0.9`), `prediction_timestamp`.
-
-The model itself (estimator, features, best params, threshold, category vocabularies, dropped features) is stored by the service under `model_name` — not in TD.
+Columns and queries: `output-tables-guide.md` (setup skill) / `data-dictionary.md` (project agent).
 
 ### Validate
 
-- The latest `classifier_run_log` row has `auc_roc` (0–100) clearly above 50 and `aucpr` above the positive rate × 100.
-- `best_threshold` is not exactly `0.5` unless `threshold_strategy: fixed` — 0.5 usually means the floor fell back (lower `min_metric_floor` or change the strategy).
-- Train vs test (`classifier_train_run_log` vs `classifier_run_log`): an AUC gap above ~5 points or an F-beta gap above ~0.1 means overfitting.
-- `psi` under 0.1 stable, 0.1–0.25 worth investigating, over 0.25 usually leakage or a population shift.
-- No single feature dominates `classifier_feature_importance` and no feature-vs-target correlation is near 1 — otherwise check it is not a proxy for the label.
-- Predictions: one row per input entity for the latest `session_id`, `threshold_applied` = `best_threshold`, scores spread across several buckets.
+| Check | Healthy |
+|---|---|
+| `auc_roc` | Clearly above 0.5; > ~0.98 → leakage |
+| `aucpr` | Above the positive rate |
+| `best_threshold` | Not exactly 0.5 (unless `fixed`) — 0.5 = floor fallback |
+| Train vs test | AUC gap < ~0.05, F-beta gap < ~0.1 |
+| `psi` | < 0.1 stable, 0.1–0.25 investigate, > 0.25 leakage or population shift |
+| Drivers | No single dominant feature, no target correlation near 1 |
+| Predictions | One row per entity, `threshold_applied` = `best_threshold`, several buckets |
 
-### Interpret and use
+### Interpret
 
-- `score` ranks entities; with `balanced` weighting it is inflated — read it as a ranking, not a calibrated probability, unless `class_balance_strategy: none`.
-- `predicted_label` = `score >= threshold_applied` — the audience the threshold strategy chose. Ranking use cases (top-N, deciles) use `score` or `score_bucket` instead.
-- SHAP direction explains *why* scores move: "increases score" features push toward the positive outcome as their value grows.
-- Every `classifier_*` table and the predictions are appended — always filter on one `session_id` (the latest, ordered by `time`).
+- `score` ranks; with `balanced` it is inflated — not a calibrated probability unless `none`.
+- `predicted_label` = the audience the threshold chose; ranking uses `score` / `score_bucket`.
+- SHAP "increases score" = higher values push toward the positive outcome.
+- Every table is appended — filter on one `session_id` (latest by `time`).
 
-### Diagnostics and limits
+### Limits
 
-- Training is capped by `max_load_rows` (default 10M rows); prediction is never capped.
-- Overfitting: narrow `max_depth_max` (e.g. 6), raise `min_child_weight_min` / `reg_*_min` (or `l2_leaf_reg_min`), lower `learning_rate_max`.
-- Small data (under ~10K rows): `max_depth` 3–6, `cv_folds` 5, consider `catboost`.
-- `corr_threshold`: 0.9 works for most data; ~0.8 for a leaner, more interpretable model; 1.0 drops only perfect duplicates.
+- Training capped by `max_load_rows` (10M); prediction never capped.
+- Overfitting → `max_depth_max` ~6, higher `min_child_weight_min` / `reg_*_min` (or `l2_leaf_reg_min`), lower `learning_rate_max`.
+- < ~10K rows → depth 3–6, `cv_folds` 5, consider `catboost`.
+- `corr_threshold`: 0.9 default, ~0.8 leaner, 1.0 only exact duplicates.
 
 ## 7. Common changes
 
 | Change | How |
 |---|---|
-| Different outcome or label window | Rewrite the label CTE in `sql/input_features.sql`; set `label_window_days` |
-| More or different features | Edit `sql/input_features.sql` (same columns in both modes); add non-features to `columns_to_drop` |
-| Precision vs recall trade-off | `fbeta_beta`, `threshold_strategy`, `min_metric_floor` (table in §5) |
-| CatBoost instead of XGBoost | `model_type: catboost` and a new `model_name`; add a `catboost` block to `train.dig` to tune its ranges |
-| Compare two models | Train each under its own `model_name`, compare their `classifier_run_log` rows |
-| Faster training | `n_trials: 0`–`5`, lower `cv_folds`; add `max_tuning_rows` to the `tuning` block for very large tables |
-| Very large training table | Add `max_load_rows` (top level) and `max_tuning_rows` (`tuning`) to `train.dig` |
-| Retrain weekly, score daily | Schedule `train.dig` and `predict.dig` separately; prediction always uses the model currently stored under `model_name` |
-| Rollback or A/B | Train under versioned names (`…_v2`) and switch `model_name` in the scoring run |
-| A clean predictions snapshot | Filter on the latest `session_id`, or drop the predictions table before scoring |
+| Outcome or horizon | Label CTE in `sql/input_features.sql`; `label_window_days` (`dataprep-guide.md` §1) |
+| Snapshots | `n_train_snapshots`, `spacing_days` — history check (`dataprep-guide.md` §2) |
+| Features | `sql/input_features.sql` (same in both modes); non-features → `columns_to_drop` |
+| Precision vs recall | `fbeta_beta`, `threshold_strategy`, `min_metric_floor` (§5) |
+| CatBoost | `model_type: catboost` + new `model_name`; add a `catboost` block to tune ranges |
+| Compare models | One `model_name` each; compare `classifier_run_log` rows |
+| Faster training | `n_trials` 0–5, fewer `cv_folds`; `max_tuning_rows` for big tables |
+| Very large table | `max_load_rows` (top level), `max_tuning_rows` (`tuning`) in `train.dig` |
+| Retrain / score cadence | Separate schedules in `train.dig` / `predict.dig` (`dataprep-guide.md` §6) |
+| Rollback / A/B | Versioned `model_name` (`…_v2`), switch it for scoring |
 
-### Troubleshooting
+### Troubleshooting (model)
 
-| Symptom | Likely cause | Fix |
+Workflow failures (data prep, 401/403, polling): `workflow-setup.md` §4.
+
+| Symptom | Cause | Fix |
 |---|---|---|
-| `+assert_training_dataset` fails | Empty input, or only one class in the training window | Check the label CTE and `label_window_days`; for stale data set `reference_date` |
-| Run fails with a user-input error | Target not {0, 1}, NULL labels, or a missing ID column | Cast the label to 0/1 BIGINT with `COALESCE(…, 0)`; check `user_id_column` |
-| Train or predict returns 401/403 | `ml_batch_api_endpoint` does not match the region, or AI Signals is not enabled for the classifier | Set the regional endpoint; ask the account admin about access |
-| Status poll gives up | Long training run | Raise `_retry` on `+wait_for_training`; lower `n_trials` / `cv_folds` |
-| `best_threshold` = 0.5 | No threshold met `min_metric_floor` | Lower the floor or change `threshold_strategy` |
-| Near-perfect AUC, one dominant feature | Leakage — a feature computed after the cut-off or derived from the outcome | Remove it or move its window before `cutoff_date` |
-| Predict fails without an ID | No `user_id_column` in the request or the model | Set `user_id_column` in both runs |
-| Scores shifted after a schema change | A feature missing at prediction (filled with 0) | Keep training and prediction SQL identical |
+| User-input error | Target not {0, 1}, NULL labels, missing ID | `CAST(COALESCE(…, 0) AS BIGINT)`; check `user_id_column` |
+| `best_threshold` = 0.5 | `min_metric_floor` not met | Lower the floor or change the strategy |
+| Near-perfect AUC, one dominant feature | Leakage | Remove it or move its window before the cutoff |
+| Predict fails without an ID | No `user_id_column` in request or model | Set it in both runs |
+| Scores shifted after a schema change | Feature missing at prediction (filled with 0) | Keep train and predict SQL identical |
