@@ -38,7 +38,7 @@ orders_lookback: ''                           # days of history to use; '' = all
 ######################## EXCLUSION FILTERS ##########################
 #####################################################################
 
-transaction_filter: ''                        # extra SQL appended to the transaction WHERE clause, e.g. "AND order_status = ''completed''"
+transaction_filter: ''                        # extra SQL appended to the transaction WHERE clause, e.g. "AND order_status = 'completed'"
 
 # ── Pre-model exclusion (removes items from training data) ─────────
 exclude_product_train: 'no'                   # 'yes' removes the matching items before training
