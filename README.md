@@ -26,6 +26,7 @@ Setup skills are the same for everyone and update with the marketplace; your pro
 | `fde-mta` | Multi-Touch Attribution — channel contribution with Markov, Shapley and standard models | `mta-agent` |
 | `fde-nba-scores` | Next Best Action — best time, channel and campaign per customer, engagement flags | `nba-scores-agent` |
 | `fde-classifier` | Propensity scoring — any yes/no outcome (lead scoring, churn, conversion, response) | `classifier-agent` |
+| `fde-prob-idu` | Probabilistic ID unification — fuzzy matching of duplicate profiles after deterministic IDU | `prob-idu-agent` |
 
 Five phases: data exploration → requirements doc → first workflow run → hands-on testing with the agent and dashboard (DEV) → Parent Segment attributes, docs and final agent (PROD, when you say the model is ready).
 

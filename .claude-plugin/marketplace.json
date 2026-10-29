@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "ai-signals-skills",
-      "description": "Set up AI Signals models on your Treasure Data account and get a project agent and dashboard for each: RFM customer segmentation, Next Best Product recommendations, Multi-Touch Attribution, Next Best Action engagement scores, and propensity scoring (binary classification for churn, lead scoring, conversion or response).",
+      "description": "Set up AI Signals models on your Treasure Data account and get a project agent and dashboard for each: RFM customer segmentation, Next Best Product recommendations, Multi-Touch Attribution, Next Best Action engagement scores, propensity scoring (binary classification for churn, lead scoring, conversion or response), and probabilistic ID unification (fuzzy matching of duplicate profiles).",
       "source": "./",
       "strict": false,
       "skills": [
@@ -19,6 +19,7 @@
         "./ai-signals-skills/mta",
         "./ai-signals-skills/nba-scores",
         "./ai-signals-skills/nbp",
+        "./ai-signals-skills/prob-idu",
         "./ai-signals-skills/shared"
       ]
     },
