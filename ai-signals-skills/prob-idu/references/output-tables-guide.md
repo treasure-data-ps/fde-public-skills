@@ -37,7 +37,7 @@ Similarity bands (`avg_cluster_similarity`): ≥ 0.98 excellent, 0.95–0.98 ver
 
 ## 4. Tuning from the results
 
-Change one parameter at a time, by 0.05, re-run and compare sessions in `prob_uni_config_stats_table`.
+`jaccard_similarity_threshold` must always stay ≤ `cluster_threshold` (the workflow fails otherwise). After 3 or more runs the agent's `tuning-advisor.md` recommends the best thresholds and weights. Change one parameter at a time, by 0.05, re-run and compare sessions in `prob_uni_config_stats_table`.
 
 | Finding | Change |
 |---|---|

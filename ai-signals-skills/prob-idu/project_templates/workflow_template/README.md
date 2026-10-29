@@ -16,6 +16,7 @@ TD project name: `prob_idu_ais` (from `tdx.json`). Entry point: `ml_prob_unifica
 
 ```
 ml_prob_unification_launch.dig                  # entry point: schedule, error email, the steps below
+├── +check_thresholds                           # fails if jaccard_similarity_threshold > cluster_threshold
 ├── +create_input_table                         # 0. sql/input_table.sql → input_table
 ├── ml_prob_unification_presto_parallel.dig     # 1. MinHash blocking → blocking_table
 ├── ml_prob_ai_signal.dig                       # 2. drop output_table; POST /v1/runs (solution pidu); poll /status (408 while running)
@@ -32,7 +33,7 @@ ml_prob_unification_launch.dig                  # entry point: schedule, error e
 
 ## Configuration
 
-All keys are in `config/global.yml`. Change the ones in **bold** for every project. Keep `jaccard_similarity_threshold ≤ cluster_threshold`; start both high (0.90–0.95) and lower them in 0.05 steps.
+All keys are in `config/global.yml`. Change the ones in **bold** for every project. `jaccard_similarity_threshold ≤ cluster_threshold` always — the workflow fails the run otherwise; start both high (0.90–0.95) and lower them in 0.05 steps.
 
 ### Input and output
 

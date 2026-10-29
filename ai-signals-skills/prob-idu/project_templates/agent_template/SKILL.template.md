@@ -16,7 +16,8 @@ Before answering any question, read these reference files (once per session):
 1. Read [data-dictionary.md](references/data-dictionary.md) — every output table and column, the quality bands, how to pick a run
 2. Read [business-context.md](references/business-context.md) — the business behind this project: what counts as the same person, the identifiers and their quality, merge rules and exclusions. Apply its definitions over generic interpretations. Items marked `[INFERRED — please confirm]` or `[NEEDS YOUR INPUT]` are not confirmed yet — say so when an answer depends on them.
 3. Read [ai-signals-guide.md](references/ai-signals-guide.md) ONLY when the user asks how the unification works (blocking, clustering, similarity), what a parameter does, how to tune thresholds or weights, or wants to test other values. End those answers with the public documentation link at the top of the guide.
-4. Read `references/workflow-guide.md` and `references/model-setup-walkthrough.md` ONLY for the questions listed under **How It Was Built** below.
+4. Read [tuning-advisor.md](references/tuning-advisor.md) ONLY when the user asks for recommended thresholds or weights, the best settings, or whether to raise or lower a threshold. Follow it exactly, including its hard rule: `jaccard_similarity_threshold` ≤ `cluster_threshold`.
+5. Read `references/workflow-guide.md` and `references/model-setup-walkthrough.md` ONLY for the questions listed under **How It Was Built** below.
 
 ## Getting Started — Example Questions
 
@@ -31,6 +32,7 @@ When the user greets you, asks what you can do, or asks something too vague to a
 - "Which settings did the latest run use?"
 - "How does the latest run compare with the previous one?"
 - "Should we raise or lower the cluster threshold?"
+- "What thresholds and column weights do you recommend after these runs?" — answer from `references/tuning-advisor.md`
 
 **How it works and how it was built**
 - "How does probabilistic unification work?" — answer from `references/ai-signals-guide.md`, ending with its public documentation link
@@ -80,6 +82,7 @@ Stats tables are appended per run and keyed by `session_id`; `{{output_table}}` 
 | "How good are the matches?" | `prob_uni_config_stats_table` | `dedupe_{{output_table}}` |
 | "Are there over-merged clusters?" | `prob_final_cluster_histogram`, `max_cluster_size` | `dedupe_{{output_table}}` grouped by `{{cluster_col_name}}` |
 | "Which settings were used?" | `prob_model_table_params` | `workflow/config/global.yml` |
+| "Recommend thresholds / weights / best settings" | `prob_model_table_params` ⨝ `prob_uni_config_stats_table` (all runs), `{{output_table}}` (per-column diagnostics) | `references/tuning-advisor.md` |
 | "Compare runs" | `prob_model_table_params` ⨝ `prob_uni_config_stats_table` by `session_id` | `prob_session_global_filter` |
 | "Show me matched IDs / examples" | `dedupe_{{output_table}}` ⨝ `{{sink_database}}.<input_table>` | — |
 | "How was it set up?" | `workflow-guide.md`, `model-setup-walkthrough.md` | `{{engagement_dir}}/project_state.md` |
@@ -180,6 +183,7 @@ Say which settings changed between the runs before attributing a difference to t
 
 ## Critical Rules
 
+- **Jaccard never above the cluster threshold.** Every threshold recommendation satisfies `jaccard_similarity_threshold` ≤ `cluster_threshold`; check it before answering.
 - **NEVER fabricate** counts, session IDs, thresholds or cluster IDs — verify with a tool call first.
 - **NEVER project ROI or revenue** beyond the `estimated_savings` column, and label that column a planning estimate.
 - **Similarity is not accuracy.** There is no ground truth in the tables; confirm matches by sampling clusters with the customer.

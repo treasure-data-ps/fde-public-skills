@@ -34,6 +34,7 @@ Show this table to the user after every build (`../../shared/customer_agent_patt
 | `SKILL.md` | The agent's instructions: what it answers, which tables it queries, its accuracy rules | "What can you help me with?" |
 | `references/business-context.md` | Your business knowledge — what counts as the same person, which identifiers are reliable, placeholder values, merge rules and exclusions, goals. Keep adding to it while you test: the more it says, the less the agent guesses | "Which of our business definitions are still unconfirmed?" |
 | `references/ai-signals-guide.md` | How the probabilistic unification works: input it needs, blocking and clustering parameters, how to tune, how to validate and read the outputs | "What would change if we raised the cluster threshold?" |
+| `references/tuning-advisor.md` | How the agent recommends the best cluster / Jaccard thresholds and column weights from several runs, with the Jaccard ≤ cluster rule | "What thresholds and weights do you recommend?" |
 | `references/data-dictionary.md` | Every output table and column, the quality bands, how to pick a run | "What does the cluster purity mean?" |
 | `references/workflow-guide.md` (if built) | The deployed workflow end to end: input SQL, dedupe columns and weights, config values, output tables | "Which columns are compared, and with what weights?" |
 | `references/model-setup-walkthrough.md` (if built) | What was decided during setup and why, the validation baseline and accuracy rules | "Why were these thresholds chosen?" |

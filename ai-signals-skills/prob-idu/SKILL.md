@@ -87,7 +87,7 @@ Tell the user its path in one line (playbook Phase 2 step 5) and continue to Pha
 **Part B — Customer requirements and tuning** (when `requirements.md` comes back; repeat as testing needs):
 
 1. Read `project_state.md`, then the filled `requirements.md`.
-2. Map the answers with the table at the end of `references/requirements_doc.md`; tune thresholds and weights with `references/output-tables-guide.md` §4 and `references/ai-signals-guide.md`.
+2. Map the answers with the table at the end of `references/requirements_doc.md`; tune thresholds and weights with `references/output-tables-guide.md` §4 and `references/ai-signals-guide.md`. After 3 or more runs, follow `project_templates/agent_template/references/tuning-advisor.md` to recommend the best thresholds and weights. Always keep `jaccard_similarity_threshold` ≤ `cluster_threshold`.
 3. Present the planned changes (input query and config); wait for approval.
 4. Edit `sql/input_table.sql` and `config/global.yml` (and `ml_prob_unification_launch.dig` for schedule / alert email) in `workflow/`, re-push, re-run, re-validate (§4). Compare the new session with the previous one in `prob_uni_config_stats_table` and in `project_state.md`.
 5. Merge the business answers into `business-context.md` (playbook Phase 4 Part B step 4).

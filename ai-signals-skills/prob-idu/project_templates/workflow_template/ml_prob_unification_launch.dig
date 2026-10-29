@@ -16,6 +16,12 @@ _export:
   td:
     database: ${sink_database}
 
+# The blocking threshold must not exceed the clustering threshold
++check_thresholds:
+  if>: ${jaccard_similarity_threshold > cluster_threshold}
+  _do:
+    fail>: jaccard_similarity_threshold must be <= cluster_threshold
+
 +create_input_table:
   td>: sql/input_table.sql
   create_table: ${input_table}
