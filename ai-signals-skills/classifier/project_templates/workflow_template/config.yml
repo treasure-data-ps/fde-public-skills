@@ -34,17 +34,21 @@ pred_output_table: classifier_predictions
 
 target_column: target
 user_id_column: user_id
-columns_to_drop: time|session_id|snapshot_date   # pipe-separated non-feature columns
+columns_to_drop: time|session_id|cutoff_date   # pipe-separated non-feature columns
 
 #####################################################################
-########################## FEATURE WINDOWS ##########################
+############################ DATA PREP ##############################
 #####################################################################
-# Read by the feature SQL in sql/ through data_prep.dig.
-# train: features up to cutoff_date = run date - label_window_days, label observed after it
-# pred:  features up to cutoff_date = run date
+# Read by the feature SQL in sql/ through data_prep.dig. Each cutoff_date is one snapshot:
+# features from [cutoff - feature_lookback_days, cutoff), label from [cutoff, cutoff + label_window_days).
+# train: n_train_snapshots cutoffs, spacing_days apart, the latest at least label_window_days
+#        before the run date (every label fully observed)
+# pred:  one cutoff = the run date
 reference_date: ''              # '' = the run date; 'YYYY-MM-DD' for data that ends in the past
-label_window_days: 90
-feature_lookback_days: 365
+label_window_days: 90           # prediction horizon: the outcome window after each cutoff
+feature_lookback_days: 365      # observation window before each cutoff
+n_train_snapshots: 3            # stacked training cutoffs (1 = a single cutoff) — set per use case
+spacing_days: 90                # days between training cutoffs (>= label_window_days: labels don't overlap)
 
 #####################################################################
 ######################### TRAINING PARAMS ###########################

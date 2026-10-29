@@ -4,7 +4,7 @@
 
 This Treasure Workflow project trains and scores a binary classification model — the probability that each entity (profile, lead, account) does something: converts, churns, responds, renews, … — with the AI Signals Propensity model (ml-batch-api `classifier_train` / `classifier_predict`). No Python runs in the workflow: training, tuning, threshold selection, SHAP and scoring all happen in the AI Signals service.
 
-- **Data prep** — the project's feature SQL (`sql/`) builds a flat model input table: one row per entity with a `session_id`, the features computed before a cut-off date and (training) a 0/1 label observed after it.
+- **Data prep** — the project's feature SQL (`sql/`) builds a flat model input table: one row per entity and cutoff date with a `session_id`, the features computed before the cutoff and a 0/1 label observed after it. Training stacks several cutoffs (snapshots) so the model sees more positives and seasons; scoring uses one cutoff, the run date.
 - **Train** — XGBoost (default) or CatBoost with an embedded Optuna search, a decision threshold chosen on out-of-fold predictions, test-set evaluation, SHAP explanations and diagnostic tables. The model is stored by the service under `model_name`.
 - **Predict** — the stored model scores every row of the prediction input table: `score` (probability), `predicted_label` (score ≥ threshold) and `score_bucket`; the latest batch is copied to `<pred_output_table>_latest`, one row per entity — the Parent Segment attribute table.
 
@@ -17,13 +17,13 @@ TD project name: `classifier_ais` (from `tdx.json`). Entry point: `classify.dig`
 ```
 classify.dig                       # entry point: schedule, error email, train then predict
 ├── train.dig                      # mode = train
-│   ├── data_prep.dig              # 0. +create_sink_database; sql/input_features.sql → train_input_table
+│   ├── data_prep.dig              # 0. +create_sink_database; sql/input_features.sql → train_input_table (n_train_snapshots cutoffs)
 │   ├── +check_training_dataset    # 1. latest batch (MAX(session_id)) non-empty, both classes present — else fail
 │   ├── +train_classifier          # 2. POST /v1/runs, solution classifier_train
 │   ├── +wait_for_training         #    polls /v1/runs/{id}/status (408 while running, 200 when done)
 │   └── +assert_training_succeeded #    fails on FAILED / ERROR / CANCELLED or error_messages
 └── predict.dig                    # mode = pred
-    ├── data_prep.dig              # 0. sql/input_features.sql → pred_input_table
+    ├── data_prep.dig              # 0. sql/input_features.sql → pred_input_table (cutoff = run date)
     ├── +check_prediction_dataset  # 1. non-empty — else fail
     ├── +predict_classifier        # 2. POST /v1/runs, solution classifier_predict, latest model under model_name
     ├── +wait_for_prediction       #    polls the status
@@ -63,15 +63,21 @@ All keys are in `config.yml`. The template values are a working example; change 
 | **`pred_output_table`** | Predictions table, appended on every scoring run; also names the latest-scores table `<pred_output_table>_latest` | `classifier_predictions`, or a use-case name (e.g. `churn_scores`) |
 | **`target_column`** | 0/1 label column in the training input | The label name the feature SQL writes (e.g. `converted`, `churned`) |
 | **`user_id_column`** | Entity ID: excluded from features, stored with the model, written to the predictions as `user_id`; required for distributed scoring | The ID the Parent Segment joins on |
-| **`columns_to_drop`** | Pipe-separated non-feature columns; saved with the model and reused at prediction | Every column of the input table that is not a feature or the label/ID: `time`, `session_id`, dates, raw timestamps, emails, other IDs |
+| **`columns_to_drop`** | Pipe-separated non-feature columns; saved with the model and reused at prediction | Every column of the input table that is not a feature or the label/ID: `time`, `session_id`, `cutoff_date`, other dates, raw timestamps, emails, other IDs |
 
-### Feature windows (read by the feature SQL)
+### Data prep (read by the feature SQL)
+
+Each cutoff date is one snapshot: features from the `feature_lookback_days` before it, the label from the `label_window_days` after it. Training cutoffs are `run date − spacing_days × k`, starting at the first `k` whose label window ends by the run date, so every training label is fully observed. Scoring uses one cutoff: the run date.
 
 | Parameter | What it does | How to choose it |
 |---|---|---|
-| **`label_window_days`** | Length of the outcome window after the training cut-off: training features end `label_window_days` before the run date, the label is observed after | The business definition of the outcome (e.g. "converted within 90 days" → `90`, "churned = no purchase in 180 days" → `180`) |
-| **`feature_lookback_days`** | History used for the features before the cut-off | Long enough to cover a buying cycle (`180`–`730`) |
-| `reference_date` | Run date used for the windows; `''` = the session date | `''` for live data; a `YYYY-MM-DD` date near the end of the data for demo or stale data |
+| **`label_window_days`** | Prediction horizon: the outcome window after each cutoff | The business definition of the outcome (e.g. "converted within 90 days" → `90`, "churned = no purchase in 180 days" → `180`) |
+| **`feature_lookback_days`** | Observation window: history used for the features before each cutoff | Long enough to cover a buying cycle (`180`–`730`) |
+| **`n_train_snapshots`** | Number of stacked training cutoffs; an entity appears once per cutoff | Per use case: `1`–`2` with many positives or recently changed behavior, `4`–`6` for rare outcomes, enough to cover a year for seasonal data. Lower it when the history is short |
+| `spacing_days` | Days between training cutoffs | `= label_window_days` (labels don't overlap); smaller for more, overlapping snapshots |
+| `reference_date` | Run date used for the cutoffs; `''` = the session date | `''` for live data; a `YYYY-MM-DD` date near the end of the data for demo or stale data |
+
+History needed before the run date: `spacing_days × (ceil(label_window_days / spacing_days) + n_train_snapshots − 1) + feature_lookback_days` (template values: 90 × 3 + 365 = 635 days).
 
 ### Training
 
@@ -84,11 +90,7 @@ All keys are in `config.yml`. The template values are a working example; change 
 | **`fbeta_beta`** | Beta of F-beta: below 1 favors precision, above 1 recall | `0.5` costly actions (sales calls, discounts); `1.0` balanced; `2.0` cheap actions where missing a positive is worse (churn save, email) |
 | `early_stopping_rounds` | Rounds without improvement before a fit stops; `0` = off | `50` |
 | `class_balance_strategy` | `balanced` weights the positive class; `none` keeps raw probabilities | `balanced` (positives under ~10%); `none` with `log_loss` when probabilities must stay calibrated |
-| `n_estimators_min`, `n_estimators_max` | Search range of the number of trees | Template values; widen for more capacity |
-| `max_depth_min`, `max_depth_max` | Search range of tree depth | Lower the max (e.g. `6`) when the model overfits or the data is small |
-| `learning_rate_min`, `learning_rate_max` | Search range of the learning rate | Lower the max when the model overfits |
-| `subsample_min`, `subsample_max`, `colsample_bytree_min`, `colsample_bytree_max` | XGBoost row / feature sampling ranges | Template values |
-| `min_child_weight_min`, `min_child_weight_max`, `reg_alpha_min`, `reg_alpha_max`, `reg_lambda_min`, `reg_lambda_max`, `gamma_min`, `gamma_max` | XGBoost regularization ranges | Template values; raise the `_min` values when the model overfits |
+| `*_min` / `*_max` pairs: `n_estimators`, `max_depth`, `learning_rate`, `subsample`, `colsample_bytree`, `min_child_weight`, `reg_alpha`, `reg_lambda`, `gamma` | Optuna search ranges | Template values. Overfitting → lower `max_depth_max` (e.g. `6`) and `learning_rate_max`, raise the regularization `_min` values |
 
 ### Threshold and diagnostics
 
@@ -109,39 +111,24 @@ All keys are in `config.yml`. The template values are a working example; change 
 
 ## Outputs
 
-All tables are in `sink_database`. The model tables are appended on every run and stamped with the run's `session_id` (the Workflow session that built the input). Always filter on the `session_id` you want — or the latest one.
+All tables are in `sink_database`, appended on every run and stamped with the run's `session_id` — filter on the one you want, or the latest. Model input tables (`train_input_table`, `pred_input_table`) are replaced each run; `<pred_output_table>_latest` (latest batch, one row per `user_id`) is the Parent Segment attribute table. The model itself is stored by the AI Signals service under `model_name`, not in TD.
 
-| Table | Contents |
-|---|---|
-| `train_input_table`, `pred_input_table` | Model input built by `data_prep.dig` — replaced each run |
-| `classifier_run_log` | One row per training run: test-split metrics (`precision`, `recall`, `fbeta`, `test_accuracy` as 0–1; `auc_roc`, `aucpr`, `f1_score` as 0–100), confusion counts, `best_threshold`, `best_params`, `psi`, the run's tuning config |
-| `classifier_train_run_log` | Same metrics on the training split — the train-vs-test overfitting check |
-| `classifier_feature_list` | Features the model uses |
-| `classifier_feature_importance`, `classifier_shap_directional` | SHAP importance and direction (increases / decreases / mixed) per feature |
-| `classifier_xgboost_gain_importance` (or `classifier_catboost_gain_importance`) | Native model importance |
-| `classifier_roc_curve`, `classifier_prediction_bins` | Test-split ROC points (0–100) and test-score histogram |
-| `classifier_target_correlations`, `classifier_feature_correlations`, `classifier_vif_scores`, `classifier_corr_drop_report` | Numeric feature diagnostics; correlated features dropped (only if any) |
-| `classifier_optuna_trials` | Hyperparameter search history (only if `n_trials > 0`) |
-| `pred_output_table` (`classifier_predictions`) | One row per scored entity and run: `session_id`, `model_type`, `user_id`, `score`, `predicted_label`, `threshold_applied`, `score_bucket`, `prediction_timestamp` — appended |
-| `<pred_output_table>_latest` | The latest scored batch, one row per `user_id` (same columns) — replaced each run; the Parent Segment attribute table |
+Table list, columns and queries: the skill's `references/output-tables-guide.md`.
 
-The trained model is stored by the AI Signals service under `model_name` (not in TD).
+## Requirements
 
-## Secrets & Requirements
-
-- **Secrets:** none to set. `train.dig` and `predict.dig` send `${secret:td.apikey}` to the AI Signals ml-batch-api, which provides the key itself.
-- **Account:** AI Signals must be enabled for `classifier_train` and `classifier_predict`.
-- **Data:** a labelled history — at least a few hundred positives and both classes in the training window — and features available for the entities to score.
-- **Permissions:** the project owner needs permission to create the sink database and tables, and read access to the source databases the feature SQL uses.
-- **Failure email:** the `_error` block in `classify.dig` is commented out. To enable it, uncomment it and replace `your-team@example.com` with the alert address.
-- **Schedule:** commented out in `classify.dig`; uncomment it for scheduled runs (or schedule `train.dig` and `predict.dig` separately).
+- **Secrets:** none — `${secret:td.apikey}` is sent to the ml-batch-api, which provides the key itself.
+- **Account:** AI Signals enabled for `classifier_train` and `classifier_predict`.
+- **Data:** a labelled history — at least a few hundred positives, both classes in the training window.
+- **Permissions:** create the sink database and tables; read the source databases used by the feature SQL.
+- **Failure email and schedule:** commented placeholders in `classify.dig`, `train.dig` and `predict.dig`. Uncomment `classify.dig` for one cadence, or `train.dig` and `predict.dig` for separate cadences — never both.
 
 ## Customization Points
 
 | Change | Where |
 |---|---|
-| Features, population, label definition | `sql/input_features.sql` — always rewritten for the project (output contract in `sql/README.md`) |
-| Extra feature tables built in parallel | A `_parallel` block in `data_prep.dig`, joined in `sql/input_features.sql` |
-| Input tables built outside this workflow | Remove the `+data_prep` call from `train.dig` and `predict.dig`; the tables must keep the output contract |
-| Failure email, schedule | `classify.dig` (or `train.dig` / `predict.dig` when scheduled separately) |
+| Features, population, label | `sql/input_features.sql` (contract in `sql/README.md`) |
+| Snapshots, horizon, observation window | `config.yml` |
+| Extra feature tables | `_parallel` block in `data_prep.dig`, joined in `sql/input_features.sql` |
+| Input tables built elsewhere | Remove `+data_prep` from `train.dig` / `predict.dig`; keep the output contract |
 | Longer polling for large tables | `_retry` of `+wait_for_training` / `+wait_for_prediction` |

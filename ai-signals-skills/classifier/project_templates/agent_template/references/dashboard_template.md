@@ -43,7 +43,7 @@ Every `classifier_*` table is appended: the latest run is `max_by(session_id, ti
 | Q7 training history | `classifier_run_log` ordered by `time` | Tab 4 metric trend |
 | Q8 scoring history | `{{pred_table}}` grouped by `session_id` (distinct users) | Tab 4 volume and positive-rate trend |
 
-Scale rule: `auc_roc`, `aucpr` and `f1_score` are stored 0–100 and divided by 100; `precision`, `recall` and `fbeta` are 0–1.
+Scale rule: every run-log metric (`auc_roc`, `aucpr`, `f1_score`, `precision`, `recall`, `fbeta`) is 0–1 — no rescaling.
 
 ## 3. Tabs
 
