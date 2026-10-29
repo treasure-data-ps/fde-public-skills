@@ -11,6 +11,7 @@ Each subfolder is a self-contained solution with its own `SKILL.md` entry point.
 | `classifier/` | `fde-classifier` | Propensity scoring — binary classification with SHAP explanations | `classifier-agent` |
 | `nba-scores/` | `fde-nba-scores` | NBA — Next Best Channel / Time / Campaign engagement scores | `nba-scores-agent` |
 | `nbp/` | `fde-nbp` | NBP — Next Best Product recommendations (AI Signals NBP model) | `nbp-agent` |
+| `prob-idu/` | `fde-prob-idu` | Probabilistic ID unification — fuzzy matching of duplicate profiles (AI Signals `pidu`) | `prob-idu-agent` |
 
 ## Shared workflow pattern
 
