@@ -14,7 +14,7 @@ ORDERS AS (
     date_diff('day', CAST(MIN(least_recent_event) as TIMESTAMP), 
               CAST(MAX(most_recent_event) as TIMESTAMP)) AS time_range_days,
     APPROX_DISTINCT(itemid) AS distinct_items_transactions_table,
-    APPROX_DISTINCT(item_name) AS distinct_categories_transactions_table
+    APPROX_DISTINCT(item_category) as distinct_categories_transactions_table
   FROM ${prefix}itemid_name_product_mapping
 ), 
 
