@@ -4,7 +4,7 @@ WITH latest as (
 
 SELECT 
   'Algorithm: ' || algorithm || ', Params: ' || model_params AS model_params,
-  'Precision: ' || REGEXP_EXTRACT(FORMAT('%.20f', ROUND(precicion_${max_recommended_items},3)), '^(-?\d+\.\d+?)(0*)$', 1)|| 
+  'Precision: ' || REGEXP_EXTRACT(FORMAT('%.20f', ROUND(precision_${max_recommended_items},3)), '^(-?\d+\.\d+?)(0*)$', 1)|| 
   ', Recall: ' || REGEXP_EXTRACT(FORMAT('%.20f', ROUND(recall_${max_recommended_items},3)), '^(-?\d+\.\d+?)(0*)$', 1)|| 
   ', NDCG: ' || REGEXP_EXTRACT(FORMAT('%.20f', ROUND(ndcg_${max_recommended_items},3)), '^(-?\d+\.\d+?)(0*)$', 1)|| 
   ', MRR: ' || REGEXP_EXTRACT(FORMAT('%.20f', ROUND(mrr_${max_recommended_items},3)), '^(-?\d+\.\d+?)(0*)$', 1)|| 
