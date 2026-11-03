@@ -30,6 +30,21 @@ Then edit the copy: `call>:` in the launch file; `input_params.yaml` (prefix, da
 
 Before pushing, run each SELECT once against real data (`tdx query -d <source_db> -f …` with the variables filled in by hand) and check it returns aggregated rows with plausible values.
 
+### Several source tables
+
+The template stages one primary table. Every other source table is read by one of three patterns — choose per SINK table:
+
+| Pattern | Use when | How |
+|---|---|---|
+| **Stage, then SINK** | the primary table, or a table that several SINKs read | Staging SQL (`01_stage_events.sql` or a second `stg_*` task with `create_table:`); the SINK SQL reads `${project_prefix}_stg_*` |
+| **Direct-read SINK** | a secondary table that only one SINK needs | The SINK SQL reads `${source_database}.<table>` fully qualified (the `_export` database is the sink) with the same `event_date` expression, `TD_TIME_RANGE(time, '${refresh_mode == "full" ? history_start : incr_start_day}', NULL, 'UTC')` window and `table_filter` as staging — the exclusions must apply to every source table; no staging table |
+| **JOIN SINK** | a metric needs two tables at one grain | Pre-aggregate the many side to the join key in a subquery, then `LEFT JOIN` from the base table; report `COUNT_IF(d.<key> IS NULL)` unmatched rows |
+
+For all three:
+- Each SINK gets its own `+sink_*` task pair with its own full / incremental branch (see the template) — a direct-read SINK in incremental mode uses the same DELETE window on its `event_date`.
+- A secondary table without a time column is a snapshot: read it in full each run, and its SINK stays full-refresh.
+- Run the fan-out and match-rate checks (`data-discovery.md` §5) before writing the JOIN SQL.
+
 ## 3. Deploy, run, monitor
 
 ```bash
@@ -49,7 +64,7 @@ On failure: `tdx wf attempt <id> tasks --include-subtasks`, then `tdx wf attempt
 - NULL audit on every measure column.
 - ≥ 3 metrics recomputed from the **source** for the same window match the SINK totals exactly (and the confirmed values from discovery).
 
-Report in one short table (table, grain, rows, checks) and record the project name, database, tables and run in `project_state.md`. Then offer the schedule (one question) and continue to Step 4.
+Report in one short table (table, grain, rows, checks) and record the project name, database, tables and run in `project_state.md`. Then ask about the schedule (it stays disabled unless the user says yes) and continue to Step 4.
 
 ## Changing an existing workflow
 

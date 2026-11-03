@@ -23,6 +23,8 @@ cp "$d/metrics-catalog.md" "$d/sql-templates.md" "$stage/references/"
 cp "$d/dashboards/"{dashboard.template.html,generate-data.js,chart.umd.min.js} "$stage/references/"
 ```
 
+`ls "$stage/references"` must now list exactly these seven files: `business-context.md` and `data-dictionary.md` (copied by `customer_agent_pattern.md` Step 2), `metrics-catalog.md`, `sql-templates.md`, `generate-data.js`, `dashboard.template.html`, `chart.umd.min.js`. Any missing file fails the build check in §3.
+
 Placeholders in `SKILL.md`:
 
 | Placeholder | Value |
@@ -34,16 +36,24 @@ Placeholders in `SKILL.md`:
 | `{{data_database}}` | The database the dashboard reads (SINK on the workflow path, otherwise source) |
 | `{{data_source_note}}` | `pre-aggregated by workflow <project>` or `queried directly from the source tables` |
 | `{{source_database}}`, `{{sink_database}}` | Confirmed databases (sink = source on the direct path) |
-| `{{trigger_phrases}}` | 3–5 natural phrases from the title and goal (e.g. "sales dashboard", "show me sales performance") |
+| `{{trigger_phrases}}` | 3–5 phrases a user would type to get this dashboard, using this business's own words (a KPI, audience or product name — e.g. "loyalty churn", "member retention"). Do not repeat the title or the trigger phrases already in the template description, and do not use generic words like "dashboard" or "data" |
 
 Never copy `dashboard.html`, query output or `*.template.md` files into the skill.
 
 ## 3. Register (after the user says yes)
 
-`customer_agent_pattern.md` Step 3 to `.claude/skills/<project_slug>-dashboard/`, then check from the Work Folder root:
+`customer_agent_pattern.md` Step 3 to `.claude/skills/<project_slug>-dashboard/`. Then run this build check from the Work Folder root; every line must print nothing except `refresh OK`:
 
-1. The refresh command in the installed `SKILL.md` exits without error and rewrites `agent_outputs/<project_slug>/dashboards/dashboard.html`; nothing new appears in `.claude/skills/<project_slug>-dashboard/`.
-2. `grep -c "INFERRED\|NEEDS YOUR INPUT" .claude/skills/<project_slug>-dashboard/references/business-context.md` — tell the user how many business-context items are still open and that the skill answers "which definitions are unconfirmed?".
+```bash
+S=".claude/skills/<project_slug>-dashboard"
+grep -rn --include='*.md' '{{' "$S" && echo "FAIL: unfilled placeholders in .md files"
+grep -nE '<(source_database|sink_database|table)>' "$S/references/generate-data.js" && echo "FAIL: placeholders in generate-data.js"
+for f in SKILL.md references/business-context.md references/data-dictionary.md references/metrics-catalog.md references/sql-templates.md references/generate-data.js references/dashboard.template.html references/chart.umd.min.js; do [ -f "$S/$f" ] || echo "MISSING $f"; done
+find "$S" -name '*.html' | grep . && echo "FAIL: generated HTML inside the skill folder"
+DASHBOARD_OUTPUT="agent_outputs/<project_slug>/dashboards/dashboard.html" node "$S/references/generate-data.js" >/dev/null && echo "refresh OK" || echo "FAIL: refresh"
+```
+
+Then tell the user how many business-context items are still open: `grep -c "INFERRED\|NEEDS YOUR INPUT" "$S/references/business-context.md"` — and that the skill answers "which definitions are unconfirmed?".
 
 Tell the user: the skill is available in new chats in this folder (and can be shared with Studio's Develop → Share); try "Show me the dashboard", "How is <KPI> calculated?", "Add <metric> to the overview tab".
 

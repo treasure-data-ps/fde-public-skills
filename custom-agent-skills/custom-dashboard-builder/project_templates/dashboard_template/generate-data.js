@@ -33,11 +33,12 @@ const CONFIG = {
 // ── QUERIES ───────────────────────────────────────────────────────────────────────────────────────
 // name → { db: 'source' | 'sink', sql, limit, columns: [required columns], numeric: [columns to coerce] }
 // Every query is aggregated (never raw events), selects only the columns the layout reads, applies the
-// confirmed exclusions, and has a LIMIT above the expected row count — reaching it fails the build.
+// confirmed exclusions, and has a LIMIT strictly above the expected row count — getting exactly `limit`
+// rows fails the build (a one-row query needs limit: 2).
 // `meta` is required: data_start / data_end as ISO date strings.
 const QUERIES = {
   meta: {
-    db: 'source', limit: 1, columns: ['data_start', 'data_end'], numeric: [],
+    db: 'source', limit: 2, columns: ['data_start', 'data_end'], numeric: [],
     sql: `SELECT TD_TIME_FORMAT(MIN(time), 'yyyy-MM-dd', 'UTC') AS data_start,
                  TD_TIME_FORMAT(MAX(time), 'yyyy-MM-dd', 'UTC') AS data_end
           FROM <table>`,

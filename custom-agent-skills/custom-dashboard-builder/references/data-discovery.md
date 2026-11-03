@@ -63,14 +63,16 @@ SELECT COUNT(*) AS joined_rows, COUNT(DISTINCT b.<key>) AS base_keys,
 FROM <base> b LEFT JOIN <dim> d ON b.<key> = d.<key>
 ```
 
+- Always `LEFT JOIN` from the base table: an inner join silently drops unmatched rows (e.g. 310 customers missing from a loyalty dashboard). Keep the unmatched rows and show them as `Unknown` unless the user says otherwise.
 - `joined_rows` > rows of `<base>` → fan-out: pre-aggregate the many side by the join key in a subquery, then join. Never SUM after a fan-out join.
 - Key types must match; match rate ≥ 80 % fine, 50–80 % investigate, < 50 % stop (format mismatch).
 - Distinct key counts on both sides within ~5 %, otherwise ask whether that is expected.
+- Run these checks before choosing the SINK design in §7: fan-out decides whether the join is pre-aggregated in the SINK query.
 
 ## 6. Size and speed
 
 - **Rows the dashboard needs** = time buckets × product of the distinct counts of the filter dimensions (only existing combinations — measure with a `COUNT(*)` over the GROUP BY).
-- **Payload** ≈ rows × (8 B per number, 10 B per date, ~20–50 B per text value) + 20 % JSON overhead. Budget: < 500 KB ideal, ≤ 2 MB hard stop.
+- **Payload** ≈ rows × (8 B per number, 10 B per date, ~20–50 B per text value) + 20 % JSON overhead. Budget: < 500 KB ideal, ≤ 2 MB hard stop. State the estimate in the Step 2 summary as uncompressed JSON KB — the unit the engine checks — and compare it with the `data … KB` line printed by the first build.
 - Dropdown filters: < 50 values fine, 50–500 acceptable, > 500 → use a coarser dimension; never ID filters.
 - Time each dashboard query on the real filters.
 - To fit the budget, in this order: drop high-cardinality filters → coarser time grain (day → week → month) → shorter history → coarser hierarchy (city → region, SKU → category) → top-N.

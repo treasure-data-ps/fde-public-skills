@@ -5,8 +5,16 @@ Template: `<skill_dir>/project_templates/dashboard_template/` — `dashboard.tem
 ```bash
 d="agent_outputs/<project_slug>/dashboards"
 [ -d "$d" ] || { mkdir -p "$d" && cp "<skill_dir>/project_templates/dashboard_template/"{dashboard.template.html,generate-data.js,chart.umd.min.js} "$d/"; }
-node "$d/generate-data.js"            # writes $d/dashboard.html
 ```
+
+Edit the copy in §1–3. Then, before every run, from the Work Folder root:
+
+```bash
+grep -cE '<(source_database|sink_database|table)>' "$d/generate-data.js"   # must print 0
+DASHBOARD_OUTPUT="$d/dashboard.html" node "$d/generate-data.js"
+```
+
+If the count is not 0, the edit did not reach disk (a write can report success while the old file stays) — rewrite `generate-data.js` with a Bash heredoc (`cat > "$d/generate-data.js" <<'EOF' … EOF`), check the count again, and only then run.
 
 ## 1. CONFIG
 
@@ -20,7 +28,7 @@ One entry per dataset: `{ db, sql, limit, columns, numeric }`. `meta` (data_star
 - **Grain = the filters that apply to the widgets using it.** A dataset for a tab carries the date column (zero-padded ISO: `YYYY-MM-DD`, `YYYY-MM` or `YYYY`) plus every global filter dimension and that tab's filter dimensions. The page filters and re-aggregates rows in the browser, so a dimension missing from a dataset makes that filter do nothing for its widgets.
 - Additive measures only (SUM, COUNT). Ratios: return numerator and denominator and use `agg: 'ratio'`. Distinct counts: a dataset at exactly the displayed grain — read with `agg: 'fixed'` (shown with a note that filters don't change it), or a row-level dataset small enough for `agg: 'distinct'`. Never sum a distinct count across rows.
 - Apply the confirmed exclusions and `COALESCE(dim, 'Unknown')`; prune on `time` first for source tables; use the SINK columns exactly as `tdx describe` shows them.
-- `limit` above the expected rows — reaching it fails the build (no silent truncation); `columns` lists the required columns (a missing one fails the build); `numeric` lists columns to coerce to numbers.
+- `limit` strictly above the rows the query returns — getting exactly `limit` rows fails the build (no silent truncation), so an aggregate that always returns one row (`meta`) needs `limit: 2`; `columns` lists the required columns (a missing one fails the build); `numeric` lists columns to coerce to numbers.
 - Queries run in parallel; the date of the data comes from `meta`.
 
 ## 3. LAYOUT
