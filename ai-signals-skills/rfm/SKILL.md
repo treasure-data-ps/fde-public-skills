@@ -1,7 +1,7 @@
 ---
 name: fde-rfm
 description: |
-  Sets up RFM (Recency, Frequency, Monetary) customer segmentation on Treasure Data: a workflow that unions customer activity (pageviews, orders, email, sales), scores every profile with the AI Signals RFM model and assigns one of ten segments for Parent Segment attributes, then builds the project's RFM agent and dashboard. Use it to start, set up, configure, change, re-run or resume an RFM project and to build or rebuild its agent. Trigger on: set up RFM, start an RFM project, new RFM setup, segment my customers by value, find our best and at-risk customers, RFM segmentation setup, RFM workflow, configure RFM, rebuild the RFM agent, resume RFM setup, RFM runbook, RFM output tables. Once the project's RFM agent is installed, questions about the results go to it.
+  Sets up RFM (Recency, Frequency, Monetary) customer segmentation on Treasure Data: a workflow that unions customer activity (pageviews, orders, email, sales), scores every profile with the AI Signals RFM model and assigns one of ten segments for Parent Segment attributes, then builds the project's RFM agent and dashboard. Use it to start, set up, configure, change, re-run or resume an RFM project and to build or rebuild its agent. Trigger on: set up RFM, start an RFM project, new RFM setup, ai signals rfm, segment my customers by value, find our best and at-risk customers, RFM segmentation setup, RFM workflow, configure RFM, rebuild the RFM agent, resume RFM setup, RFM runbook, RFM output tables. Once the project's RFM agent is installed, questions about the results go to it.
 ---
 
 # RFM Customer Segmentation

@@ -1,6 +1,7 @@
 # Local-only folders — never track or commit
 /tools/
 /tmp/
+/tests/
 
 # Personal Claude Code settings
 .claude/settings.local.json
