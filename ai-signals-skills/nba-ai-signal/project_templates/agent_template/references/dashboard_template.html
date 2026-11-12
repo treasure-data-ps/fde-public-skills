@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<!--
+================================================================================
+  NBA AI Signal (Next Best Action) Summary — Dashboard Template (3 tabs)
+================================================================================
+
+  HOW THIS TEMPLATE WORKS
+  -----------------------
+  Self-contained HTML dashboard with placeholder tokens. generate-data.js (next to this file):
+    1. Runs its queries concurrently against the NBA AI Signal outputs in the sink database:
+       the fixed-name nba_ais_* tables and the recommendations (<pred_output_table>,
+       <pred_output_table>_history)
+    2. STRIPS this leading HTML comment
+    3. Replaces every {{token}} and warns if any remain
+    4. Writes agent_outputs/<project_slug>/dashboards/nba_ai_signal_dashboard.html
+
+  The queries, token list and scale rules live in generate-data.js and dashboard_template.md.
+  Visual structure (TD palette, layout, tabs, chart shapes) is fixed — only the data changes.
+
+  TABS
+    1. Policy Performance — logged reward vs estimated policy value (interval), lift, tuning result, config
+    2. Action Mix         — logged vs recommended share per action, logged reward per action, action table
+    3. Historic Tracker   — policy value per training run, customers per action per scoring run
+================================================================================
+-->
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Next Best Action Summary — {{project_name}}</title>
+<script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+<style>
+  :root {
+    --td-1: #B4E3E3; --td-2: #ABB3DB; --td-3: #D9BFDF; --td-4: #F8E1B0;
+    --td-5: #8FD6D4; --td-6: #828DCA; --td-7: #C69ED0; --td-8: #F5D389;
+    --td-9: #6AC8C6; --td-10: #5867B8; --td-11: #B37EC0; --td-12: #F1C461;
+    --td-13: #44BAB8; --td-14: #2E41A6; --td-15: #8CC97E; --td-16: #A05EB0;
+    --bg: #F7F8FB; --card: #FFFFFF; --ink: #1F2147; --muted: #6A6F8A; --line: #E6E8F2;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+         background: var(--bg); color: var(--ink); line-height: 1.4; }
+  header { background: linear-gradient(135deg, var(--td-14) 0%, var(--td-10) 100%); color: white;
+           padding: 32px 48px 0; }
+  header h1 { margin: 0 0 8px; font-size: 28px; font-weight: 600; }
+  header p { margin: 0; opacity: 0.85; font-size: 14px; }
+  .meta-row { display: flex; flex-wrap: wrap; gap: 24px; margin-top: 16px; font-size: 13px; padding-bottom: 24px; }
+  .meta-row span strong { font-weight: 600; }
+
+  .tab-nav { background: linear-gradient(135deg, var(--td-14) 0%, var(--td-10) 100%); padding: 0 48px; }
+  .tab-nav-inner { display: flex; gap: 4px; max-width: 1400px; margin: 0 auto; }
+  .tab-button {
+    background: rgba(255,255,255,0.12); color: white; border: none; padding: 14px 24px;
+    cursor: pointer; font-size: 14px; font-weight: 500; border-radius: 8px 8px 0 0;
+    transition: background 0.15s ease; font-family: inherit;
+  }
+  .tab-button:hover { background: rgba(255,255,255,0.22); }
+  .tab-button.active { background: var(--bg); color: var(--td-14); font-weight: 600; }
+
+  main { padding: 32px 48px; max-width: 1400px; margin: 0 auto; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  section { margin-bottom: 40px; }
+  h2 { font-size: 20px; font-weight: 600; margin: 0 0 16px; padding-bottom: 8px;
+       border-bottom: 2px solid var(--td-1); color: var(--td-14); }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+  .kpi { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 20px;
+         box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .kpi .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi .value { font-size: 28px; font-weight: 700; margin-top: 6px; color: var(--td-14); }
+  .kpi .sub { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .chart { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 16px 8px;
+           box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+  .chart-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+  table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: 8px; overflow: hidden;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04); border: 1px solid var(--line); }
+  th, td { padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--line); font-size: 13px; }
+  th { background: var(--td-1); color: var(--td-14); font-weight: 600; font-size: 12px;
+       text-transform: uppercase; letter-spacing: 0.5px; }
+  tr:last-child td { border-bottom: none; }
+  td.num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 500; }
+
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600;
+          background: var(--td-1); color: var(--td-14); }
+  .pill.warn { background: var(--td-4); color: #8a6d1c; }
+  .pill.ok { background: var(--td-15); color: #2c5e1f; }
+  .pill.error { background: #F8D7DA; color: #721C24; }
+
+  .insights ul { margin: 0; padding-left: 20px; }
+  .insights li { margin-bottom: 8px; font-size: 14px; }
+  .insights li strong { color: var(--td-14); }
+
+  .callout { background: var(--td-4); border: 1px solid #e6c87e; color: #8a6d1c;
+             padding: 14px 18px; border-radius: 8px; margin-bottom: 16px; font-size: 13px; }
+  .callout strong { color: #6a5316; }
+
+  footer { text-align: center; padding: 24px; color: var(--muted); font-size: 12px; }
+  @media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Next Best Action Summary</h1>
+  <p>{{project_name}} · {{sink_database}} · Session {{session_id}}</p>
+  <div class="meta-row">
+    <span><strong>Run date:</strong> {{run_date}}</span>
+    <span><strong>Recommendations:</strong> {{pred_table}}</span>
+    <span><strong>Model:</strong> {{model_name}} ({{model_type}})</span>
+    <span><strong>Actions:</strong> {{n_actions}}</span>
+    <span><strong>Customers scored:</strong> {{customers_scored}}</span>
+    <span><strong>Train runs tracked:</strong> {{run_count}}</span>
+  </div>
+</header>
+
+<nav class="tab-nav">
+  <div class="tab-nav-inner">
+    <button class="tab-button active" data-tab="tab-policy">Policy Performance</button>
+    <button class="tab-button" data-tab="tab-mix">Action Mix</button>
+    <button class="tab-button" data-tab="tab-historic">Historic Tracker</button>
+  </div>
+</nav>
+
+<main>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1 — POLICY PERFORMANCE                                          -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div id="tab-policy" class="tab-panel active">
+
+    <section>
+      <h2>Expected Reward per Customer (off-policy estimate)</h2>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="label">Past Decisions</div><div class="value">{{logged_avg_reward}}</div><div class="sub">Average logged reward</div></div>
+        <div class="kpi"><div class="label">Model Policy</div><div class="value">{{estimated_policy_value}}</div><div class="sub">Estimated policy value</div></div>
+        <div class="kpi"><div class="label">95% Interval</div><div class="value" style="font-size: 22px; margin-top: 12px;">{{ci_lower}} – {{ci_upper}}</div><div class="sub">Range of the policy value</div></div>
+        <div class="kpi"><div class="label">Estimated Lift</div><div class="value">{{estimated_lift_pct}}</div><div class="sub">Policy vs past decisions</div></div>
+        <div class="kpi"><div class="label">Evidence</div><div class="value" style="font-size: 22px; margin-top: 12px;">{{evidence_pill}}</div><div class="sub">Interval vs the logged reward</div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Policy vs Past Decisions</h2>
+      <div class="chart-row">
+        <div class="chart"><div id="chart-policy-value" style="height:340px"></div></div>
+        <table>
+          <thead>
+            <tr><th colspan="2">Training Run</th></tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Session ID</strong></td><td>{{session_id}}</td></tr>
+            <tr><td><strong>Model name</strong></td><td><code>{{model_name}}</code></td></tr>
+            <tr><td><strong>Policy type</strong></td><td><span class="pill">{{model_type}}</span></td></tr>
+            <tr><td><strong>Tuning</strong></td><td><code>{{enable_tuning}}</code></td></tr>
+            <tr><td><strong>Training rows / customers</strong></td><td>{{train_rows}} / {{train_users}}</td></tr>
+            <tr><td><strong>Windows (reward / training / context)</strong></td><td>{{reward_window_days}} / {{train_window_days}} / {{feature_lookback_days}} days</td></tr>
+            <tr><td><strong>Output Sink Database</strong></td><td><code>{{sink_database}}</code></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section>
+      <h2>Tuning Result</h2>
+      {{tuning_callout}}
+      <table>
+        <thead>
+          <tr><th>Phase</th><th>Chosen settings</th><th class="num">Score</th><th class="num">Hold-out policy value</th><th class="num">Lift vs random</th></tr>
+        </thead>
+        <tbody>
+          {{tuning_rows}}
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Insights & Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          {{tab1_insights_html_li}}
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2 — ACTION MIX                                                  -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div id="tab-mix" class="tab-panel">
+
+    <section>
+      <h2>Latest Recommendations (scored {{scored_date}})</h2>
+      <div class="kpi-grid">
+        <div class="kpi"><div class="label">Customers Scored</div><div class="value">{{customers_scored}}</div><div class="sub">One action each</div></div>
+        <div class="kpi"><div class="label">Actions Recommended</div><div class="value">{{actions_recommended}}</div><div class="sub">of {{n_actions}} logged actions</div></div>
+        <div class="kpi"><div class="label">Top Action</div><div class="value" style="font-size: 20px; margin-top: 12px;">{{top_action}}</div><div class="sub">{{top_action_share}} of customers</div></div>
+        <div class="kpi"><div class="label">Biggest Shift</div><div class="value" style="font-size: 20px; margin-top: 12px;">{{biggest_shift_action}}</div><div class="sub">{{biggest_shift}} vs the logged share</div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Logged vs Recommended</h2>
+      <div class="chart-row">
+        <div class="chart"><div id="chart-mix" style="height:380px"></div></div>
+        <div class="chart"><div id="chart-reward-by-action" style="height:380px"></div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Action Detail</h2>
+      <table>
+        <thead>
+          <tr><th>Action</th><th class="num">Logged Rows</th><th class="num">Logged Share</th><th class="num">Logged Avg Reward</th><th class="num">Recommended Customers</th><th class="num">Recommended Share</th><th class="num">Shift</th></tr>
+        </thead>
+        <tbody>
+          {{action_rows}}
+        </tbody>
+      </table>
+    </section>
+
+    <section>
+      <h2>Insights & Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          {{tab2_insights_html_li}}
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 3 — HISTORIC TRACKER                                            -->
+  <!-- ═══════════════════════════════════════════════════════════════════ -->
+  <div id="tab-historic" class="tab-panel">
+
+    {{historic_single_run_callout}}
+
+    <section>
+      <h2>Policy Value Over Training Runs</h2>
+      <div class="chart"><div id="chart-historic-value" style="height:360px"></div></div>
+    </section>
+
+    <section>
+      <h2>Customers per Action per Scoring Run</h2>
+      <div class="chart"><div id="chart-historic-mix" style="height:360px"></div></div>
+    </section>
+
+    <section>
+      <h2>Insights & Recommendations</h2>
+      <div class="kpi insights">
+        <ul>
+          {{tab3_insights_html_li}}
+        </ul>
+      </div>
+    </section>
+
+  </div>
+
+</main>
+
+<footer>
+  Generated from <code>nba_ais_*</code> and <code>{{pred_table}}</code> · {{sink_database}} · session {{session_id}} · AI Signals Next Best Action
+</footer>
+
+<script>
+  // TD brand palette — DO NOT substitute. Fixed across all customers/runs.
+  const TD_PALETTE = ["#B4E3E3","#ABB3DB","#D9BFDF","#F8E1B0","#8FD6D4","#828DCA","#C69ED0","#F5D389","#6AC8C6","#5867B8","#B37EC0","#F1C461","#44BAB8","#2E41A6","#8CC97E","#A05EB0"];
+  const SERIES = ["#44BAB8","#2E41A6","#A05EB0","#F1C461","#8CC97E","#5867B8","#B37EC0","#6AC8C6","#828DCA","#F5D389","#C69ED0","#8FD6D4"];
+  const baseLayout = {
+    paper_bgcolor: 'white', plot_bgcolor: 'white',
+    font: { family: '-apple-system, BlinkMacSystemFont, sans-serif', color: '#1F2147', size: 12 },
+    margin: { t: 50, r: 20, b: 60, l: 60 }
+  };
+  const cfg = { responsive: true, displayModeBar: false };
+
+  // ── Data injected by generate-data.js ─────────────────────────────────────
+  const POLICY = {
+    logged: {{logged_avg_reward_num}},
+    value: {{estimated_policy_value_num}},
+    lower: {{ci_lower_num}},
+    upper: {{ci_upper_num}}
+  };
+  const MIX = {
+    actions: {{mix_actions_json}},
+    logged_share: {{mix_logged_share_json}},
+    recommended_share: {{mix_recommended_share_json}},
+    logged_reward: {{mix_logged_reward_json}}
+  };
+  const HISTORIC = {
+    runs: {{historic_run_labels_json}},
+    value: {{historic_value_json}},
+    lower: {{historic_lower_json}},
+    upper: {{historic_upper_json}},
+    logged: {{historic_logged_json}},
+    pred_runs: {{historic_pred_run_labels_json}},
+    pred_series: {{historic_pred_series_json}}
+  };
+
+  // ── Tab switching ─────────────────────────────────────────────────────────
+  document.querySelectorAll('.tab-button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const targetId = btn.dataset.tab;
+      document.querySelectorAll('.tab-button').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById(targetId).classList.add('active');
+      // Plotly charts inside hidden panels need a resize when revealed
+      window.dispatchEvent(new Event('resize'));
+    });
+  });
+
+  // ── TAB 1 ─────────────────────────────────────────────────────────────────
+  Plotly.newPlot('chart-policy-value', [{
+    type: 'bar', x: ['Past decisions (logged)', 'Model policy (estimated)'], y: [POLICY.logged, POLICY.value],
+    marker: { color: [TD_PALETTE[1], '#2E41A6'] },
+    error_y: { type: 'data', symmetric: false, array: [0, Math.max(POLICY.upper - POLICY.value, 0)],
+               arrayminus: [0, Math.max(POLICY.value - POLICY.lower, 0)], color: '#1F2147', thickness: 1.5, width: 8 },
+    text: [POLICY.logged.toFixed(4), POLICY.value.toFixed(4)], textposition: 'outside', cliponaxis: false
+  }], {
+    ...baseLayout, title: { text: 'Average Reward per Customer (bar = estimate, whisker = 95% interval)', font: { size: 14 } },
+    yaxis: { title: 'Average reward', rangemode: 'tozero' }
+  }, cfg);
+
+  // ── TAB 2 ─────────────────────────────────────────────────────────────────
+  Plotly.newPlot('chart-mix', [
+    { name: 'Logged share', type: 'bar', x: MIX.actions, y: MIX.logged_share, marker: { color: TD_PALETTE[1] } },
+    { name: 'Recommended share', type: 'bar', x: MIX.actions, y: MIX.recommended_share, marker: { color: '#44BAB8' } }
+  ], {
+    ...baseLayout, title: { text: 'Action Mix — Past Decisions vs Recommendations', font: { size: 14 } },
+    yaxis: { title: 'Share', tickformat: '.0%', rangemode: 'tozero' }, xaxis: { type: 'category', automargin: true },
+    barmode: 'group', legend: { orientation: 'h', y: -0.25 }
+  }, cfg);
+
+  Plotly.newPlot('chart-reward-by-action', [{
+    type: 'bar', x: MIX.actions, y: MIX.logged_reward, marker: { color: TD_PALETTE[9] },
+    text: MIX.logged_reward.map(v => v.toFixed(4)), textposition: 'outside', cliponaxis: false
+  }], {
+    ...baseLayout, title: { text: 'Average Logged Reward per Action (raw, not the effect)', font: { size: 14 } },
+    yaxis: { title: 'Average reward', rangemode: 'tozero' }, xaxis: { type: 'category', automargin: true }
+  }, cfg);
+
+  // ── TAB 3 ─────────────────────────────────────────────────────────────────
+  Plotly.newPlot('chart-historic-value', [
+    { name: '95% interval (upper)', type: 'scatter', mode: 'lines', x: HISTORIC.runs, y: HISTORIC.upper, line: { width: 0 }, showlegend: false, hoverinfo: 'skip' },
+    { name: '95% interval', type: 'scatter', mode: 'lines', x: HISTORIC.runs, y: HISTORIC.lower, line: { width: 0 }, fill: 'tonexty', fillcolor: 'rgba(46,65,166,0.12)' },
+    { name: 'Estimated policy value', type: 'scatter', mode: 'lines+markers', x: HISTORIC.runs, y: HISTORIC.value, line: { color: '#2E41A6', width: 3 } },
+    { name: 'Logged average reward', type: 'scatter', mode: 'lines+markers', x: HISTORIC.runs, y: HISTORIC.logged, line: { color: '#A05EB0', width: 2, dash: 'dot' } }
+  ], {
+    ...baseLayout, title: { text: 'Policy Value vs Past Decisions — Training History', font: { size: 14 } },
+    xaxis: { title: 'Run date', type: 'category' }, yaxis: { title: 'Average reward', rangemode: 'tozero' },
+    legend: { orientation: 'h', y: -0.2 }
+  }, cfg);
+
+  Plotly.newPlot('chart-historic-mix', HISTORIC.pred_series.map((s, i) => ({
+    name: s.action, type: 'bar', x: HISTORIC.pred_runs, y: s.customers, marker: { color: SERIES[i % SERIES.length] }
+  })), {
+    ...baseLayout, title: { text: 'Recommended Customers per Action', font: { size: 14 } },
+    barmode: 'stack', xaxis: { title: 'Scoring run', type: 'category' }, yaxis: { title: 'Customers', rangemode: 'tozero' },
+    legend: { orientation: 'h', y: -0.2 }
+  }, cfg);
+</script>
+
+</body>
+</html>

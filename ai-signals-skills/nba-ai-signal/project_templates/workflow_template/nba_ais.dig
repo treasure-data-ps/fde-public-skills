@@ -1,0 +1,25 @@
+timezone: UTC
+
+# ###################### SCHEDULE PARAMS ##################################
+# schedule:
+#   weekly>: Mon,06:00:00
+
+####################### ERROR EMAIL NOTIFICATION ##########################
+# _error:
+#  mail>: body.txt
+#  subject: NBA Workflow failed - Project Name
+#  to: ['your-team@example.com']
+
+# Entry point: train (optionally tuned), then recommend. Schedule train.dig and
+# predict.dig separately instead if retraining and scoring run on different cadences.
+# Never run two attempts with the same model_name at the same time.
+_export:
+  !include : 'config.yml'
+  td:
+    database: ${sink_database}
+
++train:
+  call>: train.dig
+
++predict:
+  call>: predict.dig

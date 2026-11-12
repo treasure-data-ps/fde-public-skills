@@ -46,7 +46,7 @@ Asked at the start of a new engagement (`playbook.md` Entry Point), before anyth
 
 Before confirming, check the slug is free: `ls -d agent_outputs/<project_slug> .claude/skills/<project_slug>-agent 2>/dev/null`. If either exists for a different project, say so and recommend a prefix (or resuming that project). Record the name and slug in `project_state.md`.
 
-`<solution_slug>` — the calling solution's folder name: `rfm`, `mta`, `classifier`, `nba-scores`, `nbp`.
+`<solution_slug>` — the calling solution's folder name: `rfm`, `mta`, `classifier`, `nba-scores`, `nba-ai-signal`, `nbp`, `prob-idu`.
 
 ## Folder layout
 

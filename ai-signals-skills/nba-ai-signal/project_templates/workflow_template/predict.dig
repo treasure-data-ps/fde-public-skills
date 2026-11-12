@@ -1,0 +1,124 @@
+timezone: UTC
+
+# ###################### SCHEDULE PARAMS ##################################
+# Uncomment to score on its own cadence (dataprep-guide.md §6), e.g. daily:
+# schedule:
+#   daily>: 06:00:00
+
+####################### ERROR EMAIL NOTIFICATION ##########################
+# _error:
+#  mail>: body.txt
+#  subject: NBA Scoring failed - Project Name
+#  to: ['your-team@example.com']
+
+_export:
+  !include : 'config.yml'
+  td:
+    database: ${sink_database}
+  mode: 'pred'
+
+# 0. Build ${pred_input_table} (one row per customer with the same context
+#    feature columns as training) with the SQL in sql/
++data_prep:
+  call>: data_prep.dig
+
+# 1. Guard: non-empty, exactly one row per customer, no NULL IDs
++check_prediction_dataset:
+  td>:
+  query: |
+    SELECT COUNT(*)                                              AS n,
+           COUNT(${user_column}) - COUNT(DISTINCT ${user_column}) AS duplicate_ids,
+           COUNT_IF(${user_column} IS NULL)                      AS null_ids
+    FROM ${pred_input_table}
+  store_last_results: true
+
++assert_prediction_dataset:
+  if>: ${Number(td.last_results.n) === 0 || Number(td.last_results.duplicate_ids) > 0 || Number(td.last_results.null_ids) > 0}
+  _do:
+    fail>: "Prediction dataset ${pred_input_table} invalid: n=${td.last_results.n}, repeated customers=${td.last_results.duplicate_ids}, NULL IDs=${td.last_results.null_ids} — it needs exactly one row per customer"
+
+# 2. Recommend with the model stored under model_name (always one action per user)
++predict_nba:
+  http>: ${ml_batch_api_endpoint}/v1/runs
+  method: POST
+  retry: false
+  headers:
+    - authorization: ${secret:td.apikey}
+    - X-TD-ML-SESSION-ID: ${session_id}
+    - X-TD-ML-ATTEMPT-ID: ${attempt_id}
+  content_format: json
+  store_content: true
+  content:
+    input_table: ${sink_database}.${pred_input_table}
+    output_table: ${sink_database}.mltmp_nba_ais_predict_${project_id}_${attempt_id}
+    solution_name: nba_predict
+    version: ${ml_batch_api_version}
+    solution_arguments:
+      model_name: ${model_name}
+      user_column: ${user_column}
+      timestamp_column: ${timestamp_column}
+      exclude_columns: "${user_column + '|user_id' + (exclude_columns ? '|' + exclude_columns : '')}"
+
+# 3. Wait for completion (408 while running, 400 failed, 200 succeeded)
++wait_for_prediction:
+  _retry:
+    limit: 10
+    interval: 60
+    interval_type: constant
+  http>: ${ml_batch_api_endpoint}/v1/runs/${JSON.parse(http.last_content).id}/status
+  method: GET
+  headers:
+    - authorization: ${secret:td.apikey}
+  store_content: false
+
+# 4. Latest next best action, one row per user — the Parent Segment attribute table.
+#    The API writes user_id and predictions (a one-element list of action labels).
++latest_actions:
+  td>:
+  query: |
+    SELECT user_id,
+           CAST(element_at(predictions, 1) AS VARCHAR) AS next_best_action,
+           '${model_name}'                             AS model_name,
+           '${run_date}'                               AS scored_date,
+           '${session_id}'                             AS session_id
+    FROM mltmp_nba_ais_predict_${project_id}_${attempt_id}
+  create_table: ${pred_output_table}
+
++append_history:
+  td>:
+  query: |
+    SELECT user_id, next_best_action, model_name, scored_date, session_id
+    FROM ${pred_output_table}
+  insert_into: ${pred_output_table}_history
+
+# 5. Action mix: share of each action in the training log vs. in this run's recommendations
++action_stats:
+  td>:
+  query: |
+    WITH logged AS (
+      SELECT CAST(${action_column} AS VARCHAR)       AS action,
+             COUNT(*)                                AS logged_rows,
+             AVG(CAST(${reward_column} AS DOUBLE))   AS logged_avg_reward
+      FROM ${train_input_table}
+      GROUP BY 1
+    ),
+    recommended AS (
+      SELECT next_best_action AS action, COUNT(*) AS recommended_users
+      FROM ${pred_output_table}
+      GROUP BY 1
+    )
+    SELECT '${session_id}'                                         AS session_id,
+           '${run_date}'                                           AS scored_date,
+           COALESCE(l.action, r.action)                            AS action,
+           COALESCE(l.logged_rows, 0)                              AS logged_rows,
+           COALESCE(l.logged_rows, 0) * 1.0 / SUM(COALESCE(l.logged_rows, 0)) OVER ()             AS logged_share,
+           l.logged_avg_reward,
+           COALESCE(r.recommended_users, 0)                        AS recommended_users,
+           COALESCE(r.recommended_users, 0) * 1.0 / SUM(COALESCE(r.recommended_users, 0)) OVER () AS recommended_share
+    FROM logged l
+    FULL OUTER JOIN recommended r ON r.action = l.action
+  insert_into: nba_ais_action_stats
+
++drop_working_table:
+  td_ddl>:
+  drop_tables: ["mltmp_nba_ais_predict_${project_id}_${attempt_id}"]

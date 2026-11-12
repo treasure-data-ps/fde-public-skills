@@ -1,0 +1,198 @@
+timezone: UTC
+
+# ###################### SCHEDULE PARAMS ##################################
+# Uncomment to retrain on its own cadence (dataprep-guide.md §6), e.g. monthly:
+# schedule:
+#   monthly>: 1,02:00:00
+
+####################### ERROR EMAIL NOTIFICATION ##########################
+# _error:
+#  mail>: body.txt
+#  subject: NBA Training failed - Project Name
+#  to: ['your-team@example.com']
+
+_export:
+  !include : 'config.yml'
+  td:
+    database: ${sink_database}
+  mode: 'train'
+
+# 0. Build ${train_input_table} (one row per logged action: user, action, reward,
+#    timestamp and context features) with the SQL in sql/
++data_prep:
+  call>: data_prep.dig
+
+# 1. Guard: rows present, 2..100 actions, rewards that vary, no NULL IDs
++check_training_dataset:
+  td>:
+  query: |
+    SELECT COUNT(*)                                        AS n,
+           COUNT(DISTINCT ${action_column})                AS n_actions,
+           COALESCE(STDDEV(CAST(${reward_column} AS DOUBLE)), 0) AS reward_sd,
+           COUNT_IF(${user_column} IS NULL OR ${action_column} IS NULL OR ${reward_column} IS NULL) AS null_keys
+    FROM ${train_input_table}
+  store_last_results: true
+
++assert_training_dataset:
+  if>: ${Number(td.last_results.n) === 0 || Number(td.last_results.n_actions) < 2 || Number(td.last_results.n_actions) > 100 || Number(td.last_results.reward_sd) === 0 || Number(td.last_results.null_keys) > 0}
+  _do:
+    fail>: "Training dataset invalid in ${train_input_table}: n=${td.last_results.n}, actions=${td.last_results.n_actions} (2..100), reward_sd=${td.last_results.reward_sd} (must vary), NULL user/action/reward=${td.last_results.null_keys}"
+
+# 2. Optional tuning, then training. The status endpoint answers 408 while the run
+#    is PENDING / RUNNING (http> keeps retrying), 400 when it FAILED or was
+#    CANCELLED (the task fails) and 200 when it SUCCEEDED; _retry extends the wait.
+#    The polls keep store_content off so http.last_content stays the submitted run.
++train:
+  if>: ${String(enable_tuning).trim().toLowerCase() === 'true'}
+  _do:
+    +tune_nba:
+      http>: ${ml_batch_api_endpoint}/v1/runs
+      method: POST
+      retry: false
+      headers:
+        - authorization: ${secret:td.apikey}
+        - X-TD-ML-SESSION-ID: ${session_id}
+        - X-TD-ML-ATTEMPT-ID: ${attempt_id}
+      content_format: json
+      store_content: true
+      content:
+        input_table: ${sink_database}.${train_input_table}
+        output_table: ${sink_database}.nba_ais_tuning_results
+        solution_name: nba_tune
+        version: ${ml_batch_api_version}
+        solution_arguments:
+          model_name: ${model_name}
+          action_column: ${action_column}
+          reward_column: ${reward_column}
+          timestamp_column: ${timestamp_column}
+          # tuning has no user_column argument: exclude the ID explicitly
+          exclude_columns: "${user_column + '|user_id' + (exclude_columns ? '|' + exclude_columns : '')}"
+          hyperparam_tune_sample_ratio: ${Number(hyperparam_tune_sample_ratio)}
+          ocv_phase0_k: ${Number(ocv_phase0_k)}
+          ocv_phase1_trials: ${Number(ocv_phase1_trials)}
+          ocv_phase2_trials: ${Number(ocv_phase2_trials)}
+
+    +wait_for_tuning:
+      _retry:
+        limit: 10
+        interval: 60
+        interval_type: constant
+      http>: ${ml_batch_api_endpoint}/v1/runs/${JSON.parse(http.last_content).id}/status
+      method: GET
+      headers:
+        - authorization: ${secret:td.apikey}
+      store_content: false
+
+    # Tuned values fill every model setting not sent here
+    +train_nba:
+      http>: ${ml_batch_api_endpoint}/v1/runs
+      method: POST
+      retry: false
+      headers:
+        - authorization: ${secret:td.apikey}
+        - X-TD-ML-SESSION-ID: ${session_id}
+        - X-TD-ML-ATTEMPT-ID: ${attempt_id}
+      content_format: json
+      store_content: true
+      content:
+        input_table: ${sink_database}.${train_input_table}
+        output_table: ${sink_database}.mltmp_nba_ais_train_${project_id}_${attempt_id}
+        solution_name: nba_train
+        version: ${ml_batch_api_version}
+        solution_arguments:
+          model_name: ${model_name}
+          user_column: ${user_column}
+          action_column: ${action_column}
+          reward_column: ${reward_column}
+          timestamp_column: ${timestamp_column}
+          exclude_columns: "${user_column + '|user_id' + (exclude_columns ? '|' + exclude_columns : '')}"
+          tuning_results_table: ${sink_database}.nba_ais_tuning_results
+          tuning_run_id: ${JSON.parse(http.last_content).id}
+  _else_do:
+    +train_nba:
+      http>: ${ml_batch_api_endpoint}/v1/runs
+      method: POST
+      retry: false
+      headers:
+        - authorization: ${secret:td.apikey}
+        - X-TD-ML-SESSION-ID: ${session_id}
+        - X-TD-ML-ATTEMPT-ID: ${attempt_id}
+      content_format: json
+      store_content: true
+      content:
+        input_table: ${sink_database}.${train_input_table}
+        output_table: ${sink_database}.mltmp_nba_ais_train_${project_id}_${attempt_id}
+        solution_name: nba_train
+        version: ${ml_batch_api_version}
+        solution_arguments:
+          model_name: ${model_name}
+          user_column: ${user_column}
+          action_column: ${action_column}
+          reward_column: ${reward_column}
+          timestamp_column: ${timestamp_column}
+          exclude_columns: "${user_column + '|user_id' + (exclude_columns ? '|' + exclude_columns : '')}"
+          model_type: ${model_type}
+          epsilon: ${Number(epsilon)}
+          impute_type: ${impute_type}
+          scaler_type: ${scaler_type}
+          base_classifier: ${base_classifier}
+
++wait_for_training:
+  _retry:
+    limit: 10
+    interval: 60
+    interval_type: constant
+  http>: ${ml_batch_api_endpoint}/v1/runs/${JSON.parse(http.last_content).id}/status
+  method: GET
+  headers:
+    - authorization: ${secret:td.apikey}
+  store_content: false
+
+# 3. Stamp this run's off-policy metrics with the session and append them
++log_train_metrics:
+  td>:
+  query: |
+    SELECT '${session_id}'                       AS session_id,
+           '${JSON.parse(http.last_content).id}' AS train_run_id,
+           '${model_name}'                       AS model_name,
+           metric,
+           value
+    FROM mltmp_nba_ais_train_${project_id}_${attempt_id}
+  insert_into: nba_ais_train_metrics
+
+# 4. One run-log row: the run's config, the logged (historical) reward and the
+#    estimated value of the learned policy
++log_run:
+  td>:
+  query: |
+    WITH m AS (
+      SELECT MAX(IF(metric = 'estimated_policy_value', value))    AS estimated_policy_value,
+             MAX(IF(metric = 'confidence_interval_lower', value)) AS ci_lower,
+             MAX(IF(metric = 'confidence_interval_upper', value)) AS ci_upper
+      FROM mltmp_nba_ais_train_${project_id}_${attempt_id}
+    ),
+    i AS (
+      SELECT COUNT(*)                                 AS train_rows,
+             COUNT(DISTINCT ${user_column})           AS train_users,
+             COUNT(DISTINCT ${action_column})         AS n_actions,
+             AVG(CAST(${reward_column} AS DOUBLE))    AS logged_avg_reward
+      FROM ${train_input_table}
+    )
+    SELECT '${session_id}'                       AS session_id,
+           '${JSON.parse(http.last_content).id}' AS train_run_id,
+           '${run_date}'                         AS run_date,
+           '${model_name}'                       AS model_name,
+           '${String(enable_tuning).trim().toLowerCase() === 'true' ? 'tuned' : model_type}' AS model_type,
+           '${String(enable_tuning).trim().toLowerCase()}' AS enable_tuning,
+           i.train_rows, i.train_users, i.n_actions, i.logged_avg_reward,
+           m.estimated_policy_value, m.ci_lower, m.ci_upper,
+           IF(i.logged_avg_reward > 0, 100 * (m.estimated_policy_value / i.logged_avg_reward - 1)) AS estimated_lift_pct,
+           ${reward_window_days}                 AS reward_window_days,
+           ${train_window_days}                  AS train_window_days,
+           ${feature_lookback_days}              AS feature_lookback_days
+    FROM m CROSS JOIN i
+  insert_into: nba_ais_run_log
+
++drop_working_table:
+  td_ddl>:
+  drop_tables: ["mltmp_nba_ais_train_${project_id}_${attempt_id}"]

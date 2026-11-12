@@ -1,0 +1,76 @@
+sink_database: td_agents
+description: 'next best action - contextual bandit over the logged actions'
+
+#####################################################################
+############################ ML BATCH API ###########################
+#####################################################################
+# Region endpoint for the ML batch API (set from the account's site, `tdx status`):
+#   US: https://ml-batch-api.treasuredata.com
+#   (use the matching endpoint for JP / EU / AP accounts — see README)
+ml_batch_api_endpoint: https://ml-batch-api.treasuredata.com
+ml_batch_api_version: stable
+
+#####################################################################
+############################ ML MODEL ###############################
+#####################################################################
+# model_name is unique per TD account: every training run overwrites the model stored
+# under it, and predict loads it. Never run two workflows with the same model_name at once.
+model_name: nba_ais_model
+
+# Used only when enable_tuning is false (tuning chooses them otherwise)
+model_type: lin_ucb             # lin_ucb | lin_ts | lin_eps_greedy | ipw_learner
+epsilon: 0.1                    # lin_ucb: exploration alpha; lin_eps_greedy: exploration rate (0..1)
+impute_type: median             # median | knn | hybrid | drop | none
+scaler_type: standard           # standard | minmax | robust | maxabs | none
+base_classifier: random_forest  # ipw_learner only: random_forest | logistic_regression
+
+# Input tables are rebuilt by data_prep.dig (sql/) in every run.
+#   train_input_table  one row per logged action: user, action, reward, timestamp, context features
+#   pred_input_table   one row per customer: user, timestamp, the same context features
+# Outputs (all in ${sink_database}):
+#   pred_output_table           latest next best action per user (Parent Segment table), replaced each run
+#   <pred_output_table>_history every scoring run, appended
+#   nba_ais_run_log, nba_ais_train_metrics, nba_ais_action_stats  appended per run (fixed names)
+#   nba_ais_tuning_results      tuning trials, appended (only with enable_tuning)
+train_input_table: nba_ais_train_input
+pred_input_table: nba_ais_pred_input
+pred_output_table: nba_ais_actions
+
+user_column: user_id
+action_column: action
+reward_column: reward
+timestamp_column: action_ts
+exclude_columns: time|session_id   # pipe-separated globs of non-feature columns (user/action/reward/timestamp are automatic)
+
+#####################################################################
+############################ DATA PREP ##############################
+#####################################################################
+# Read by the SQL in sql/ through data_prep.dig.
+# train: every action logged in [run date - reward_window_days - train_window_days, run date - reward_window_days),
+#        reward observed in [action time, action time + reward_window_days) — every reward fully observed
+#        features from [action time - feature_lookback_days, action time)
+# pred:  one row per customer, features from [run date - feature_lookback_days, run date)
+reference_date: ''              # '' = the run date; 'YYYY-MM-DD' for data that ends in the past
+reward_window_days: 14          # how long after an action its outcome counts
+train_window_days: 180          # how many days of logged actions to learn from
+feature_lookback_days: 90       # context history before each action (and before the run date when scoring)
+
+#####################################################################
+############################ TUNING #################################
+#####################################################################
+# true: nba_tune searches preprocessing, the off-policy estimator and the policy before training
+# (needs the nba_tune solution and enough rows per action). false: train with the ML MODEL values.
+enable_tuning: false
+hyperparam_tune_sample_ratio: 0.1   # share of the tuning split used (0.001..1)
+ocv_phase0_k: 5                     # folds for the preprocessing search (2..10)
+ocv_phase1_trials: 20               # estimator search trials (5..200)
+ocv_phase2_trials: 50               # policy search trials (5..200)
+
+timezone: UTC
+
+#####################################################################
+##################### DERIVED — do not edit #########################
+#####################################################################
+run_date: "${moment(reference_date == '' ? session_date : reference_date).format('YYYY-MM-DD')}"
+train_end: "${moment(reference_date == '' ? session_date : reference_date).subtract(Number(reward_window_days), 'days').format('YYYY-MM-DD')}"
+train_start: "${moment(reference_date == '' ? session_date : reference_date).subtract(Number(reward_window_days) + Number(train_window_days), 'days').format('YYYY-MM-DD')}"

@@ -1,0 +1,34 @@
+_export:
+  !include : 'config.yml'
+  td:
+    database: ${sink_database}
+
+  # Partition-pruning bounds for every source scan (config.yml DATA PREP):
+  # train: earliest action - feature_lookback_days .. run date; pred: run date - feature_lookback_days .. run date
+  scan_start: "${moment(reference_date == '' ? session_date : reference_date).subtract((mode == 'train' ? Number(reward_window_days) + Number(train_window_days) : 0) + Number(feature_lookback_days), 'days').format('YYYY-MM-DD')}"
+  scan_end: "${moment(reference_date == '' ? session_date : reference_date).add(1, 'days').format('YYYY-MM-DD')}"
+
+# ============================================================
+# DATA PREP: customer-specific input SQL (sql/)
+# ============================================================
+# Called from train.dig (mode = 'train') and predict.dig (mode = 'pred').
+# Builds ${train_input_table} (one row per logged action) or ${pred_input_table}
+# (one row per customer) with the same context feature columns. sql/README.md
+# describes the contract.
+#
+# Heavy sources can be pre-aggregated into feature tables in parallel and
+# joined in input_features.sql:
+#   +create_features:
+#     _parallel: true
+#
+#     +create_feature_table_1:
+#       td>: sql/your_feature_query_1.sql
+#       create_table: nba_ais_feat_1_${mode}
+
++create_sink_database:
+  td_ddl>:
+  create_databases: ["${sink_database}"]
+
++create_input_table:
+  td>: sql/input_features.sql
+  create_table: "${mode == 'train' ? train_input_table : pred_input_table}"
