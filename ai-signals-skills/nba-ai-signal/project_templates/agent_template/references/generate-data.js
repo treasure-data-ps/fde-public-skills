@@ -99,7 +99,7 @@ if (!sinkDatabase) {
 validIdentifier(sinkDatabase, 'sink database');
 validIdentifier(predTable, 'recommendations table');
 projectSlug = projectSlug || 'nba-ai-signal';
-projectName = projectName || projectSlug.split(/[-_]/).map(w => w[0]?.toUpperCase() + w.slice(1)).join(' ');
+projectName = projectName || projectSlug.split(/[-_]/).filter(Boolean).map(w => w[0].toUpperCase() + w.slice(1)).join(' ');
 
 const scriptDir = __dirname;
 const templatePath = customTemplate
@@ -169,8 +169,8 @@ async function run() {
     query(`SELECT session_id, run_date, model_name, model_type, enable_tuning, train_rows, train_users, n_actions, logged_avg_reward, estimated_policy_value, ci_lower, ci_upper, estimated_lift_pct, reward_window_days, train_window_days, feature_lookback_days FROM ${db}.nba_ais_run_log ORDER BY time DESC LIMIT 1`, 'Q1 latest training run'),
     query(`SELECT session_id, run_date, logged_avg_reward, estimated_policy_value, ci_lower, ci_upper FROM ${db}.nba_ais_run_log ORDER BY time ASC`, 'Q2 training history'),
     query(`SELECT action, logged_rows, logged_share, logged_avg_reward, recommended_users, recommended_share FROM ${db}.nba_ais_action_stats WHERE session_id = ${latestStats} ORDER BY recommended_users DESC, logged_rows DESC`, 'Q3 action mix'),
-    query(`SELECT COUNT(*) AS customers, COUNT(DISTINCT next_best_action) AS actions_recommended, MAX(scored_date) AS scored_date, MAX(session_id) AS pred_session_id FROM ${pred}`, 'Q4 latest recommendations'),
-    query(`SELECT * FROM ${db}.nba_ais_tuning_results WHERE run_id = ${latestTuning} AND is_best = 'true'`, 'Q5 tuning best trials'),
+    query(`SELECT COUNT(*) AS customers, COUNT(DISTINCT next_best_action) AS actions_recommended, MAX(scored_date) AS scored_date, arbitrary(session_id) AS pred_session_id FROM ${pred}`, 'Q4 latest recommendations'),
+    query(`SELECT * FROM ${db}.nba_ais_tuning_results WHERE run_id = ${latestTuning} AND LOWER(CAST(is_best AS VARCHAR)) = 'true'`, 'Q5 tuning best trials'),
     query(`SELECT session_id, MIN(scored_date) AS scored_date, MIN(time) AS t, next_best_action, COUNT(*) AS customers FROM ${history} GROUP BY session_id, next_best_action ORDER BY 3`, 'Q6 scoring history')
   ]);
 
@@ -191,7 +191,7 @@ async function run() {
   // Tuning: one best row per phase; chosen settings are whichever phase*_ columns exist
   const phaseOrder = ['baseline_random', 'phase0_preprocessing', 'phase1_ope', 'phase2_policy'];
   const tuningRows = q5.slice().sort((a, b) => phaseOrder.indexOf(a.phase) - phaseOrder.indexOf(b.phase));
-  const settingKeys = row => Object.keys(row).filter(k => /^phase[0-2]_/.test(k) && !/_std_score$|_ESS$/i.test(k) && row[k] !== null && row[k] !== '');
+  const settingKeys = row => Object.keys(row).filter(k => /^phase[0-2]_/.test(k) && !/_std_score$|_ESS(_threshold)?$/i.test(k) && row[k] !== null && row[k] !== '');
   const tuningHtml = tuningRows.map(r => `<tr><td><strong>${escapeHtml(r.phase)}</strong></td><td>${settingKeys(r).map(k => `<code>${escapeHtml(k.replace(/^phase[0-2]_/, ''))}=${escapeHtml(r[k])}</code>`).join(' ') || '—'}</td><td class="num">${decimal(r.overall_score)}</td><td class="num">${decimal(r.estimated_policy_value)}</td><td class="num">${signedPct(r.lift_vs_random_pct)}</td></tr>`).join('\n');
   const bestPolicy = tuningRows.find(r => r.phase === 'phase2_policy') || {};
   const tuningCallout = tuningRows.length ? '' : `<div class="callout"><strong>${tuned ? 'Tuning results not found.' : 'Tuning has not run.'}</strong> ${tuned ? 'The latest run was tuned, but nba_ais_tuning_results returned no best trials.' : 'The model was trained with the configured settings; set enable_tuning to true in the workflow config to search them.'}</div>`;
@@ -206,7 +206,10 @@ async function run() {
   const actionRows = actions.map(a => `<tr><td><strong>${escapeHtml(a.action)}</strong></td><td class="num">${integer(a.loggedRows)}</td><td class="num">${pct(a.loggedShare)}</td><td class="num">${a.hasReward ? decimal(a.loggedReward) : '—'}</td><td class="num">${integer(a.recommended)}</td><td class="num">${pct(a.recommendedShare)}</td><td class="num">${a.shift >= 0 ? '+' : ''}${(a.shift * 100).toFixed(1)} pts</td></tr>`).join('\n');
 
   // History
-  const historicTrain = q2.map(r => ({ label: r.run_date || String(r.session_id), value: n(r.estimated_policy_value), lower: n(r.ci_lower), upper: n(r.ci_upper), logged: n(r.logged_avg_reward) }));
+  // Unique category per run: two training runs on the same run date get a (2), (3) suffix
+  const seenLabels = {};
+  const runLabel = base => { seenLabels[base] = (seenLabels[base] || 0) + 1; return seenLabels[base] > 1 ? `${base} (${seenLabels[base]})` : base; };
+  const historicTrain = q2.map(r => ({ label: runLabel(r.run_date || String(r.session_id)), value: n(r.estimated_policy_value), lower: n(r.ci_lower), upper: n(r.ci_upper), logged: n(r.logged_avg_reward) }));
   const predSessions = [];
   const bySession = {};
   q6.forEach(r => {

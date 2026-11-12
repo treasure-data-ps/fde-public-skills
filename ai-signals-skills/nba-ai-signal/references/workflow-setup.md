@@ -107,7 +107,7 @@ LEFT JOIN <source_database>.<table> s ON s.<id_col> = a.id
 | Item | Value |
 |---|---|
 | Project / entry point | `nba_ais` (`tdx.json`) / `nba_ais`; `train`, `predict` run alone |
-| Secrets | None — `${secret:td.apikey}` is provided by AI Signals; never ask for it; keep the header as is |
+| Secrets | None — `${secret:td.apikey}` is provided by AI Signals; never ask for it; keep the header `"TD1 ${secret:td.apikey}"` as is |
 | API endpoint | `ml_batch_api_endpoint` for the region (`tdx status`; values in the template README) |
 | Sink database | Created by `+create_sink_database`; owner can't create databases → user creates it in the Console. `tdx tables "<sink_database>.nba_ais_*"` must be empty |
 | Schedule | Commented; ask; different cadences → `train.dig` / `predict.dig` (`dataprep-guide.md` §6) |
@@ -140,7 +140,7 @@ FROM <db>.nba_ais_run_log ORDER BY time DESC LIMIT 1
 -- 3
 SELECT phase, phase_trial, overall_score, estimated_policy_value, ci_lower, ci_upper, lift_vs_random_pct
 FROM <db>.nba_ais_tuning_results
-WHERE run_id = (SELECT max_by(run_id, time) FROM <db>.nba_ais_tuning_results) AND is_best = 'true'
+WHERE run_id = (SELECT max_by(run_id, time) FROM <db>.nba_ais_tuning_results) AND LOWER(CAST(is_best AS VARCHAR)) = 'true'
 
 -- 4
 SELECT next_best_action, COUNT(*) AS users FROM <db>.<pred> GROUP BY 1 ORDER BY 2 DESC
@@ -175,8 +175,9 @@ Check 6 is only fair when the "other action" group was not chosen for a reason (
 | `+assert_prediction_dataset` fails | Repeated customers in the scoring population | `DISTINCT` / one row per customer in the pred branch |
 | 401 / 403 on a run | Wrong regional endpoint, or the solution is not enabled | Fix `ml_batch_api_endpoint`; ask the account admin (`nba_train`, `nba_predict`, `nba_tune`) |
 | Status poll fails with 400 | The run failed — the error is in the poll task log | Fix the cause (`ai-signals-guide.md` §7), re-run the whole workflow |
-| Status poll gives up | Long tuning or training | Raise `_retry` on the wait task; lower tuning budgets |
+| Run takes very long | Large table or big tuning budget | `http>` keeps polling (up to the task time limit); lower the tuning budgets or `train_window_days` |
 | `+latest_actions` fails on `element_at` | The prediction table is empty (no rows imported) | Check the prediction input and the poll log |
+| Re-running a failed attempt | Same session | Safe: the log steps first delete that session's rows in `nba_ais_run_log`, `nba_ais_train_metrics`, `<pred>_history` and `nba_ais_action_stats`, then append. Cancel any ML run still in progress first |
 | Leftover `mltmp_nba_ais_*` tables | An attempt failed before the drop step | Drop them once no run is active |
 | Policy value jumps between runs | Different windows, actions, features or tuning | Diff config and SQL of both runs first |
 

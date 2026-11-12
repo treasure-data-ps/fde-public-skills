@@ -66,7 +66,7 @@ ocv_phase0_k: 5                     # folds for the preprocessing search (2..10)
 ocv_phase1_trials: 20               # estimator search trials (5..200)
 ocv_phase2_trials: 50               # policy search trials (5..200)
 
-timezone: UTC
+timezone: UTC   # informational; the .dig files set the workflow timezone
 
 #####################################################################
 ##################### DERIVED — do not edit #########################

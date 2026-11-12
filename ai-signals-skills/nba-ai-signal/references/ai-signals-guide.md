@@ -35,7 +35,7 @@ Feature engineering happens upstream in `sql/input_features.sql` (`dataprep-guid
 | Action | Any type, encoded internally; **2–100** distinct values (more fails) | Not needed (ignored by the saved name) |
 | Reward | Numeric (0/1 or a value); it must vary | Not needed |
 | Timestamp | UNIX seconds or UTC text `YYYY-MM-DD HH:MM:SS`; used for the tuning time split | Required (the run date) |
-| Features | Every other column is context — **numeric only** (no categorical encoding): counts, recency, sums, ratios, 0/1 flags | Same columns, names and types — a training column missing at prediction fails the imputer |
+| Features | Every other column is context — **numeric only** (no categorical encoding): counts, recency, sums, ratios, 0/1 flags | Same columns, names and types — a training column missing at prediction fails or silently shifts the context, depending on the imputer |
 | Excluded | `exclude_columns` globs (pipe-separated) + action, reward, timestamp, user, `time`, the propensity column | Same |
 
 Rule of thumb: several hundred rows per action at least, each action given to a mix of customers. An action given only to one segment can't be compared with the others for anyone else.
@@ -56,7 +56,7 @@ Rule of thumb: several hundred rows per action at least, each action given to a 
 | `base_classifier` | config (untuned) | `random_forest` | `ipw_learner` only; plus `rf_n_estimators`, `rf_max_depth`, `rf_min_samples_split`, `lr_C`, `lr_max_iter` |
 | `propensity_column` | — | — | Logged probability of the chosen action (randomized tests); with `propensity_type: true_propensity` |
 | `propensity_type` | — | `logistic` | `logistic` (estimated), `uniform`, `none`, `true_propensity` |
-| `tuning_results_table`, `tuning_run_id` | tuned branch | — | Fill every model setting **not** sent in the request from the best trials of that tuning run |
+| `tuning_results_table`, `tuning_run_id` | tuned branch | — | Fill every model setting **not** sent in the request from the best trials of that tuning run. If the rows can't be loaded, training logs "Could not load tuning results" and uses the API defaults — not the config values — while `nba_ais_run_log.model_type` still says `tuned` |
 | `n_predictions` | — | `1` | Output is always the single best action |
 | `max_ope_samples` | — | `200000` | Rows used for the off-policy evaluation |
 | `max_training_samples_per_model` | — | 5M linear / 1M `ipw_learner`, `neural_lin_ucb` | Subsampling cap |
@@ -89,7 +89,7 @@ Default search space: impute `knn` / `hybrid` / `median`, scaler `minmax` / `sta
 
 | Site | Endpoint |
 |---|---|
-| US (us01) | `https://ml-batch-api.treasuredata.com` |
+| US (us01) | `https://ml-batch-api.treasuredata.com` (or `https://ml-batch-api.us01.treasuredata.com`) |
 | Japan (jp01) | `https://ml-batch-api.treasuredata.co.jp` |
 | EU (eu01) | `https://ml-batch-api.eu01.treasuredata.com` |
 | AP (ap02) | `https://ml-batch-api.ap02.treasuredata.com` |
@@ -105,7 +105,7 @@ Prerequisite: AI Signals includes `nba_train` and `nba_predict` (and `nba_tune` 
   method: POST
   retry: false                                # never submit the same run twice
   headers:
-    - authorization: ${secret:td.apikey}      # keep exactly as in the template
+    - authorization: "TD1 ${secret:td.apikey}"   # keep exactly as in the template
     - X-TD-ML-SESSION-ID: ${session_id}
     - X-TD-ML-ATTEMPT-ID: ${attempt_id}
   content_format: json
@@ -125,16 +125,15 @@ Prerequisite: AI Signals includes `nba_train` and `nba_predict` (and `nba_tune` 
       model_type: ${model_type}
 
 +wait_for_training:
-  _retry: { limit: 10, interval: 60, interval_type: constant }
   http>: ${ml_batch_api_endpoint}/v1/runs/${JSON.parse(http.last_content).id}/status
   method: GET
   headers:
-    - authorization: ${secret:td.apikey}
+    - authorization: "TD1 ${secret:td.apikey}"
   store_content: false                        # keep the submitted run in http.last_content
 ```
 
-- The status call answers **408** while the run is PENDING / RUNNING (`http>` keeps retrying), **400** when it FAILED or was CANCELLED (the task fails, with the error messages in the log) and **200** when it SUCCEEDED.
-- Authentication: the key is provided by the AI Signals architecture — never ask the user to set `td.apikey`, and keep the header as in the template.
+- The status call answers **408** while the run is PENDING / RUNNING (`http>` keeps retrying), **400** when it FAILED or was CANCELLED (the task fails, with the error messages in the log) and **200** when it SUCCEEDED. `http>` keeps retrying a 408 on its own (up to the task time limit), so the polls need no `_retry` — one would only re-poll a failed run.
+- Authentication: the API accepts only `TD1 <key>` or `Bearer <token>` in the `Authorization` header (anything else → 400 "Invalid key format"), so the template sends `"TD1 ${secret:td.apikey}"`, like the official NBA template. The key is provided by the AI Signals architecture — never ask the user to set `td.apikey`, and keep the header as in the template.
 - The service appends to its output tables. The template writes training and prediction to per-attempt `mltmp_nba_ais_*` tables, copies them to the published tables and drops them.
 - Unknown `solution_arguments` keys are ignored silently — a typo does not fail, it is just not applied. `solution_arguments` must stay under ~6 KB.
 - Cancel a stuck run: `DELETE /v1/runs/<run_id>` with the same header (run id in the poll task log); then re-run the whole workflow, not a single task.
@@ -153,7 +152,7 @@ Prerequisite: AI Signals includes `nba_train` and `nba_predict` (and `nba_tune` 
 
 The training metrics are **in-sample** off-policy estimates — read them against the logged average reward, not as a guaranteed result. Propensities are estimated (logistic) unless the log carries them; estimates are biased when the past policy was very deterministic.
 
-**Tuning (OCV-DR, three phases):** time split 70% / 30% → sample `hyperparam_tune_sample_ratio` of the 70% → Phase 0 grid over impute × scaler (K-fold) → Phase 1 Optuna over the estimator (IPW / DM / DR) and its lambda with cross-validated off-policy evaluation → Phase 2 Optuna over the policy, scored by a lower confidence bound with effective-sample-size filtering → final evaluation of the best policy on the 30% hold-out against a random policy (`lift_vs_random_pct`). Training reads the best trial of each phase.
+**Tuning (OCV-DR, three phases):** time split 70% / 30% (with UNIX-second timestamps the split stays chronological, but the service's 1-hour gap between the parts is not applied) → sample `hyperparam_tune_sample_ratio` of the 70% → Phase 0 grid over impute × scaler (K-fold) → Phase 1 Optuna over the estimator (IPW / DM / DR) and its lambda with cross-validated off-policy evaluation → Phase 2 Optuna over the policy, scored by a lower confidence bound with effective-sample-size filtering → final evaluation of the best policy on the 30% hold-out against a random policy (`lift_vs_random_pct`). Training reads the best trial of each phase.
 
 **Prediction:** load the policy → shard by user → keep one row per user → score every action for the context → pick the highest → decode back to the action label → append `user_id`, `predictions` (a one-element list).
 
@@ -173,7 +172,7 @@ The training metrics are **in-sample** off-policy estimates — read them agains
 | Table | Contents |
 |---|---|
 | Training `output_table` | `metric`, `value`: `estimated_policy_value`, `confidence_interval_lower`, `confidence_interval_upper` (+ `neural_linucb_active`) — copied with the session to `nba_ais_train_metrics`, pivoted into `nba_ais_run_log` |
-| Tuning `output_table` (`nba_ais_tuning_results`) | One row per trial: `run_id`, `session_id`, `phase` (`baseline_random`, `phase0_preprocessing`, `phase1_ope`, `phase2_policy`), `phase_trial`, `is_best` (`'true'` once per phase), `overall_score`, `phase0_*` / `phase1_*` / `phase2_*` chosen values; the best phase-2 row adds `estimated_policy_value`, `ci_lower`, `ci_upper`, `lift_vs_random_pct` (30% hold-out) |
+| Tuning `output_table` (`nba_ais_tuning_results`) | One row per trial: `run_id`, `session_id`, `phase` (`baseline_random`, `phase0_preprocessing`, `phase1_ope`, `phase2_policy`), `phase_trial`, `is_best` (true once per phase — text or boolean), `overall_score`, `phase0_*` / `phase1_*` / `phase2_*` chosen values; the `baseline_random` row (random policy, lift 0) and the best `phase2_policy` row carry `estimated_policy_value`, `ci_lower`, `ci_upper`, `lift_vs_random_pct` (30% hold-out) |
 | Prediction `output_table` | `user_id`, `predictions` (list of one action label) — flattened to `next_best_action` in `pred_output_table` |
 
 No score, probability or ranking of the other actions is written — the output is the chosen action only. Columns and queries: `output-tables-guide.md` (setup skill) / `data-dictionary.md` (project agent).

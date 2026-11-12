@@ -40,8 +40,9 @@ _export:
 
 # 2. Optional tuning, then training. The status endpoint answers 408 while the run
 #    is PENDING / RUNNING (http> keeps retrying), 400 when it FAILED or was
-#    CANCELLED (the task fails) and 200 when it SUCCEEDED; _retry extends the wait.
-#    The polls keep store_content off so http.last_content stays the submitted run.
+#    CANCELLED (the task fails at once, with the API's error) and 200 when it
+#    SUCCEEDED. The polls keep store_content off so http.last_content stays the
+#    submitted run.
 +train:
   if>: ${String(enable_tuning).trim().toLowerCase() === 'true'}
   _do:
@@ -50,7 +51,7 @@ _export:
       method: POST
       retry: false
       headers:
-        - authorization: ${secret:td.apikey}
+        - authorization: "TD1 ${secret:td.apikey}"
         - X-TD-ML-SESSION-ID: ${session_id}
         - X-TD-ML-ATTEMPT-ID: ${attempt_id}
       content_format: json
@@ -73,14 +74,10 @@ _export:
           ocv_phase2_trials: ${Number(ocv_phase2_trials)}
 
     +wait_for_tuning:
-      _retry:
-        limit: 10
-        interval: 60
-        interval_type: constant
       http>: ${ml_batch_api_endpoint}/v1/runs/${JSON.parse(http.last_content).id}/status
       method: GET
       headers:
-        - authorization: ${secret:td.apikey}
+        - authorization: "TD1 ${secret:td.apikey}"
       store_content: false
 
     # Tuned values fill every model setting not sent here
@@ -89,7 +86,7 @@ _export:
       method: POST
       retry: false
       headers:
-        - authorization: ${secret:td.apikey}
+        - authorization: "TD1 ${secret:td.apikey}"
         - X-TD-ML-SESSION-ID: ${session_id}
         - X-TD-ML-ATTEMPT-ID: ${attempt_id}
       content_format: json
@@ -114,7 +111,7 @@ _export:
       method: POST
       retry: false
       headers:
-        - authorization: ${secret:td.apikey}
+        - authorization: "TD1 ${secret:td.apikey}"
         - X-TD-ML-SESSION-ID: ${session_id}
         - X-TD-ML-ATTEMPT-ID: ${attempt_id}
       content_format: json
@@ -138,17 +135,37 @@ _export:
           base_classifier: ${base_classifier}
 
 +wait_for_training:
-  _retry:
-    limit: 10
-    interval: 60
-    interval_type: constant
   http>: ${ml_batch_api_endpoint}/v1/runs/${JSON.parse(http.last_content).id}/status
   method: GET
   headers:
-    - authorization: ${secret:td.apikey}
+    - authorization: "TD1 ${secret:td.apikey}"
   store_content: false
 
-# 3. Stamp this run's off-policy metrics with the session and append them
+# 3. Re-running an attempt in the same session replaces that session's log rows
+#    instead of appending them twice (only tables that already exist are cleared)
++check_logged_tables:
+  td>:
+  query: |
+    SELECT COUNT_IF(table_name = 'nba_ais_train_metrics') AS metrics,
+           COUNT_IF(table_name = 'nba_ais_run_log')       AS run_log
+    FROM information_schema.columns
+    WHERE table_schema = '${sink_database}' AND column_name = 'session_id'
+      AND table_name IN ('nba_ais_train_metrics', 'nba_ais_run_log')
+  store_last_results: true
+
++clear_train_metrics:
+  if>: ${Number(td.last_results.metrics) > 0}
+  _do:
+    td>:
+    query: DELETE FROM nba_ais_train_metrics WHERE session_id = '${session_id}'
+
++clear_run_log:
+  if>: ${Number(td.last_results.run_log) > 0}
+  _do:
+    td>:
+    query: DELETE FROM nba_ais_run_log WHERE session_id = '${session_id}'
+
+# 4. Stamp this run's off-policy metrics with the session and append them
 +log_train_metrics:
   td>:
   query: |
@@ -160,7 +177,7 @@ _export:
     FROM mltmp_nba_ais_train_${project_id}_${attempt_id}
   insert_into: nba_ais_train_metrics
 
-# 4. One run-log row: the run's config, the logged (historical) reward and the
+# 5. One run-log row: the run's config, the logged (historical) reward and the
 #    estimated value of the learned policy
 +log_run:
   td>:

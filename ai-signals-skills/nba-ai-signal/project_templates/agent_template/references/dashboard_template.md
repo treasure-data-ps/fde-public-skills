@@ -38,7 +38,7 @@ The `nba_ais_*` logs are appended: the latest run is the newest row by `time`; a
 | Q2 training history | `nba_ais_run_log` ordered by `time` | Tab 3 policy-value trend |
 | Q3 action mix | `nba_ais_action_stats` (latest session) | Tab 2 KPIs, charts and table |
 | Q4 latest recommendations | `{{pred_table}}` | Header and Tab 2 customers scored, actions used |
-| Q5 tuning best trials | `nba_ais_tuning_results` (latest `run_id`, `is_best = 'true'`) | Tab 1 tuning table — empty when tuning never ran |
+| Q5 tuning best trials | `nba_ais_tuning_results` (latest `run_id`, `LOWER(CAST(is_best AS VARCHAR)) = 'true'`) | Tab 1 tuning table — empty when tuning never ran |
 | Q6 scoring history | `{{pred_table}}_history` grouped by session and action | Tab 3 stacked customers per action |
 
 A query on a missing table (tuning off) returns nothing and the section shows its "not run" note.

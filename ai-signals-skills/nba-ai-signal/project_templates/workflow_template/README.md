@@ -23,8 +23,9 @@ nba_ais.dig                        # entry point: schedule, error email, train t
 │   ├── +train                     # 2. enable_tuning: nba_tune → poll → nba_train with the tuning run id
 │   │                              #    otherwise: nba_train with the ML MODEL settings
 │   ├── +wait_for_training         #    polls /v1/runs/{id}/status (408 running, 400 failed, 200 done)
-│   ├── +log_train_metrics         # 3. off-policy metrics → nba_ais_train_metrics
-│   ├── +log_run                   # 4. config, logged reward, policy value → nba_ais_run_log
+│   ├── +clear_*                   # 3. a re-run of the same session first removes its log rows
+│   ├── +log_train_metrics         # 4. off-policy metrics → nba_ais_train_metrics
+│   ├── +log_run                   # 5. config, logged reward, policy value → nba_ais_run_log
 │   └── +drop_working_table
 └── predict.dig                    # mode = pred
     ├── data_prep.dig              # 0. sql/input_features.sql → pred_input_table (one row per customer)
@@ -32,6 +33,7 @@ nba_ais.dig                        # entry point: schedule, error email, train t
     ├── +predict_nba               # 2. POST /v1/runs, solution nba_predict, model under model_name
     ├── +wait_for_prediction
     ├── +latest_actions            # 4. next_best_action per user → pred_output_table
+    ├── +clear_*                   #    a re-run of the same session first removes its history / stats rows
     ├── +append_history            #    → <pred_output_table>_history
     ├── +action_stats              # 5. logged vs recommended action mix → nba_ais_action_stats
     └── +drop_working_table
@@ -55,7 +57,7 @@ All keys are in `config.yml`. The template values are a working example; change 
 |---|---|---|
 | **`sink_database`** | Database for the input tables, every `nba_ais_*` table and the recommendations | The confirmed sink database. Created by the first run if missing. The `nba_ais_*` names are fixed, so one sink database holds one NBA AI Signal project |
 | `description` | Free-text note; not sent to the API | One line on the use case |
-| **`ml_batch_api_endpoint`** | AI Signals ml-batch-api base URL | The account's region: US `https://ml-batch-api.treasuredata.com`, Japan `https://ml-batch-api.treasuredata.co.jp`, EU `https://ml-batch-api.eu01.treasuredata.com`, AP `https://ml-batch-api.ap02.treasuredata.com` / `https://ml-batch-api.ap03.treasuredata.com` |
+| **`ml_batch_api_endpoint`** | AI Signals ml-batch-api base URL | The account's region: US `https://ml-batch-api.treasuredata.com` (also listed as `https://ml-batch-api.us01.treasuredata.com`), Japan `https://ml-batch-api.treasuredata.co.jp`, EU `https://ml-batch-api.eu01.treasuredata.com`, AP `https://ml-batch-api.ap02.treasuredata.com` / `https://ml-batch-api.ap03.treasuredata.com` |
 | `ml_batch_api_version` | AI Signals solution version | `stable` |
 | **`model_name`** | Name the trained policy is stored under; predict loads it | Unique per TD account — every training run overwrites it. Project-specific (e.g. `loyalty_offer_nba`) |
 | **`model_type`** | Bandit policy, used when `enable_tuning` is false | `lin_ucb` (default, explores where it is uncertain); `lin_ts` (Thompson sampling); `lin_eps_greedy` (simple, explores at rate `epsilon`); `ipw_learner` (classifier-based offline learner, best with logged propensities) |
@@ -87,7 +89,7 @@ Each logged action in the training window becomes one training row: its context 
 | **`feature_lookback_days`** | Context history before each action / the run date | `90`; up to `365` for slow buying cycles |
 | `reference_date` | Run date used for the windows; `''` = the session date | `''` for live data; a `YYYY-MM-DD` date near the end of the data for demo or stale data |
 | `run_date`, `train_start`, `train_end` | DERIVED block: the run date and the training-action range, computed from `reference_date` and the windows; read by the SQL and the logs | Never edit |
-| `timezone` | Time zone of the session date | `UTC` |
+| `timezone` | Informational only — the workflow time zone is the top-level `timezone:` of each `.dig` (UTC) | Keep `UTC` |
 
 History needed before the run date: `reward_window_days + train_window_days + feature_lookback_days` (template values: 14 + 180 + 90 = 284 days).
 
@@ -95,7 +97,7 @@ History needed before the run date: `reward_window_days + train_window_days + fe
 
 | Parameter | What it does | How to choose it |
 |---|---|---|
-| **`enable_tuning`** | `true` runs `nba_tune` before training and trains with the best settings (the ML MODEL values are then ignored) | `false` for the first push; `true` once the input is stable and the account has `nba_tune` |
+| **`enable_tuning`** | `true` runs `nba_tune` before training and trains with the best settings (the ML MODEL values are then ignored). If training can't read the tuning rows, it silently falls back to the API defaults (`lin_ucb`, `knn`, `standard`), not the ML MODEL values — check the train log for "Could not load tuning results" | `false` for the first push; `true` once the input is stable and the account has `nba_tune` |
 | `hyperparam_tune_sample_ratio` | Share of the tuning split (70% of rows, by time) that is searched | Aim at ≥ ~50K sampled rows and ≥ ~100 per action per fold: `0.1` for ~1M rows, `0.5`–`1.0` below ~200K |
 | `ocv_phase0_k` | Folds for the impute × scaler grid | `5`; `3` for small data |
 | `ocv_phase1_trials` | Optuna trials for the off-policy estimator | `20`; `10` for a quick run |
@@ -117,7 +119,7 @@ The policy itself is stored by the AI Signals service under `model_name`, not in
 
 ## Secrets & Requirements
 
-- **Secrets:** none — `${secret:td.apikey}` is sent to the ml-batch-api, which provides the key itself.
+- **Secrets:** none — `${secret:td.apikey}` is provided by AI Signals and sent as `Authorization: TD1 <key>`, the only key format the ml-batch-api accepts.
 - **Account:** AI Signals enabled for `nba_train` and `nba_predict` (and `nba_tune` when `enable_tuning` is true).
 - **Data:** a log of past actions per customer with an observable outcome — 2–100 distinct actions, at least a few hundred rows (better thousands) per action, each action given to a mix of customers, and some rewards for every action.
 - **Permissions:** create the sink database and tables; read the source databases used by the input SQL.
@@ -132,5 +134,4 @@ The policy itself is stored by the AI Signals service under `model_name`, not in
 | Windows | `config.yml` DATA PREP |
 | Extra feature tables | `_parallel` block in `data_prep.dig`, joined in `sql/input_features.sql` |
 | Logged propensities (randomized tests) | Add `propensity_column` (and `propensity_type: true_propensity`) to `+train_nba` in `train.dig`; output the column in the input SQL |
-| Longer polling for large tables | `_retry` of `+wait_for_tuning` / `+wait_for_training` / `+wait_for_prediction` |
 | Compare two policies | A second project with its own `model_name` and sink database (the `nba_ais_*` names are fixed) |

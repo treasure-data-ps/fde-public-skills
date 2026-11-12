@@ -11,7 +11,7 @@ All tables live in `{{sink_database}}`. The workflow writes its logs under **fix
 | Latest scoring run | `{{pred_table}}` (no filter); `nba_ais_action_stats` / `{{pred_table}}_history` with `session_id = (SELECT max_by(session_id, time) FROM <table>)` |
 | Latest tuning run | `nba_ais_tuning_results WHERE run_id = (SELECT max_by(run_id, time) FROM nba_ais_tuning_results)` |
 
-`session_id` is VARCHAR. Never use `MAX(session_id)` to find the latest run — order by `time`. A run started with `nba_ais.dig` has the same `session_id` for training and scoring. `is_best` in the tuning table is the string `'true'`.
+`session_id` is VARCHAR. Never use `MAX(session_id)` to find the latest run — order by `time`. A run started with `nba_ais.dig` has the same `session_id` for training and scoring. Filter `is_best` in the tuning table with `LOWER(CAST(is_best AS VARCHAR)) = 'true'` (text or boolean).
 
 ## Scales — read before comparing values
 
@@ -71,11 +71,11 @@ Context effects are associations in the past decisions: if an action was only se
 |---|---|
 | `run_id`, `session_id` | Tuning run |
 | `phase` | `baseline_random`, `phase0_preprocessing`, `phase1_ope`, `phase2_policy` |
-| `phase_trial`, `is_best`, `overall_score`, `execution_time`, `diverged` | Trial number, best of its phase (`'true'`), score, duration |
+| `phase_trial`, `is_best`, `overall_score`, `execution_time`, `diverged` | Trial number, best of its phase (text or boolean), score, duration |
 | `phase0_impute_type`, `phase0_scaler_type` | Preprocessing chosen in phase 0 |
 | `phase1_estimator_type`, other `phase1_*` | Off-policy estimator settings |
 | `phase2_model_type`, `phase2_lin_ucb_alpha`, `phase2_lin_eps_greedy_epsilon`, `phase2_base_classifier`, `phase2_policy_rf_*`, `phase2_ESS` | Policy settings, effective sample size |
-| `estimated_policy_value`, `ci_lower`, `ci_upper`, `lift_vs_random_pct` | Best phase-2 row only — on the 30% hold-out |
+| `estimated_policy_value`, `ci_lower`, `ci_upper`, `lift_vs_random_pct` | The `baseline_random` row (random policy on the 30% time hold-out, lift 0) and the best `phase2_policy` row (the chosen policy on the same hold-out, and its lift over random) |
 
 Which `phase*_` columns exist depends on what was searched — check with `SHOW COLUMNS FROM nba_ais_tuning_results` first.
 

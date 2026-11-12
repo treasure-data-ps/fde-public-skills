@@ -6,7 +6,7 @@ Every table the workflow writes to `sink_database`, its columns and the queries 
 
 - **Latest training run:** `nba_ais_run_log ORDER BY time DESC LIMIT 1`; its `session_id` keys `nba_ais_train_metrics`.
 - **Latest scoring run:** `<pred>` (always the latest, one row per user); `nba_ais_action_stats` and `<pred>_history` filtered on `session_id = (SELECT max_by(session_id, time) FROM <table>)`.
-- **Latest tuning run:** `run_id = (SELECT max_by(run_id, time) FROM nba_ais_tuning_results)`; `is_best` is the string `'true'` / `'false'`.
+- **Latest tuning run:** `run_id = (SELECT max_by(run_id, time) FROM nba_ais_tuning_results)`; filter `is_best` with `LOWER(CAST(is_best AS VARCHAR)) = 'true'` — it is stored as text or boolean depending on how the service wrote it.
 - Never `MAX(session_id)` to find the latest — order by `time`. `session_id` is VARCHAR.
 - A run started with `nba_ais.dig` has the same `session_id` for training and scoring; `train.dig` / `predict.dig` scheduled apart have different ones.
 - `time` is UNIX seconds — show with `TD_TIME_FORMAT(time, 'yyyy-MM-dd HH:mm', 'UTC')`.
@@ -54,7 +54,7 @@ Every table the workflow writes to `sink_database`, its columns and the queries 
 | `phase0_impute_type`, `phase0_scaler_type`, `phase0_std_score` | Preprocessing grid |
 | `phase1_estimator_type`, `phase1_*` | Off-policy estimator and its settings |
 | `phase2_model_type`, `phase2_base_classifier`, `phase2_lin_ucb_alpha`, `phase2_lin_eps_greedy_epsilon`, `phase2_policy_rf_*`, `phase2_ESS` | Policy settings and effective sample size |
-| `estimated_policy_value`, `ci_lower`, `ci_upper`, `lift_vs_random_pct` | Best phase-2 row only: value of the chosen policy on the 30% time hold-out, and its lift over a random policy |
+| `estimated_policy_value`, `ci_lower`, `ci_upper`, `lift_vs_random_pct` | The `baseline_random` row (random policy on the 30% time hold-out, lift 0) and the best `phase2_policy` row (the chosen policy on the same hold-out, and its lift over random) |
 
 Which `phase*_` columns exist depends on the search space — check with `SHOW COLUMNS FROM nba_ais_tuning_results` before selecting one.
 
@@ -63,7 +63,7 @@ Which `phase*_` columns exist depends on the search space — check with `SHOW C
 SELECT phase, phase0_impute_type, phase0_scaler_type, phase1_estimator_type, phase2_model_type,
        overall_score, estimated_policy_value, ci_lower, ci_upper, lift_vs_random_pct
 FROM nba_ais_tuning_results
-WHERE run_id = (SELECT max_by(run_id, time) FROM nba_ais_tuning_results) AND is_best = 'true'
+WHERE run_id = (SELECT max_by(run_id, time) FROM nba_ais_tuning_results) AND LOWER(CAST(is_best AS VARCHAR)) = 'true'
 ORDER BY phase
 ```
 
@@ -124,7 +124,7 @@ WHERE a.session_id = (SELECT session_id FROM s WHERE rn = 1) AND b.session_id = 
 | Question | Tables |
 |---|---|
 | Is the policy better than what we did before? | `nba_ais_run_log` (`estimated_policy_value` vs `logged_avg_reward`, interval) ; tuning hold-out lift |
-| Which settings did tuning pick? | `nba_ais_tuning_results` (`is_best = 'true'`) |
+| Which settings did tuning pick? | `nba_ais_tuning_results` (`LOWER(CAST(is_best AS VARCHAR)) = 'true'`) |
 | How many customers get each action? | `<pred>`; `nba_ais_action_stats` |
 | How does the mix differ from the past? | `nba_ais_action_stats` |
 | Why does customer X get action A? | `<pred>` ⨝ `pred_input_table` (context) vs. the averages of customers getting A |

@@ -87,7 +87,7 @@ Use `tdx-skills:tdx-basic` (`tdx-skills:parent-segment-analysis` for a Parent Se
 1. Read `../shared/push_pattern_td_workflows.md` and `references/workflow-setup.md`.
 2. Copy `project_templates/workflow_template/` → `agent_outputs/<project_slug>/workflow/`; read its `README.md` and `sql/README.md`.
 3. **Name checks** (one command):
-   - Sink database: default `td_agents`, must hold no `nba_ais_*` tables (fixed names = one project per database); taken → `nba_ais_<project_prefix>`. Created by the first run.
+   - Sink database: default `td_agents`, must hold no `nba_ais_*` tables (fixed names = one project per database); taken → `nba_ais_<project_prefix>` (`-` → `_`; database and table names allow only letters, digits and `_`). Created by the first run.
    - Workflow project: default `nba_ais`, must not exist.
    - `model_name`: `<project_prefix>_nba` (`-` → `_`) — unique per account.
 4. **Input SQL** — rewrite `workflow/sql/input_features.sql`: `bounds` → `anchors` (log / population) → context CTEs → `reward` → final SELECT, 5–12 numeric features (`references/workflow-setup.md` §1, patterns in `references/dataprep-guide.md` §4). Don't review the `.dig` files.

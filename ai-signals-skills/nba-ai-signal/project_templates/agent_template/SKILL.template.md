@@ -87,7 +87,7 @@ Default to the **latest run** unless the user asks for history. Every log table 
 | "How sure are we?" | `nba_ais_run_log` (`ci_lower`, `ci_upper`, `train_rows`, `n_actions`) | Rows per action in `train_input_table` |
 | "How many get each action?" / mix | `{{pred_table}}` | `nba_ais_action_stats` |
 | "Why does customer X get A?" | `{{pred_table}}` ⨝ `pred_input_table` | Context averages per recommended action |
-| "Which settings did tuning choose?" | `nba_ais_tuning_results` (`is_best = 'true'`) | `nba_ais_run_log.model_type` |
+| "Which settings did tuning choose?" | `nba_ais_tuning_results` (`LOWER(CAST(is_best AS VARCHAR)) = 'true'`) | `nba_ais_run_log.model_type` |
 | "Did the recommendations change?" | `{{pred_table}}_history` | `nba_ais_action_stats` by session |
 | "Did following the recommendation work?" | `{{pred_table}}_history` ⨝ the action log and outcomes (`workflow-guide.md` sources) | — |
 | "What config / actions / reward were used?" | `nba_ais_run_log` config columns | `workflow-guide.md`, `{{engagement_dir}}/workflow/` |
@@ -106,7 +106,7 @@ Default to the **latest run** unless the user asks for history. Every log table 
 ## Query Rules
 
 - Latest run by `time`, never `MAX(session_id)`; `session_id` is VARCHAR (quote it)
-- Tuning: latest `run_id` by `time`; `is_best = 'true'` (a string); check `SHOW COLUMNS FROM nba_ais_tuning_results` before selecting a `phase*_` column
+- Tuning: latest `run_id` by `time`; `LOWER(CAST(is_best AS VARCHAR)) = 'true'` (stored as text or boolean); check `SHOW COLUMNS FROM nba_ais_tuning_results` before selecting a `phase*_` column
 - When unsure which tables exist (tuning is optional), check first: `SHOW TABLES IN {{sink_database}} LIKE 'nba_ais_%'`
 - Limit to TOP 20 results per query unless the user needs a full export; include `ORDER BY` for deterministic results
 - `time` is UNIX bigint — show with `TD_TIME_FORMAT(time, 'yyyy-MM-dd HH:mm', 'UTC')`
@@ -202,7 +202,7 @@ Take the feature names from `SHOW COLUMNS FROM <pred_input_table>`. The model do
 SELECT phase, phase0_impute_type, phase0_scaler_type, phase1_estimator_type, phase2_model_type,
        overall_score, estimated_policy_value, ci_lower, ci_upper, lift_vs_random_pct
 FROM nba_ais_tuning_results
-WHERE run_id = (SELECT max_by(run_id, time) FROM nba_ais_tuning_results) AND is_best = 'true'
+WHERE run_id = (SELECT max_by(run_id, time) FROM nba_ais_tuning_results) AND LOWER(CAST(is_best AS VARCHAR)) = 'true'
 ORDER BY phase
 ```
 

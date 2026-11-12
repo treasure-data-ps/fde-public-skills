@@ -43,7 +43,7 @@ _export:
   method: POST
   retry: false
   headers:
-    - authorization: ${secret:td.apikey}
+    - authorization: "TD1 ${secret:td.apikey}"
     - X-TD-ML-SESSION-ID: ${session_id}
     - X-TD-ML-ATTEMPT-ID: ${attempt_id}
   content_format: json
@@ -61,14 +61,10 @@ _export:
 
 # 3. Wait for completion (408 while running, 400 failed, 200 succeeded)
 +wait_for_prediction:
-  _retry:
-    limit: 10
-    interval: 60
-    interval_type: constant
   http>: ${ml_batch_api_endpoint}/v1/runs/${JSON.parse(http.last_content).id}/status
   method: GET
   headers:
-    - authorization: ${secret:td.apikey}
+    - authorization: "TD1 ${secret:td.apikey}"
   store_content: false
 
 # 4. Latest next best action, one row per user — the Parent Segment attribute table.
@@ -83,6 +79,30 @@ _export:
            '${session_id}'                             AS session_id
     FROM mltmp_nba_ais_predict_${project_id}_${attempt_id}
   create_table: ${pred_output_table}
+
+# Re-running an attempt in the same session replaces that session's rows in the
+# appended tables instead of adding them twice (only existing tables are cleared)
++check_logged_tables:
+  td>:
+  query: |
+    SELECT COUNT_IF(table_name = '${pred_output_table}_history') AS history,
+           COUNT_IF(table_name = 'nba_ais_action_stats')         AS action_stats
+    FROM information_schema.columns
+    WHERE table_schema = '${sink_database}' AND column_name = 'session_id'
+      AND table_name IN ('${pred_output_table}_history', 'nba_ais_action_stats')
+  store_last_results: true
+
++clear_history:
+  if>: ${Number(td.last_results.history) > 0}
+  _do:
+    td>:
+    query: DELETE FROM ${pred_output_table}_history WHERE session_id = '${session_id}'
+
++clear_action_stats:
+  if>: ${Number(td.last_results.action_stats) > 0}
+  _do:
+    td>:
+    query: DELETE FROM nba_ais_action_stats WHERE session_id = '${session_id}'
 
 +append_history:
   td>:

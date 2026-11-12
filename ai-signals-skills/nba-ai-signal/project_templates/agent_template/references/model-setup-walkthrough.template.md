@@ -119,7 +119,7 @@ keep the headings below as the plan for one:
 
 <!-- fill — append-only list of pitfalls found during the engagement, each with the correct approach:
 - Policy value is an in-sample estimate — always with its interval; logged reward per action is not the action's effect
-- Latest run by `time`, dedupe appended tables, `is_best = 'true'` is a string
+- Latest run by `time`, dedupe appended tables, `LOWER(CAST(is_best AS VARCHAR)) = 'true'` (text or boolean)
 - Exact action spellings in the data and the business names for them
 - Columns or tables that look right but must not be used, and why
 - Anything a future chat got wrong once and should not repeat
