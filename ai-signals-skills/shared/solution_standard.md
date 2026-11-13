@@ -97,6 +97,8 @@ Every deviation from §4 must be listed here and stated in the solution's `SKILL
 | `prob-idu` | Phase 3 writes the project's input query (`workflow_template/sql/input_table.sql`) in the working copy, besides the config | The input is project-specific (ID source, identifier columns); the template ships an example structure and the output contract (`sql/README.md`) |
 | `prob-idu` | No standalone HTML dashboard or `generate-data.js`; the agent charts the stats tables in chat | The `prob_*` stats tables are the dashboard feed; one-off HTML adds nothing over in-chat charts |
 | `classifier` | Phase 3 writes the project's feature SQL (`workflow_template/sql/input_features.sql`) in the working copy, besides the config | A classifier's input is project-specific (population, features, label); the template ships an example structure and the output contract (`sql/README.md`) |
+| `nba-ai-signal` | Phase 1 Step 1 asks the decision type (channel, time, campaign, custom) and the success measure before exploring | The decision type decides which sources form the touchpoint union, which touches are decisions and how the training rows are built |
+| `nba-ai-signal` | Phase 3 writes the project's touchpoint union (`workflow_template/sql/touchpoints_union.sql`) and adapts `sql/input_features.sql` in the working copy, besides the config | The sources and their channel extraction are project-specific; the template ships an example structure, the fixed channel / sequencing logic and the contracts (`sql/README.md`) |
 
 ## 6. Conformance checklist
 

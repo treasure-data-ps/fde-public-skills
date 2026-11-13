@@ -25,6 +25,7 @@ Setup skills are the same for everyone and update with the marketplace; your pro
 | `fde-nbp` | Next Best Product — top product and category recommendations per customer | `nbp-agent` |
 | `fde-mta` | Multi-Touch Attribution — channel contribution with Markov, Shapley and standard models | `mta-agent` |
 | `fde-nba-scores` | Next Best Action — best time, channel and campaign per customer, engagement flags | `nba-scores-agent` |
+| `fde-nba-ai-signal` | Next Best Action with AI Signals — the best offer, campaign or channel per customer, learned from past actions and their outcomes (contextual bandits) | `nba-ai-signal-agent` |
 | `fde-classifier` | Propensity scoring — any yes/no outcome (lead scoring, churn, conversion, response) | `classifier-agent` |
 | `fde-prob-idu` | Probabilistic ID unification — fuzzy matching of duplicate profiles after deterministic IDU | `prob-idu-agent` |
 

@@ -1,6 +1,6 @@
 ---
 name: fde-ai-signals-shared
-description: Shared reference files (playbook, workflow, agent and docs patterns) read by the fde-rfm, fde-nbp, fde-mta, fde-nba-scores and fde-classifier setup skills. Not used directly — to set up a model, use one of those skills.
+description: Shared reference files (playbook, workflow, agent and docs patterns) read by the fde-rfm, fde-nbp, fde-mta, fde-nba-scores, fde-nba-ai-signal, fde-classifier and fde-prob-idu setup skills. Not used directly — to set up a model, use one of those skills.
 disable-model-invocation: true
 user-invocable: false
 ---
