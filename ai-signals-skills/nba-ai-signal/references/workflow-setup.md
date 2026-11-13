@@ -10,7 +10,7 @@ Use with `../../shared/push_pattern_td_workflows.md`. Source of truth in the wor
 
 This file adds only: Phase 1 findings → SQL and config values, deploy details, output checks, troubleshooting.
 
-**NBA AI Signal exception:** `sql/input_features.sql` is project code — an example structure rewritten for every project (`../../shared/solution_standard.md` §5).
+**NBA AI Signal exception:** `sql/touchpoints_union.sql` is project code — an example structure rewritten for every project — and `sql/input_features.sql` is adapted (`../../shared/solution_standard.md` §5).
 
 **Minimal push first (Phase 3):** SQL from the Phase 1 confirmation, "First push" values below, template values for the rest, tuning off, schedule and alert email commented. Record each assumption in `project_state.md` as "default — confirm in requirements"; resolve caveats in Phase 4.
 
@@ -18,21 +18,21 @@ This file adds only: Phase 1 findings → SQL and config values, deploy details,
 
 ## 1. Write the input SQL
 
-One file, two modes: training rows are logged actions, scoring rows are customers. Design and patterns: `dataprep-guide.md`.
+Three files, two modes: training rows are decision touches, scoring rows are customers. Design and patterns: `dataprep-guide.md`.
 
-| Part | From Phase 1 | Config |
+| File | From Phase 1 | Config |
 |---|---|---|
-| Actions | Action log table, action column (grouped to 2–100 labels), action time | `action_column`, `train_window_days` |
-| Reward | Outcome table + rule, or the reward column on the log | `reward_column`, `reward_window_days` |
-| Context | Activity, order, engagement tables + stable profile attributes | `feature_lookback_days`, `exclude_columns` |
-| Scoring population | Profile table (or Parent Segment `customers`) + eligibility | `user_column` |
+| `touchpoints_union.sql` (rewrite) | One block per confirmed source: `src_name`, ID, time column, URL / referrer / UTM or traffic-source columns, `channel_hint`, campaign, custom label, conversions | `user_column`, `session_gap_minutes` |
+| `touchpoints.sql` (extend rules only) | Customer-specific UTM mediums / sources from discovery query 3 | — |
+| `input_features.sql` (adapt context) | Top channels for the per-channel columns; extra source-specific features | `nba_type`, `time_grain`, `local_timezone`, `action_sources`, `min_action_share`, `reward_*`, windows, `exclude_columns` |
 
 Rules:
-- **Shape:** `bounds` → `anchors` (train branch: the log; pred branch: the population) → `anchors_n` → one CTE per context source → `reward` → final SELECT (`session_id`, user, action, reward, timestamp, features). Join every CTE on the user **and** `anchor_id`.
-- **First push:** 5–12 numeric features — window counts, active days, recency, monetary sums, prior actions, 1–2 stable attributes as numbers.
-- **No leakage:** features end at the anchor; no column describing the outcome or the action (`dataprep-guide.md` §2 checklist).
-- **Event time:** UNIX seconds — `time` if it is the real event time, else `TD_TIME_PARSE(<col>)`. Keep `TD_TIME_RANGE(…, '${scan_start}', '${scan_end}')` on every scan.
-- **Join keys** differ per source → join through the lookup table from Phase 1.
+- **Union:** every block returns the 14 contract columns in order (`sql/README.md` §1), one customer ID everywhere, `TD_TIME_RANGE(<time>, '${scan_start}', '${scan_end}')` on every scan, NULL IDs dropped. Web: UTM from the URL with the referrer URL as fallback, or the traffic-source columns; `channel_hint` NULL. Non-web: `channel_hint` set. Conversions: `is_conversion = 1`.
+- **Decision touches:** `action_sources` names the `src_name` values that are decisions — `''` for `channel`; give business sends their own `src_name` (`email_send`) for `time` / `campaign`.
+- **Context, first push:** keep the shipped features; set the per-channel columns to the 3–6 largest channels from query 3; 5–20 numeric features in total.
+- **No leakage:** features end at the anchor; nothing describing the outcome or the action (`dataprep-guide.md` §2 checklist).
+- **Event time:** UNIX seconds — `time` if it is the real event time, else `TD_TIME_PARSE(<col>)`.
+- **Join keys** differ per source → join through the lookup table from Phase 1 inside that source's block.
 - **`exclude_columns`:** `time|session_id` + every other non-feature column the SQL outputs.
 
 ### Discovery queries
@@ -48,58 +48,90 @@ FROM <source_database>.<table>
 UNION ALL SELECT '<next table>', … FROM …
 ```
 
-**2. Action mix and reward per action** over the planned training window (`<start>` … `<end>` = `<last_date>` − `reward_window_days` − `train_window_days` … − `reward_window_days`):
+**2. UTM / traffic-source coverage** — per web table, over the last 90 days:
 
 ```sql
-WITH a AS (SELECT <id_col> AS id, <action_col> AS action, <action_time_col> AS ts FROM <source_database>.<action_log_table>
-           WHERE TD_TIME_RANGE(<action_time_col>, '<start>', '<end>')),
-o AS (SELECT DISTINCT a.id, a.ts, a.action FROM a JOIN <source_database>.<outcome_table> x
-      ON x.<id_col> = a.id AND x.<outcome_time_col> >= a.ts AND x.<outcome_time_col> < a.ts + <reward_window_days> * 86400)
+SELECT COUNT(*) AS pageviews,
+       ROUND(AVG(IF(url_extract_parameter(<url_col>, 'utm_medium') IS NOT NULL, 1.0, 0.0)), 3)      AS utm_in_url,
+       ROUND(AVG(IF(url_extract_parameter(<referrer_col>, 'utm_medium') IS NOT NULL, 1.0, 0.0)), 3) AS utm_in_referrer,
+       ROUND(AVG(IF(<referrer_col> IS NOT NULL AND <referrer_col> <> '', 1.0, 0.0)), 3)              AS has_referrer
+FROM <source_database>.<pageview_table> WHERE TD_INTERVAL(<ts>, '-90d')
+```
+
+If a traffic-source / medium column exists, add its fill rate. Coverage near 0 in both → the referrer host is the only signal; tell the user most web visits will be `direct` / `referral` / `organic_search`.
+
+**3. Traffic-source values** — the mediums and sources the channel rules must cover:
+
+```sql
+SELECT LOWER(COALESCE(url_extract_parameter(<url_col>, 'utm_medium'), url_extract_parameter(<referrer_col>, 'utm_medium'))) AS medium,
+       LOWER(COALESCE(url_extract_parameter(<url_col>, 'utm_source'), url_extract_parameter(<referrer_col>, 'utm_source'))) AS source,
+       COUNT(*) AS pageviews
+FROM <source_database>.<pageview_table> WHERE TD_INTERVAL(<ts>, '-90d')
+GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 50
+```
+
+Map every frequent value the rules in `touchpoints.sql` don't cover (`dataprep-guide.md` §3 table) — e.g. `aff`, `cj` → `affiliate`, `mail` → `email`. After the first run, the channel mix of `nba_ais_touchpoints` (§4 check 1) is the final check.
+
+**4. Action mix and reward per action** — before the first run, from the source that will hold the decision touches (for `channel`, the per-source counts of query 1 plus query 3 approximate the mix). For `time` / `campaign` / `custom`, over the planned training window (`<start>` … `<end>` = `<last_date>` − `reward_window_days` − `train_window_days` … − `reward_window_days`):
+
+```sql
+WITH a AS (SELECT <id_col> AS id, <action_expr> AS action, <time_col> AS ts FROM <source_database>.<decision_table>
+           WHERE TD_TIME_RANGE(<time_col>, '<start>', '<end>')),
+o AS (SELECT DISTINCT a.id, a.ts, a.action FROM a JOIN <source_database>.<orders_table> x
+      ON x.<id_col> = a.id AND x.<order_time_col> >= a.ts AND x.<order_time_col> < a.ts + <reward_window_days> * 86400)
 SELECT a.action, COUNT(*) AS n_rows, COUNT(DISTINCT a.id) AS users, COUNT(o.id) AS rewarded,
        ROUND(100.0 * COUNT(o.id) / COUNT(*), 2) AS reward_pct
 FROM a LEFT JOIN o ON o.id = a.id AND o.ts = a.ts AND o.action = a.action
 GROUP BY 1 ORDER BY 2 DESC
 ```
 
+`<action_expr>`: the campaign column, the custom label, or for `time` the local daypart `HOUR(FROM_UNIXTIME(<time_col>, '<local_timezone>'))` bucketed as in `sql/README.md`.
+
 | Result | Action |
 |---|---|
 | 2–100 actions, hundreds+ rows and some rewards each | Continue |
-| > 100 actions, or many with < ~200 rows | Group to families; drop retired actions |
+| > 100 actions, or many with < ~200 rows | Group (campaign themes, coarser `time_grain`, higher `min_action_share`) |
 | One action holds > ~90% of rows | The model will mostly learn about that one — tell the user; ask in requirements about rotations or tests |
-| No rewards for an action, or reward rate 0 / 100% overall | Check the outcome rule and window before continuing |
+| No rewards for an action, or reward rate 0 / 100% overall | Check the conversion source and window before continuing |
 
-**3. Assignment check** — did each action reach a mix of customers? Compare a simple context per action:
+**5. Assignment check** — did each action reach a mix of customers? Compare a simple context per action (decision table ⨝ profile):
 
 ```sql
-SELECT a.<action_col> AS action, COUNT(*) AS n_rows,
+SELECT <action_expr> AS action, COUNT(*) AS n_rows,
        ROUND(AVG(CAST(p.<numeric_attr> AS DOUBLE)), 2) AS avg_attr, COUNT(DISTINCT p.<segment_col>) AS segments_reached
-FROM <source_database>.<action_log_table> a JOIN <source_database>.<profile_table> p ON p.<id_col> = a.<id_col>
-WHERE TD_TIME_RANGE(a.<action_time_col>, '<start>', '<end>') GROUP BY 1 ORDER BY 2 DESC
+FROM <source_database>.<decision_table> a JOIN <source_database>.<profile_table> p ON p.<id_col> = a.<id_col>
+WHERE TD_TIME_RANGE(a.<time_col>, '<start>', '<end>') GROUP BY 1 ORDER BY 2 DESC
 ```
 
-Actions sent to a single segment only → note it as a caveat: the model can't compare them for other customers.
+Actions given to a single segment only → note it as a caveat: the model can't compare them for other customers.
 
-**4. ID overlap** — one block per context source; a low `matched` share = join-key mismatch:
+**6. ID overlap** — one block per source; a low `matched` share = join-key mismatch:
 
 ```sql
-SELECT '<table>' AS src, COUNT(DISTINCT a.id) AS log_ids, COUNT(DISTINCT s.<id_col>) AS matched
-FROM (SELECT DISTINCT <id_col> AS id FROM <source_database>.<action_log_table>) a
-LEFT JOIN <source_database>.<table> s ON s.<id_col> = a.id
+SELECT '<table>' AS src, COUNT(DISTINCT p.id) AS customers, COUNT(DISTINCT s.<id_col>) AS matched
+FROM (SELECT DISTINCT <id_col> AS id FROM <source_database>.<main_source_table>) p
+LEFT JOIN <source_database>.<table> s ON s.<id_col> = p.id
 ```
 
 ## 2. Choose the other values
 
 | Key | First push | Change when |
 |---|---|---|
-| `reward_window_days` | Per use case (`dataprep-guide.md` §1) | The business outcome window differs |
+| `nba_type` | The decision from Phase 1 | — |
+| `time_grain`, `local_timezone` | `daypart`, the customers' main zone | Phase 4 answers; `hour` only with tens of thousands of decisions |
+| `action_sources` | `''` for `channel`; the send / decision `src_name` otherwise | Requirements name other decision sources |
+| `min_action_share` | `0.01` | Long tail of campaigns or mediums → `0.02`–`0.05` |
+| `reward_attribution`, `reward_type` | `next_touch`, `binary` | Sparse sends → `window`; revenue goal → `value` |
+| `session_gap_minutes` | `30` | `events_per_touch` ≈ 1 for web → `60` |
+| `reward_window_days` | Per decision (`dataprep-guide.md` §1) | The business outcome window differs |
 | `train_window_days` | `180` | Actions change often → `60`–`90`; history check fails → shorter |
 | `feature_lookback_days` | `90` | Slow buying cycle → `180`–`365` |
-| `reference_date` | `''` | Data ends before today → last action date (query 1) |
+| `reference_date` | `''` | Data ends before today → last event date (query 1) |
 | `model_type`, `epsilon` | `lin_ucb`, `0.1` | Phase 4 answers or tuning results (`ai-signals-guide.md` §5) |
 | `impute_type`, `scaler_type` | `median`, `standard` | Heavy outliers → `robust` |
 | `enable_tuning` | `false` | Input stable and `nba_tune` enabled → `true`; sample ratio per the README |
 | `model_name` | `<project_prefix>_nba` | Never shared — same name overwrites the other model |
-| `pred_output_table` | `nba_ais_actions` | Use-case name (`offer_nba`) |
+| `pred_output_table` | `nba_ais_actions` | Use-case name (`channel_nba`) |
 | Failure email | Commented | Requirements give an address → uncomment `_error` in `nba_ais.dig`, project name in `subject` |
 
 ## 3. Deploy details
@@ -120,7 +152,8 @@ After every run: direct `tdx query -d <db>` calls in one shell command (no scrip
 
 | # | Check | Pass |
 |---|---|---|
-| 1 | Training log per action | Same actions as discovery query 2; hundreds+ rows and some rewards each. Off → `dataprep-guide.md` §5 |
+| 0 | Touchpoints | Every union source present; web `direct` share plausible (not most of web); channel values all expected; web `events_per_touch` > 1. Off → `dataprep-guide.md` §5 |
+| 1 | Training log per action | The expected actions (discovery query 4); hundreds+ rows and some rewards each. Off → `dataprep-guide.md` §5 |
 | 2 | Policy value | `estimated_policy_value` ≥ `logged_avg_reward`; `ci_lower` above it = confident improvement; interval spanning it = no evidence yet (more data, better context); far above (> ~3× with a wide interval) = few rows per action or extreme weights |
 | 3 | Tuning (if on) | Best phase-2 trial with `lift_vs_random_pct` > 0; chosen settings plausible |
 | 4 | Recommendations | `users` = `pred_input_table` rows; every `next_best_action` is a logged action; more than one action recommended (or a clear reason) |
@@ -128,12 +161,16 @@ After every run: direct `tdx query -d <db>` calls in one shell command (no scrip
 | 6 | Live check (once `reward_window_days` passed after a scoring run) | Customers who received the recommended action have a higher reward rate than those who received another one |
 
 ```sql
+-- 0
+SELECT src_name, channel, COUNT(*) AS touches, ROUND(AVG(events_in_touch), 1) AS events_per_touch
+FROM <db>.<touchpoints_table> WHERE is_conversion = 0 GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 40
+
 -- 1
 SELECT <action_column> AS action, COUNT(*) AS n_rows, ROUND(AVG(<reward_column>), 4) AS avg_reward
 FROM <db>.<train_input_table> GROUP BY 1 ORDER BY 2 DESC
 
 -- 2
-SELECT session_id, run_date, model_type, train_rows, n_actions, logged_avg_reward,
+SELECT session_id, run_date, nba_type, time_grain, model_type, train_rows, n_actions, logged_avg_reward,
        estimated_policy_value, ci_lower, ci_upper, estimated_lift_pct
 FROM <db>.nba_ais_run_log ORDER BY time DESC LIMIT 1
 
@@ -170,7 +207,8 @@ Check 6 is only fair when the "other action" group was not chosen for a reason (
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `data_prep` fails | `<...>` placeholder or unknown column left; undefined `${…}` (also in SQL comments) | `tdx wf attempt <id> tasks`, `logs +<task>`; fix the SQL |
+| `data_prep` fails | `<...>` placeholder or unknown column left; union blocks with different column counts or types; undefined `${…}` (also in SQL comments) | `tdx wf attempt <id> tasks`, `logs +<task>`; fix the SQL — `+create_touchpoints_raw` failing points at the union |
+| `FROM_UNIXTIME` time-zone error | `local_timezone` not an IANA name | e.g. `America/New_York`, `Asia/Tokyo`, `UTC` |
 | `+assert_training_dataset` fails | Empty window, one action, constant reward, NULL keys | Check `reference_date`, windows, the action filter and the reward rule |
 | `+assert_prediction_dataset` fails | Repeated customers in the scoring population | `DISTINCT` / one row per customer in the pred branch |
 | 401 / 403 on a run | Wrong regional endpoint, or the solution is not enabled | Fix `ml_batch_api_endpoint`; ask the account admin (`nba_train`, `nba_predict`, `nba_tune`) |

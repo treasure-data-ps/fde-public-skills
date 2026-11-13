@@ -1,154 +1,182 @@
 # NBA AI Signal — Data Prep Guide
 
-How to turn the customer's data into the two model inputs: the **training log** (one row per past action with its reward and the context before it) and the **prediction input** (one row per customer with the context today). The output contract and variables are in the working copy's `sql/README.md`; config values in `workflow-setup.md` §2; how the model uses the input in `ai-signals-guide.md` §2.
+How to turn the customer's data into the model inputs for any next best action — channel, time, campaign or a custom action. The pipeline is the same for every decision type:
+
+```
+sources (web, email, app, sms, call center, orders …)
+  → sql/touchpoints_union.sql   one event schema, UTM / traffic source extracted        → <touchpoints_table>_raw
+  → sql/touchpoints.sql         channel per event, session inheritance, sequential touches → <touchpoints_table>
+  → sql/input_features.sql      decision touches + action (nba_type) + reward + context  → train_input_table / pred_input_table
+```
+
+Contracts and variables: the working copy's `sql/README.md`; config values: `workflow-setup.md` §2; how the model uses the input: `ai-signals-guide.md` §2.
 
 | Term | Meaning |
 |---|---|
-| Action | One of the choices the business makes per customer: offer, campaign, message, content, channel, treatment |
-| Action log | Where past decisions are recorded: campaign sends, offer assignments, coupon issues, journey steps, call-center treatments |
-| Reward | What happened after the action, as a number: converted 1/0, redeemed 1/0, clicked 1/0, revenue |
-| Context | What was known about the customer just before the action: activity, purchases, engagement, tenure, stable attributes |
-| Anchor | The moment the context is measured at: the action time (training) or the run date (scoring) |
+| Event | One row of a source: a pageview, an email click, an app session, an order |
+| Touch | Consecutive events of one customer in the same channel within `session_gap_minutes` — the unit the model decides on |
+| Decision touch | A touch that counts as a decision (every touch, or only those from `action_sources`) — one training row |
+| Action | The label of a decision touch per `nba_type`: its channel, local time slot, campaign or custom label |
+| Reward | What happened after the decision touch: converted 1/0, or the converted value |
+| Context | What was known about the customer just before the touch: touch history, channel mix, time-of-day profile, conversions |
 
 ---
 
-## 1. Define the use case
+## 1. Choose the decision
 
-| Use case | Actions | Action log | Reward (window) |
-|---|---|---|---|
-| Offer selection | Offer types or discount levels (incl. "no offer" if logged) | Offer assignments / coupon issues | Redeemed or purchased (7–30 days) |
-| Campaign / content choice | Campaign or content IDs or themes | Email / push / SMS sends | Clicked (1–3 days) or converted (7–14 days) |
-| Channel choice | email, sms, push, call, ad | Sends per channel | Responded or converted (7–14 days) |
-| Retention treatment | Treatments (call, discount, content, none) | Treatment log, CRM tasks | Retained / renewed (30–90 days) |
-| Cross-sell | Product categories promoted | Recommendation or promotion log | Bought the promoted category (14–30 days) |
+| `nba_type` | The model answers | Decision touches (`action_sources`) | Action | Reward (window) |
+|---|---|---|---|---|
+| `channel` | Through which channel to reach the customer | `''` — every touch across web, email, app, SMS, ads … | The touch's channel | Conversion until the next touch (`next_touch`) or 7–14 days |
+| `time` | When to send (daypart, hour, day × daypart) | The sends the business times — `email_send`, `push_send` | Local time slot of the touch (`time_grain`, `local_timezone`) | Open / click (1–2 days) or conversion (3–7 days) |
+| `campaign` | Which campaign or content to send | Sends or ad clicks that carry a campaign — `email_send`, `web` | The touch's `campaign` | Conversion (7–14 days) |
+| `custom` | Which offer / treatment / content | The decision log's source (offer assignments, treatments) | The touch's `action_label` | Redemption / purchase / retention (7–90 days) |
 
 Rules:
-- **Actions must be repeatable choices.** One action = one label in the log. Group fine-grained IDs (campaign ID → campaign type, offer code → offer family) to 2–100 labels with hundreds+ rows each. Actions that no longer exist are dropped or merged; new actions can't be recommended until they are in the log.
-- **"No action" is an action** only if it is logged (a control group). Otherwise the model only chooses among the actions taken.
-- **The log needs variation.** If one segment always got action A and another always B, the model can't learn what B would have done for the first segment. Check per action who received it (§3 query 2); a randomized test or rotation gives the most reliable result.
-- **Reward = the business goal, as a number.** 0/1 is easiest to read; revenue works but outliers dominate (cap it). The reward must be observable for every logged action within `reward_window_days`.
-- **Who is scored** at prediction: usually the customers eligible for the next decision (active, opted in, not excluded) — one row each.
+- **2–100 actions with hundreds+ rows each.** Rare channels, mediums or campaigns are grouped as `other` by `min_action_share`; group campaign IDs to themes in the union when there are hundreds.
+- **The model only chooses among actions that happened.** A channel or time slot the business never used can't be recommended.
+- **The log needs variation.** If one segment always got email and another always SMS, the model can't learn what SMS would have done for the first. Check per action who received it (`workflow-setup.md` §1 query 5).
+- **Time decisions need business-timed sends.** The time of a customer's own visits is the customer's choice, not the business's; use send events as decision touches and the engagement after them as the reward. With engagement-only data, say so — the result describes when customers are active, not when to send.
+- **Several decisions** (channel and time) are separate projects with their own `nba_type`, `model_name` and sink database.
 
 ## 2. Window design
 
 ```
-training row:  [action time − feature_lookback_days, action time)   →  context
-               [action time, action time + reward_window_days)       →  reward
-actions used:  [run date − reward_window_days − train_window_days, run date − reward_window_days)
-scoring row:   [run date − feature_lookback_days, run date)          →  context
+decision touch:  [touch time − feature_lookback_days, touch time)          → context
+                 [touch time, min(touch time + reward_window_days, next decision touch))  → reward (next_touch)
+decisions used:  [run date − reward_window_days − train_window_days, run date − reward_window_days)
+scoring row:     [run date − feature_lookback_days, run date)               → context
 ```
 
 | Window | First push | Change when |
 |---|---|---|
-| `reward_window_days` | Typical time from action to outcome (table §1) | The business definition of success differs |
-| `train_window_days` | `180` | Actions or offers change often → `60`–`90`; few actions per day → `365` |
+| `reward_window_days` | Per decision (table §1) | The business definition of success differs |
+| `reward_attribution` | `next_touch` | Sparse touches (a send a week) → `window` |
+| `train_window_days` | `180` | Channels or campaigns change often → `60`–`90`; few touches per day → `365` |
 | `feature_lookback_days` | `90` | Slow buying cycles → `180`–`365` |
+| `session_gap_minutes` | `30` | Multi-device or slow journeys → `60` |
 
 History check: data must start `reward_window_days + train_window_days + feature_lookback_days` before the run date. Shorter → reduce `train_window_days` first, then `feature_lookback_days`; or set `reference_date` for demo data that ends in the past.
 
 ### Leakage checklist
 
 - No feature is measured at or after the anchor (`>= anchor_ts`) — that is the reward window.
-- No feature records the outcome (redemption flag, order after the action, status changed by the outcome).
-- No feature describes the action itself (campaign ID, offer value) — the action column is the decision; describing it twice leaks it into the context.
-- Parent Segment attributes are today's values: only stable ones (region, acquisition source) as features; rebuild recency, totals and status from the behavior tables relative to the anchor.
+- No feature records the outcome (a conversion flag inside the touch, an order after it).
+- No feature describes the action itself (the touch's channel, campaign or hour as a feature) — the action column is the decision.
+- Parent Segment attributes are today's values: only stable ones (region, acquisition source) as features.
 
-## 3. Discovery
+## 3. The touchpoint union and channel extraction
 
-Queries and their actions: `workflow-setup.md` §1. The two that decide most: the **action mix** (rows, customers and reward rate per action — rare actions are merged or dropped) and the **assignment check** (whether every action reached a mix of customers).
+One block per source in `sql/touchpoints_union.sql`, every block in the union contract (`sql/README.md` §1). How to fill the traffic-source columns per source type:
 
-## 4. SQL patterns
+| Source | `src_name` | `channel_hint` | `utm_medium` / `utm_source` / `utm_campaign` | `campaign` |
+|---|---|---|---|---|
+| Web pageviews with UTM in the URL | `web` | NULL | `url_extract_parameter(<url>, 'utm_medium')` … — fallback `url_extract_parameter(<referrer>, …)` | `utm_campaign` |
+| Web with explicit traffic-source columns (GA-style `traffic_source`, `medium`, `source`) | `web` | NULL | Those columns, lower-cased | The campaign column |
+| Web with only a referrer | `web` | NULL | NULL — the referrer host classifies the session (`touchpoints.sql`) | NULL |
+| Email events (opens, clicks) | `email` | `'email'` | `'email'`, the ESP | Email campaign name |
+| Email / push / SMS sends (the business's decisions) | `email_send`, `push_send`, `sms_send` | `'email'`, `'push'`, `'sms'` | — | Campaign name |
+| App sessions / events | `app` | `'app'` (or `'push'` for push opens) | Deep-link UTM if present | Deep-link campaign |
+| Call center, stores, sales reps | `call_center`, `store` | `'call_center'`, `'store'` | — | Topic / reason, if any |
+| Ad clicks / impressions logs | `ads` | NULL | The platform's medium / source fields | Ad campaign |
+| Orders, sign-ups, bookings | `orders` | NULL | NULL | Coupon / promo, if any; `is_conversion = 1`, `conversion_value` = order total |
 
-All patterns plug into `sql/input_features.sql`, measured relative to `anchor_ts` and joined on the user and `anchor_id`.
+UTM handling, in the union:
+- Lower-case and trim every extracted value; `TRY(url_extract_parameter(…))` returns NULL for broken URLs. Encoded values (`email%20blast`) are decoded with `url_decode` if discovery shows them.
+- UTM present on any page of a visit counts — a mid-session UTM or external referrer starts the new channel, later internal pageviews inherit it (`touchpoints.sql`).
+- Paid platforms often set `utm_source` only (`facebook`, `google`) — the source rules cover them.
 
-**Reward on the action log** (clicked, redeemed, order value recorded with the send):
+Channel rules, in the `signals` CTE of `touchpoints.sql` — extend only with the customer's own values from discovery query 3:
 
-```sql
--- in anchors (train branch), carry the reward column instead of the reward CTE
-SELECT a.<id_col> AS ${user_column}, CAST(a.<action_col> AS VARCHAR) AS ${action_column},
-       a.<action_time_col> AS anchor_ts, CAST(COALESCE(a.<reward_col>, 0) AS DOUBLE) AS log_reward
-...
--- final SELECT: IF('${mode}' = 'train', an.log_reward) AS ${reward_column}
-```
+| Signal | Channel |
+|---|---|
+| `channel_hint` | As given |
+| medium `email`, `newsletter`, `crm` / source an ESP | `email` |
+| medium `sms`, `push` | `sms`, `push` |
+| medium `affiliate`, `partner` | `affiliate` |
+| medium or source a social network | `paid_social` with `cpc` / `cpm` / `paid`, else `social` |
+| medium `cpc`, `ppc`, `paid_search`, `sem` | `paid_search` |
+| medium `display`, `banner`, `cpm`, `programmatic`, `video` | `display` |
+| medium `referral` / `organic` | `referral` / `organic_search` |
+| any other medium | the medium, cleaned (`[^a-z0-9]` → `_`) — grouped as `other` if rare |
+| no UTM, external referrer: webmail / search engine / social network / other site | `email` / `organic_search` / `social` / `referral` |
+| no signal in the session | `direct` |
 
-**Reward window ends at the next action** (several actions in a row would otherwise all get credit):
+Sequencing: all sources of a customer in time order; consecutive events in the same channel within `session_gap_minutes` become one touch (`events_in_touch` counts them), a channel change starts the next touch — so an email click followed by the pageviews it opened is one `email` touch, and a later paid-search visit is the next touch. Conversions stay separate rows and never break or merge touches.
 
-```sql
-anchors_w AS (
-  SELECT *, LEAST(anchor_ts + ${reward_window_days} * 86400,
-                  COALESCE(LEAD(anchor_ts) OVER (PARTITION BY ${user_column} ORDER BY anchor_ts), 9999999999)) AS reward_end_ts
-  FROM anchors_n
-)
--- reward CTE: o.<outcome_time_col> >= an.anchor_ts AND o.<outcome_time_col> < an.reward_end_ts
-```
+## 4. SQL patterns (`input_features.sql`)
 
-**Revenue reward, capped:**
+All patterns are measured relative to `anchor_ts` and joined on the user and `anchor_id`.
 
-```sql
-SELECT an.${user_column}, an.anchor_id, LEAST(SUM(o.<amount_col>), <cap>) AS ${reward_column}
-```
-
-**Monetary and purchase context:**
-
-```sql
-SUM(o.<amount_col>)                                   AS spend_lookback,
-COUNT(DISTINCT o.<order_id_col>)                      AS orders_lookback,
-(an.anchor_ts - MAX(o.<order_time_col>)) / 86400      AS days_since_last_order
-```
-
-**Engagement context** (email, push): opens / clicks in the window, click rate `IF(sends > 0, clicks * 1.0 / sends)`.
-
-**Response to past actions** (strong context for bandits): earlier rewards of the same customer, before the anchor only:
+**Per-channel context** — one literal column per top channel from discovery query 3:
 
 ```sql
-past_response AS (
-  SELECT an.${user_column}, an.anchor_id,
-         COUNT(*) AS past_actions, AVG(IF(o2.<id_col> IS NULL, 0.0, 1.0)) AS past_response_rate
-  ...  -- prior actions in [anchor_ts − lookback, anchor_ts) with their own outcome known before anchor_ts
-)
+COUNT_IF(t.channel = 'paid_search')                     AS touches_paid_search,
+MAX(IF(t.channel = 'email', t.touch_ts))                AS last_email_ts,   -- → days_since_last_email
 ```
 
-**Stable profile attributes as numbers:**
+**Last channel before the decision** as 0/1 flags (numeric only):
 
 ```sql
-IF(p.<tier_col> = 'gold', 1, 0)          AS tier_gold,
-DATE_DIFF('day', DATE(FROM_UNIXTIME(p.<signup_ts>)), DATE(FROM_UNIXTIME(an.anchor_ts))) AS tenure_days
+IF(element_at(ARRAY_AGG(t.channel ORDER BY t.touch_ts DESC), 1) = 'email', 1, 0) AS last_channel_email
 ```
 
-Scoring population variants (pred branch of `anchors`): active in the last N days (`EXISTS` on the activity table), opted in for the channel, not in a suppression list, Parent Segment `customers`.
+**Response by channel** (strong context for channel NBA): conversions within N days after earlier touches of a channel, before the anchor only.
+
+**Time-of-day profile** (for time NBA, shipped): `share_morning`, `share_afternoon`, `share_evening`, `share_weekend`; add `share_<hour block>` for `hour` grain.
+
+**Monetary context:** `conversion_value_sum`, `conversions_cnt`, `days_since_last_conversion` (shipped); average order value `IF(cnt > 0, sum / cnt)`.
+
+**Revenue reward, capped** — cap `conversion_value` in the orders block of the union: `LEAST(o.<amount>, <cap>)`.
+
+**Stable profile attributes as numbers** — join the profile table in `input_features.sql`:
+
+```sql
+IF(p.<tier_col> = 'gold', 1, 0)                                                         AS tier_gold,
+DATE_DIFF('day', DATE(FROM_UNIXTIME(p.<signup_ts>)), DATE(FROM_UNIXTIME(an.anchor_ts)))  AS tenure_days
+```
+
+**Scoring population variants** (pred branch of `anchors`): customers with a touch in the lookback (shipped), opted in for the channel, not in a suppression list, Parent Segment `customers` (one row each).
 
 ## 5. Validate the input tables
 
-Run after `data_prep` (or when `+assert_*` fails). `<db>` = `sink_database`.
+Run after `data_prep` (or when `+assert_*` fails). `<db>` = `sink_database`, `<tp>` = `touchpoints_table`.
 
 ```sql
--- 1. training log: rows, actions, reward per action
+-- 1. union: rows per source and UTM coverage of web
+SELECT src_name, COUNT(*) AS events, COUNT(DISTINCT <user_column>) AS users,
+       ROUND(AVG(IF(utm_medium IS NOT NULL OR utm_source IS NOT NULL, 1.0, 0.0)), 3) AS utm_share
+FROM <db>.<tp>_raw GROUP BY 1 ORDER BY 2 DESC
+
+-- 2. touches: channel mix and events per touch
+SELECT channel, COUNT(*) AS touches, ROUND(AVG(events_in_touch), 1) AS events_per_touch
+FROM <db>.<tp> WHERE is_conversion = 0 GROUP BY 1 ORDER BY 2 DESC
+
+-- 3. training log: rows and reward per action
 SELECT <action_column> AS action, COUNT(*) AS n_rows, COUNT(DISTINCT <user_column>) AS users,
-       ROUND(AVG(<reward_column>), 4) AS avg_reward, COUNT_IF(<reward_column> > 0) AS rewarded
+       ROUND(AVG(<reward_column>), 4) AS avg_reward
 FROM <db>.<train_input_table> GROUP BY 1 ORDER BY 2 DESC
 
--- 2. scoring input: one row per customer
+-- 4. scoring input: one row per customer
 SELECT COUNT(*) AS n_rows, COUNT(DISTINCT <user_column>) AS users FROM <db>.<pred_input_table>
-
--- 3. feature ranges in both modes (same columns, plausible values)
-SELECT 'train' AS m, AVG(events_cnt), AVG(days_since_last_event), COUNT_IF(days_since_last_event IS NULL) * 1.0 / COUNT(*) FROM <db>.<train_input_table>
-UNION ALL SELECT 'pred', AVG(events_cnt), AVG(days_since_last_event), COUNT_IF(days_since_last_event IS NULL) * 1.0 / COUNT(*) FROM <db>.<pred_input_table>
 ```
 
 | Symptom | Cause | Fix |
 |---|---|---|
-| An action has few rows or no rewards | Rare or retired action | Merge into a family or drop it from the log |
-| > 100 actions | IDs instead of types | Group in the `anchors` CTE |
-| Reward rate near 0 or 1 everywhere | Wrong outcome join or window | Check the outcome table, ID join and `reward_window_days` |
-| Scoring rows ≠ customers | Duplicates in the population source | `DISTINCT`, or pick one row per customer |
-| Feature means differ a lot between train and pred | Context measured differently, or a time-dependent feature (calendar date, cumulative totals) | Measure relative to `anchor_ts` only |
-| Training rows far fewer than expected | `train_end` excludes recent actions by design (reward window), or `reference_date` stale | Expected; widen `train_window_days` |
+| `direct` holds most web touches | UTM not extracted (wrong column, values in another parameter or column), or referrer missing | Check the raw URLs; use the traffic-source column or the referrer URL fallback |
+| Many unknown channels from mediums | Customer-specific UTM values | Add rules in `touchpoints.sql`; or raise `min_action_share` |
+| `events_per_touch` ≈ 1 for web | `session_gap_minutes` too small, or channel flips between pageviews | Raise the gap; check that internal referrers are the site's own host |
+| One touch per customer per day across channels | Sources share one channel by mistake (`channel_hint` on web) | Leave `channel_hint` NULL for web |
+| An action has few rows or no rewards | Rare or retired action | Group it (`min_action_share`, campaign themes) or drop it |
+| > 100 actions | Campaign IDs / hours × days | Group in the union; coarser `time_grain` |
+| Reward near 0 everywhere | Conversion source missing or `is_conversion` not set; `next_touch` with very frequent touches | Check the orders block; try `window` with a shorter `reward_window_days` |
+| Scoring rows ≠ customers | Duplicates in a population source | `DISTINCT`, one row per customer |
+| Feature means differ a lot between train and pred | Context measured differently | Measure relative to `anchor_ts` only |
 
 ## 6. Schedules
 
 | Cadence | Setup |
 |---|---|
 | One cadence (retrain each time) | Schedule in `nba_ais.dig` — weekly is a good default |
-| Retrain rarely, recommend often | `train.dig` monthly (or weekly when actions change fast), `predict.dig` daily or before each campaign; leave `nba_ais.dig` unscheduled |
+| Retrain rarely, recommend often | `train.dig` monthly (weekly when channels or campaigns change fast), `predict.dig` daily or before each send; leave `nba_ais.dig` unscheduled |
 
-Recommendations are only as fresh as the context: score shortly before the action is sent. Retrain when the action set changes, after a big campaign or season, or when the policy value vs logged reward moves between runs.
+Recommendations are only as fresh as the context: score shortly before the decision is used. Retrain when the action set changes (new channel, campaign set, offers), after a big campaign or season, or when the policy value vs logged reward moves between runs.

@@ -201,6 +201,8 @@ _export:
            '${model_name}'                       AS model_name,
            '${String(enable_tuning).trim().toLowerCase() === 'true' ? 'tuned' : model_type}' AS model_type,
            '${String(enable_tuning).trim().toLowerCase()}' AS enable_tuning,
+           '${nba_type}'                         AS nba_type,
+           '${nba_type == 'time' ? time_grain : ''}' AS time_grain,
            i.train_rows, i.train_users, i.n_actions, i.logged_avg_reward,
            m.estimated_policy_value, m.ci_lower, m.ci_upper,
            IF(i.logged_avg_reward > 0, 100 * (m.estimated_policy_value / i.logged_avg_reward - 1)) AS estimated_lift_pct,

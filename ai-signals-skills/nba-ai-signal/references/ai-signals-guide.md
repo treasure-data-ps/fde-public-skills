@@ -204,10 +204,11 @@ No score, probability or ranking of the other actions is written — the output 
 
 | Change | How |
 |---|---|
-| Action set | Action log / mapping in `sql/input_features.sql` (merge rare actions, drop retired ones) |
-| Reward definition or window | `reward` CTE; `reward_window_days` (`dataprep-guide.md` §1) |
+| Decision type | `nba_type` (`channel`, `time` + `time_grain` / `local_timezone`, `campaign`, `custom`) and `action_sources` — a new project per decision type |
+| Action set | Sources in `sql/touchpoints_union.sql`, channel rules in `sql/touchpoints.sql`, `min_action_share` for rare actions |
+| Reward definition or window | Conversion blocks of the union; `reward_window_days`, `reward_attribution`, `reward_type` (`dataprep-guide.md` §1–§2) |
 | Context features | `sql/input_features.sql` (same in both modes); non-features → `exclude_columns` |
-| Who is scored | `pred` branch of the `anchors` CTE |
+| Who is scored | `pred` branch of the `anchors` CTE in `sql/input_features.sql` |
 | Policy type / exploration | `model_type`, `epsilon` (tuning off) |
 | Tuning | `enable_tuning: true`; budgets in config; custom `search_space` in `+tune_nba` |
 | Known propensities | `propensity_column`, `propensity_type: true_propensity` in `+train_nba` |

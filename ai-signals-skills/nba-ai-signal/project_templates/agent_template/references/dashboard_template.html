@@ -108,6 +108,7 @@
   <h1>Next Best Action Summary</h1>
   <p>{{project_name}} · {{sink_database}} · Session {{session_id}}</p>
   <div class="meta-row">
+    <span><strong>Decision:</strong> next best {{decision_type}}</span>
     <span><strong>Run date:</strong> {{run_date}}</span>
     <span><strong>Recommendations:</strong> {{pred_table}}</span>
     <span><strong>Model:</strong> {{model_name}} ({{model_type}})</span>
@@ -155,6 +156,7 @@
             <tr><td><strong>Session ID</strong></td><td>{{session_id}}</td></tr>
             <tr><td><strong>Model name</strong></td><td><code>{{model_name}}</code></td></tr>
             <tr><td><strong>Policy type</strong></td><td><span class="pill">{{model_type}}</span></td></tr>
+            <tr><td><strong>Decision type</strong></td><td><span class="pill">{{decision_type}}</span></td></tr>
             <tr><td><strong>Tuning</strong></td><td><code>{{enable_tuning}}</code></td></tr>
             <tr><td><strong>Training rows / customers</strong></td><td>{{train_rows}} / {{train_users}}</td></tr>
             <tr><td><strong>Windows (reward / training / context)</strong></td><td>{{reward_window_days}} / {{train_window_days}} / {{feature_lookback_days}} days</td></tr>

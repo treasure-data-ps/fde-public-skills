@@ -72,7 +72,10 @@ AUTHORING RULES (for the engagement copy)
 - Which attributes must not be used as context for compliance or fairness reasons (age, gender, location, health)?
 
 ## Next Best Action Definitions
-- Which options does the model choose between, and which are grouped together?
+- Which decision is it — channel, send time, campaign, or another action — and which options does the model choose between (which are grouped)?
+- Channels: which UTM mediums / sources, tracking codes or traffic-source values map to which channel; what counts as `direct`?
+- Time: which time zone, and which time slots matter (dayparts, hours, day of week)?
+- Which events are decisions made by the business (sends, assignments) and which are customer engagement?
 - How long after an action should success count (the reward window)?
 - Is success yes/no or a value (order value, margin)? Is there a cap on large values?
 - Which customers should get a recommendation at each run?

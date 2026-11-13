@@ -45,6 +45,8 @@ Use this document to answer questions about **how this customer's Next Best Acti
 <!-- fill:
 - Decision and success measure as first stated
 - Databases and tables reviewed; for each: included or excluded, role (action log, outcome, context, population), reason
+- The decision type chosen and why; the union sources and how each one's channel is set; UTM / traffic-source coverage and the
+  values mapped to channels (discovery queries 2–3)
 - The action list from discovery: rows, customers and reward rate per action; how actions were grouped, merged or dropped
 - Assignment check: how actions were given in the past (rules, segments, random, rotation) and the caveats it creates
 - ID column chosen and how it was checked (NULLs, distinct counts, overlap across sources); join keys that differed per source

@@ -54,6 +54,7 @@ Context effects are associations in the past decisions: if an action was only se
 | `model_name` | varchar | Stored model |
 | `model_type` | varchar | Policy from the config, or `tuned` (chosen type in `nba_ais_tuning_results`) |
 | `enable_tuning` | varchar | `true` / `false` |
+| `nba_type`, `time_grain` | varchar | Decision type (`channel`, `time`, `campaign`, `custom`) and the time-slot grain for `time` |
 | `train_rows`, `train_users`, `n_actions` | bigint | Size of the training log |
 | `logged_avg_reward` | double | Average reward of the logged decisions |
 | `estimated_policy_value`, `ci_lower`, `ci_upper` | double | Policy value and its 95% interval |
@@ -105,9 +106,13 @@ Same columns plus `time`, appended. Use for stability over time and for the live
 
 `logged_avg_reward` per action is a raw average over who received it — not the action's effect.
 
+### `nba_ais_touchpoints` — sequential touches (rebuilt each run)
+
+One row per touch or conversion for the last run's scan window: `<user_column>`, `touch_ts`, `touch_end_ts` (UNIX), `channel` (from the source, the UTM medium / source, or the external referrer; `direct` without signal), `campaign`, `action_label`, `src_name`, `event_type`, `events_in_touch` (consecutive same-channel events merged), `is_conversion`, `conversion_value`. `nba_ais_touchpoints_raw` is the union before sequencing, one row per source event, with `url`, `referrer`, `utm_medium`, `utm_source`, `utm_campaign`. Use them to explain channels and journeys; they are not a history.
+
 ### Model input tables
 
-`train_input_table` / `pred_input_table` from the workflow config (defaults `nba_ais_train_input` / `nba_ais_pred_input`): the training log (one row per past action with its reward and context) and the scoring context (one row per customer), replaced each run. Use them to describe who received which action, or to compare the context of customers recommended different actions — join on the ID column (`user_column` in `{{engagement_dir}}/workflow/config.yml`) to `user_id`.
+`train_input_table` / `pred_input_table` from the workflow config (defaults `nba_ais_train_input` / `nba_ais_pred_input`): the training log (one row per decision touch with its action, reward and context) and the scoring context (one row per customer), replaced each run. Use them to describe who received which action, or to compare the context of customers recommended different actions — join on the ID column (`user_column` in `{{engagement_dir}}/workflow/config.yml`) to `user_id`.
 
 ---
 

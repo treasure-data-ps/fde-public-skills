@@ -15,7 +15,9 @@ Every table the workflow writes to `sink_database`, its columns and the queries 
 
 | Table | Written by | Grain | Mode |
 |---|---|---|---|
-| `train_input_table` (`nba_ais_train_input`) | `data_prep.dig` (train) | One row per logged action | Replaced |
+| `<touchpoints_table>_raw` (`nba_ais_touchpoints_raw`) | `data_prep.dig` | One row per source event | Replaced (last run's scan window) |
+| `<touchpoints_table>` (`nba_ais_touchpoints`) | `data_prep.dig` | One row per sequential touch or conversion | Replaced (last run's scan window) |
+| `train_input_table` (`nba_ais_train_input`) | `data_prep.dig` (train) | One row per decision touch | Replaced |
 | `pred_input_table` (`nba_ais_pred_input`) | `data_prep.dig` (pred) | One row per customer | Replaced |
 | `nba_ais_run_log` | `train.dig` `+log_run` | One row per training run | Appended |
 | `nba_ais_train_metrics` | `train.dig` `+log_train_metrics` | (run, metric) | Appended |
@@ -34,6 +36,7 @@ Every table the workflow writes to `sink_database`, its columns and the queries 
 | `run_date` | Run date used for the windows (`reference_date` or the session date) |
 | `model_name`, `model_type` | Stored model; policy type from the config, or `tuned` when `enable_tuning` was on (chosen type in `nba_ais_tuning_results`) |
 | `enable_tuning` | `'true'` / `'false'` |
+| `nba_type`, `time_grain` | Decision type of the run (`channel`, `time`, `campaign`, `custom`) and, for `time`, the slot grain |
 | `train_rows`, `train_users`, `n_actions` | Size of the training log |
 | `logged_avg_reward` | Average reward of the past decisions — the baseline |
 | `estimated_policy_value`, `ci_lower`, `ci_upper` | Off-policy estimate of the average reward if the learned policy had chosen, with its 95% interval (in-sample) |
@@ -65,6 +68,32 @@ SELECT phase, phase0_impute_type, phase0_scaler_type, phase1_estimator_type, pha
 FROM nba_ais_tuning_results
 WHERE run_id = (SELECT max_by(run_id, time) FROM nba_ais_tuning_results) AND LOWER(CAST(is_best AS VARCHAR)) = 'true'
 ORDER BY phase
+```
+
+## Touchpoint tables
+
+Rebuilt by every run for its scan window (train: the training window plus the lookback; pred: the lookback) — use them to explain channels and journeys, not as history.
+
+| Column (`nba_ais_touchpoints`) | Meaning |
+|---|---|
+| `<user_column>` | Customer ID |
+| `touch_ts`, `touch_end_ts` | First and last event of the touch (UNIX seconds) |
+| `channel` | Channel of the touch — from the source, its UTM medium / source, or its external referrer; `direct` without signal; NULL on conversion rows |
+| `campaign`, `action_label` | First campaign / custom label in the touch |
+| `src_name`, `event_type` | Source and event type of the touch's first event |
+| `events_in_touch` | Consecutive same-channel events merged into the touch |
+| `is_conversion`, `conversion_value` | 1 and the value on conversion rows |
+
+`nba_ais_touchpoints_raw` holds the union before sequencing (one row per source event, with `url`, `referrer`, `utm_medium`, `utm_source`, `utm_campaign`, `channel_hint`).
+
+```sql
+-- channel mix and journey length
+SELECT channel, COUNT(*) AS touches, COUNT(DISTINCT <user_column>) AS customers, ROUND(AVG(events_in_touch), 1) AS events_per_touch
+FROM nba_ais_touchpoints WHERE is_conversion = 0 GROUP BY 1 ORDER BY 2 DESC
+
+-- how web visits got their channel
+SELECT utm_medium, utm_source, COUNT(*) AS events FROM nba_ais_touchpoints_raw
+WHERE src_name = 'web' GROUP BY 1, 2 ORDER BY 3 DESC LIMIT 30
 ```
 
 ## Prediction tables
@@ -123,6 +152,7 @@ WHERE a.session_id = (SELECT session_id FROM s WHERE rn = 1) AND b.session_id = 
 
 | Question | Tables |
 |---|---|
+| Which channels exist and how was each touch's channel set? | `nba_ais_touchpoints`, `nba_ais_touchpoints_raw` |
 | Is the policy better than what we did before? | `nba_ais_run_log` (`estimated_policy_value` vs `logged_avg_reward`, interval) ; tuning hold-out lift |
 | Which settings did tuning pick? | `nba_ais_tuning_results` (`LOWER(CAST(is_best AS VARCHAR)) = 'true'`) |
 | How many customers get each action? | `<pred>`; `nba_ais_action_stats` |

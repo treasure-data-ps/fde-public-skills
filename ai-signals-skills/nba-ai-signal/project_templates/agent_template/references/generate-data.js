@@ -166,7 +166,7 @@ async function run() {
   const latestTuning = `(SELECT max_by(run_id, time) FROM ${db}.nba_ais_tuning_results)`;
 
   const [q1, q2, q3, q4, q5, q6] = await Promise.all([
-    query(`SELECT session_id, run_date, model_name, model_type, enable_tuning, train_rows, train_users, n_actions, logged_avg_reward, estimated_policy_value, ci_lower, ci_upper, estimated_lift_pct, reward_window_days, train_window_days, feature_lookback_days FROM ${db}.nba_ais_run_log ORDER BY time DESC LIMIT 1`, 'Q1 latest training run'),
+    query(`SELECT session_id, run_date, nba_type, time_grain, model_name, model_type, enable_tuning, train_rows, train_users, n_actions, logged_avg_reward, estimated_policy_value, ci_lower, ci_upper, estimated_lift_pct, reward_window_days, train_window_days, feature_lookback_days FROM ${db}.nba_ais_run_log ORDER BY time DESC LIMIT 1`, 'Q1 latest training run'),
     query(`SELECT session_id, run_date, logged_avg_reward, estimated_policy_value, ci_lower, ci_upper FROM ${db}.nba_ais_run_log ORDER BY time ASC`, 'Q2 training history'),
     query(`SELECT action, logged_rows, logged_share, logged_avg_reward, recommended_users, recommended_share FROM ${db}.nba_ais_action_stats WHERE session_id = ${latestStats} ORDER BY recommended_users DESC, logged_rows DESC`, 'Q3 action mix'),
     query(`SELECT COUNT(*) AS customers, COUNT(DISTINCT next_best_action) AS actions_recommended, MAX(scored_date) AS scored_date, arbitrary(session_id) AS pred_session_id FROM ${pred}`, 'Q4 latest recommendations'),
@@ -228,7 +228,7 @@ async function run() {
 
   const tokenMap = {
     '{{project_name}}': escapeHtml(projectName), '{{sink_database}}': escapeHtml(sinkDatabase), '{{pred_table}}': escapeHtml(predTable),
-    '{{session_id}}': escapeHtml(runRow.session_id), '{{run_date}}': escapeHtml(runRow.run_date || '—'), '{{model_name}}': escapeHtml(runRow.model_name || '—'), '{{model_type}}': escapeHtml(runRow.model_type || '—'), '{{enable_tuning}}': escapeHtml(runRow.enable_tuning || 'false'),
+    '{{session_id}}': escapeHtml(runRow.session_id), '{{run_date}}': escapeHtml(runRow.run_date || '—'), '{{model_name}}': escapeHtml(runRow.model_name || '—'), '{{model_type}}': escapeHtml(runRow.model_type || '—'), '{{enable_tuning}}': escapeHtml(runRow.enable_tuning || 'false'), '{{decision_type}}': escapeHtml(runRow.nba_type ? `${runRow.nba_type}${runRow.time_grain ? ` (${runRow.time_grain})` : ''}` : '—'),
     '{{n_actions}}': integer(runRow.n_actions), '{{customers_scored}}': integer(recs.customers), '{{run_count}}': String(historicTrain.length),
     '{{train_rows}}': integer(runRow.train_rows), '{{train_users}}': integer(runRow.train_users), '{{reward_window_days}}': integer(runRow.reward_window_days), '{{train_window_days}}': integer(runRow.train_window_days), '{{feature_lookback_days}}': integer(runRow.feature_lookback_days),
     '{{logged_avg_reward}}': decimal(runRow.logged_avg_reward), '{{estimated_policy_value}}': decimal(runRow.estimated_policy_value), '{{ci_lower}}': decimal(runRow.ci_lower), '{{ci_upper}}': decimal(runRow.ci_upper), '{{estimated_lift_pct}}': signedPct(runRow.estimated_lift_pct), '{{evidence_pill}}': evidencePill,

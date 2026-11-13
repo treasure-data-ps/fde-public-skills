@@ -43,10 +43,13 @@ Use this document to answer questions about how **this customer's deployed** Nex
 
 ## Input SQL
 
-<!-- fill — from workflow/sql/input_features.sql:
-- Action log: source table, action column, how actions were grouped / filtered (the final list of action labels), the
-  training window (`train_window_days`, `train_start` … `train_end`)
-- Reward: the success rule in plain words, its table and columns, the window (`reward_window_days`), the latest average reward
+<!-- fill — from workflow/sql/touchpoints_union.sql, touchpoints.sql and input_features.sql:
+- Decision: `nba_type` (and `time_grain`, `local_timezone` for time), the decision touches (`action_sources`), the final list of
+  action labels and how they were grouped (`min_action_share`, campaign themes), the training window (`train_window_days`)
+- Union: one line per source block — `src_name`, table, ID, time column, filters, how its channel is set (channel_hint, UTM
+  from the URL / referrer, traffic-source column), conversions (`is_conversion`, `conversion_value`)
+- Channel rules added for this customer in touchpoints.sql (UTM value → channel) and `session_gap_minutes`
+- Reward: the success rule in plain words, the window (`reward_window_days`), `reward_attribution`, `reward_type`, the latest average reward
 - Context: one line per source CTE — table, what it measures, the window (`feature_lookback_days`), the feature names
 - Scoring population: source, eligibility and exclusions, the ID column (`user_column`)
 - `reference_date` ('' = run date), `exclude_columns` and why each column is excluded

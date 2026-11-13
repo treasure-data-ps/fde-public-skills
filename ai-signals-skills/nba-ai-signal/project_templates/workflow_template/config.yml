@@ -25,7 +25,7 @@ scaler_type: standard           # standard | minmax | robust | maxabs | none
 base_classifier: random_forest  # ipw_learner only: random_forest | logistic_regression
 
 # Input tables are rebuilt by data_prep.dig (sql/) in every run.
-#   train_input_table  one row per logged action: user, action, reward, timestamp, context features
+#   train_input_table  one row per decision touch: user, action, reward, timestamp, context features
 #   pred_input_table   one row per customer: user, timestamp, the same context features
 # Outputs (all in ${sink_database}):
 #   pred_output_table           latest next best action per user (Parent Segment table), replaced each run
@@ -41,6 +41,28 @@ action_column: action
 reward_column: reward
 timestamp_column: action_ts
 exclude_columns: time|session_id   # pipe-separated globs of non-feature columns (user/action/reward/timestamp are automatic)
+
+#####################################################################
+############################ DECISION ###############################
+#####################################################################
+# What the model chooses per customer — the action label of each decision touch:
+#   channel   the touch's channel, derived from UTM / referrer / source (sql/touchpoints.sql)
+#   time      the touch's local time slot (time_grain)
+#   campaign  the touch's campaign
+#   custom    the touch's action_label (offer, treatment, content ...) from sql/touchpoints_union.sql
+nba_type: channel
+time_grain: daypart             # nba_type = time: daypart (4) | hour (24) | dow_daypart (28)
+local_timezone: UTC             # IANA time zone for time slots, e.g. America/New_York
+action_sources: ''              # pipe-separated src_name values whose touches are decisions; '' = all sources
+min_action_share: 0.01          # actions below this share of training rows become 'other' (not for time)
+reward_attribution: next_touch  # next_touch: the reward window ends at the customer's next decision | window: full window
+reward_type: binary             # binary: 1 if converted | value: sum of conversion_value
+
+#####################################################################
+############################ TOUCHPOINTS ############################
+#####################################################################
+touchpoints_table: nba_ais_touchpoints  # union (<table>_raw) and sequential touches, rebuilt each run
+session_gap_minutes: 30         # inactivity that ends a session / touch; consecutive same-channel events within it are one touch
 
 #####################################################################
 ############################ DATA PREP ##############################

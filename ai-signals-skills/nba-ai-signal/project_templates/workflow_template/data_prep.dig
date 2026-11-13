@@ -12,9 +12,11 @@ _export:
 # DATA PREP: customer-specific input SQL (sql/)
 # ============================================================
 # Called from train.dig (mode = 'train') and predict.dig (mode = 'pred').
-# Builds ${train_input_table} (one row per logged action) or ${pred_input_table}
-# (one row per customer) with the same context feature columns. sql/README.md
-# describes the contract.
+#   1. sql/touchpoints_union.sql  every source (web, email, app, orders, ...) in one schema
+#   2. sql/touchpoints.sql        channel per event (UTM / referrer / source), sequential touches
+#   3. sql/input_features.sql     ${train_input_table} (one row per decision touch) or
+#                                 ${pred_input_table} (one row per customer), same context features
+# sql/README.md describes the contracts.
 #
 # Heavy sources can be pre-aggregated into feature tables in parallel and
 # joined in input_features.sql:
@@ -28,6 +30,14 @@ _export:
 +create_sink_database:
   td_ddl>:
   create_databases: ["${sink_database}"]
+
++create_touchpoints_raw:
+  td>: sql/touchpoints_union.sql
+  create_table: ${touchpoints_table}_raw
+
++create_touchpoints:
+  td>: sql/touchpoints.sql
+  create_table: ${touchpoints_table}
 
 +create_input_table:
   td>: sql/input_features.sql
