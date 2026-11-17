@@ -143,7 +143,7 @@ The policy itself is stored by the AI Signals service under `model_name`, not in
 
 ## Secrets & Requirements
 
-- **Secrets:** none — `${secret:td.apikey}` is provided by AI Signals and sent as `Authorization: TD1 <key>`, the only key format the ml-batch-api accepts.
+- **Secrets:** none — `${secret:td.apikey}` is provided by AI Signals and sent as the bare key in the `Authorization` header (no `TD1 ` prefix; the prefix gets 403 "API Key is invalid").
 - **Account:** AI Signals enabled for `nba_train` and `nba_predict` (and `nba_tune` when `enable_tuning` is true).
 - **Data:** customer touchpoints (web, email, app …) and conversions with timestamps and one customer ID — 2–100 distinct actions after grouping, at least a few hundred rows (better thousands) per action, each action given to a mix of customers, and some rewards for every action.
 - **Permissions:** create the sink database and tables; read the source databases used by the input SQL.

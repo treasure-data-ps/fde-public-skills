@@ -16,7 +16,7 @@ _export:
   http>: ${ml_batch_endpoint}/v1/runs/
   method: POST
   headers:
-    - authorization: "TD1 ${secret:td.apikey}"
+    - authorization: "${secret:td.apikey}"
     - X-TD-ML-SESSION-ID: ${session_id}
     - X-TD-ML-ATTEMPT-ID: ${attempt_id}
   content_format: json
@@ -42,4 +42,4 @@ _export:
   http>: ${ml_batch_endpoint}/v1/runs/${JSON.parse(http.last_content)['id']}/status
   method: GET
   headers:
-    - authorization: "TD1 ${secret:td.apikey}"
+    - authorization: "${secret:td.apikey}"

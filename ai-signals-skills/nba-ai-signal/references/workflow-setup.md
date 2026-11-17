@@ -139,7 +139,7 @@ LEFT JOIN <source_database>.<table> s ON s.<id_col> = p.id
 | Item | Value |
 |---|---|
 | Project / entry point | `nba_ais` (`tdx.json`) / `nba_ais`; `train`, `predict` run alone |
-| Secrets | None — `${secret:td.apikey}` is provided by AI Signals; never ask for it; keep the header `"TD1 ${secret:td.apikey}"` as is |
+| Secrets | None — `${secret:td.apikey}` is provided by AI Signals; never ask for it; keep the header as the bare key `"${secret:td.apikey}"` (no `TD1 ` prefix) |
 | API endpoint | `ml_batch_api_endpoint` for the region (`tdx status`; values in the template README) |
 | Sink database | Created by `+create_sink_database`; owner can't create databases → user creates it in the Console. `tdx tables "<sink_database>.nba_ais_*"` must be empty |
 | Schedule | Commented; ask; different cadences → `train.dig` / `predict.dig` (`dataprep-guide.md` §6) |
@@ -211,7 +211,7 @@ Check 6 is only fair when the "other action" group was not chosen for a reason (
 | `FROM_UNIXTIME` time-zone error | `local_timezone` not an IANA name | e.g. `America/New_York`, `Asia/Tokyo`, `UTC` |
 | `+assert_training_dataset` fails | Empty window, one action, constant reward, NULL keys | Check `reference_date`, windows, the action filter and the reward rule |
 | `+assert_prediction_dataset` fails | Repeated customers in the scoring population | `DISTINCT` / one row per customer in the pred branch |
-| 401 / 403 on a run | Wrong regional endpoint, or the solution is not enabled | Fix `ml_batch_api_endpoint`; ask the account admin (`nba_train`, `nba_predict`, `nba_tune`) |
+| 401 / 403 on a run | `authorization` header has a `TD1 ` prefix (403 "API Key is invalid"); wrong regional endpoint; or the solution is not enabled | Send the bare key `"${secret:td.apikey}"`; fix `ml_batch_api_endpoint`; ask the account admin (`nba_train`, `nba_predict`, `nba_tune`) |
 | Status poll fails with 400 | The run failed — the error is in the poll task log | Fix the cause (`ai-signals-guide.md` §7), re-run the whole workflow |
 | Run takes very long | Large table or big tuning budget | `http>` keeps polling (up to the task time limit); lower the tuning budgets or `train_window_days` |
 | `+latest_actions` fails on `element_at` | The prediction table is empty (no rows imported) | Check the prediction input and the poll log |

@@ -105,7 +105,7 @@ Prerequisite: AI Signals includes `nba_train` and `nba_predict` (and `nba_tune` 
   method: POST
   retry: false                                # never submit the same run twice
   headers:
-    - authorization: "TD1 ${secret:td.apikey}"   # keep exactly as in the template
+    - authorization: "${secret:td.apikey}"   # keep exactly as in the template
     - X-TD-ML-SESSION-ID: ${session_id}
     - X-TD-ML-ATTEMPT-ID: ${attempt_id}
   content_format: json
@@ -128,12 +128,12 @@ Prerequisite: AI Signals includes `nba_train` and `nba_predict` (and `nba_tune` 
   http>: ${ml_batch_api_endpoint}/v1/runs/${JSON.parse(http.last_content).id}/status
   method: GET
   headers:
-    - authorization: "TD1 ${secret:td.apikey}"
+    - authorization: "${secret:td.apikey}"
   store_content: false                        # keep the submitted run in http.last_content
 ```
 
 - The status call answers **408** while the run is PENDING / RUNNING (`http>` keeps retrying), **400** when it FAILED or was CANCELLED (the task fails, with the error messages in the log) and **200** when it SUCCEEDED. `http>` keeps retrying a 408 on its own (up to the task time limit), so the polls need no `_retry` — one would only re-poll a failed run.
-- Authentication: the API accepts only `TD1 <key>` or `Bearer <token>` in the `Authorization` header (anything else → 400 "Invalid key format"), so the template sends `"TD1 ${secret:td.apikey}"`, like the official NBA template. The key is provided by the AI Signals architecture — never ask the user to set `td.apikey`, and keep the header as in the template.
+- Authentication: the template sends the bare key, `"${secret:td.apikey}"`, in the `Authorization` header — no `TD1 ` prefix. The `TD1 ` prefix gets 403 "API Key is invalid" from this service. The key is provided by the AI Signals architecture — never ask the user to set `td.apikey`, and keep the header as in the template.
 - The service appends to its output tables. The template writes training and prediction to per-attempt `mltmp_nba_ais_*` tables, copies them to the published tables and drops them.
 - Unknown `solution_arguments` keys are ignored silently — a typo does not fail, it is just not applied. `solution_arguments` must stay under ~6 KB.
 - Cancel a stuck run: `DELETE /v1/runs/<run_id>` with the same header (run id in the poll task log); then re-run the whole workflow, not a single task.
