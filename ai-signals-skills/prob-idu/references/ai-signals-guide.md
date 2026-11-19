@@ -36,7 +36,7 @@ The workflow then collapses IDs that landed in several clusters, merges clusters
 | `input_table` | `<sink_database>.<blocking_table>` |
 | `output_table` | `<sink_database>.<output_table>` |
 | `solution_arguments` | `block_key_col`, `id_col`, `cluster_col_name`, `dedupe_columns` (list of `name` / `type` / `weight`), `string_type`, `cluster_threshold`, `fill_missing`, `max_block_rows` |
-| Headers | `authorization: TD1 ${secret:td.apikey}` (provided by AI Signals — no secret to set), `X-TD-ML-SESSION-ID`, `X-TD-ML-ATTEMPT-ID` |
+| Headers | `authorization: ${secret:td.apikey}` (provided by AI Signals — no secret to set), `X-TD-ML-SESSION-ID`, `X-TD-ML-ATTEMPT-ID` |
 
 Polling: `GET {ml_batch_endpoint}/v1/runs/{id}/status` — `408` while running, `200` when done; `http>` retries until then.
 
@@ -68,7 +68,7 @@ Start strict (`cluster_threshold` and `jaccard_similarity_threshold` 0.90–0.95
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| `+cluster` returns 401/403 | `ml_batch_endpoint` does not match the region, or `pidu` is not enabled | Set the regional endpoint; ask the account admin about access |
+| `+cluster` returns 401/403 | `authorization` header has a `TD1 ` prefix (403 "API Key is invalid"); `ml_batch_endpoint` does not match the region; or `pidu` is not enabled | Send the bare key `"${secret:td.apikey}"`; set the regional endpoint; ask the account admin about access |
 | `+cluster` returns 4xx naming the solution or version | `ml_batch_version` unavailable for the account | Confirm the available `pidu` version with the AI Signals team and set `ml_batch_version` |
 | Run status FAILED / user-input error | Dedupe column missing from the blocking table, weights not summing to 1.0, wrong `block_key_col` / `id_col` | Compare `dedupe_columns` with the input table columns; check the weights |
 | Output table empty | Blocking table empty or thresholds too high | Check `blocking_table` has rows; lower `jaccard_similarity_threshold` and `cluster_threshold` |

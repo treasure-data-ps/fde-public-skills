@@ -10,6 +10,7 @@ Each subfolder is a self-contained solution with its own `SKILL.md` entry point.
 | `mta/` | `fde-mta` | MTA — Multi-Touch Attribution (standard models + AI Signals Markov and Shapley) | `mta-agent` |
 | `classifier/` | `fde-classifier` | Propensity scoring — binary classification with SHAP explanations | `classifier-agent` |
 | `nba-scores/` | `fde-nba-scores` | NBA — Next Best Channel / Time / Campaign engagement scores | `nba-scores-agent` |
+| `nba-ai-signal/` | `fde-nba-ai-signal` | NBA AI Signal — next best action per customer from a contextual-bandit policy (AI Signals `nba_tune` / `nba_train` / `nba_predict`) | `nba-ai-signal-agent` |
 | `nbp/` | `fde-nbp` | NBP — Next Best Product recommendations (AI Signals NBP model) | `nbp-agent` |
 | `prob-idu/` | `fde-prob-idu` | Probabilistic ID unification — fuzzy matching of duplicate profiles (AI Signals `pidu`) | `prob-idu-agent` |
 
@@ -32,4 +33,4 @@ Each solution folder contains:
 - `project_templates/agent_template/` — the customer analysis agent blueprint (`SKILL.template.md` + `references/`)
 - `references/` — workflow setup, requirements doc, agent setup, docs content, Parent Segment spec, and the AI Signals model guide (AI Signals solutions)
 
-All five follow this layout (`shared/solution_standard.md`, checked by the maintainers' conformance script).
+All of them follow this layout (`shared/solution_standard.md`, checked by the maintainers' conformance script).
